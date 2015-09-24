@@ -3,23 +3,9 @@
 
 import unittest
 import numpy as np
-import sys
 
 from pyPixelClusterizer.hit_clusterizer import HitClusterizer
 from pyPixelClusterizer import data_struct
-
-
-def pprint_array(array):  # just to print the results in a nice way
-    offsets = []
-    for column_name in array.dtype.names:
-        sys.stdout.write(column_name)
-        sys.stdout.write('\t')
-        offsets.append(column_name.count(''))
-    for row in array:
-        print('')
-        for i, column in enumerate(row):
-            print ' ' * (offsets[i] / 2), column, '\t',
-    print('')
 
 
 def create_hits(n_hits, max_column, max_row):
