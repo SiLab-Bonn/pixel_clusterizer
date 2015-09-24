@@ -2,7 +2,6 @@
 '''
 
 import unittest
-from tables import dtype_from_descr
 import numpy as np
 import sys
 
@@ -24,7 +23,7 @@ def pprint_array(array):  # just to print the results in a nice way
 
 
 def create_hits(n_hits, max_column, max_row):
-    hits = np.ones(shape=(n_hits, ), dtype=dtype_from_descr(data_struct.HitInfo))
+    hits = np.ones(shape=(n_hits, ), dtype=data_struct.HitInfo)
     for i in range(n_hits):
         hits[i]['event_number'], hits[i]['frame'], hits[i]['column'], hits[i]['row'], hits[i]['charge'] = i / 3, i % 129, i % max_column + 1, 2 * i % max_row + 1, i % 2
     return hits
@@ -42,7 +41,7 @@ class TestClusterizer(unittest.TestCase):
 
     def test_hit_definition(self):  # colum/row has to startat 1, otherwise IndexError exception
         clusterizer = HitClusterizer()
-        hits = np.zeros(shape=(1, ), dtype=dtype_from_descr(data_struct.HitInfo))
+        hits = np.zeros(shape=(1, ), dtype=data_struct.HitInfo)
         with self.assertRaises(IndexError):
             clusterizer.add_hits(hits)  # cluster hits
 
@@ -55,7 +54,7 @@ class TestClusterizer(unittest.TestCase):
         clusterizer.add_hits(hits)  # cluster hits
         cluster_hits, cluster = clusterizer.get_hit_cluster(), clusterizer.get_cluster()
         # Define expected output
-        expected_result = np.zeros(shape=(4, ), dtype=dtype_from_descr(data_struct.ClusterInfo))
+        expected_result = np.zeros(shape=(4, ), dtype=data_struct.ClusterInfo)
         expected_result['event_number'] = [0, 1, 2, 3]
         expected_result['size'] = [3, 3, 3, 1]
         expected_result['charge'] = [1, 2, 1, 1]
@@ -73,7 +72,7 @@ class TestClusterizer(unittest.TestCase):
         clusterizer.add_hits(hits)  # cluster hits
         cluster_hits, cluster = clusterizer.get_hit_cluster(), clusterizer.get_cluster()
         # Define expected output
-        expected_result = np.zeros(shape=(10, ), dtype=dtype_from_descr(data_struct.ClusterHitInfo))
+        expected_result = np.zeros(shape=(10, ), dtype=data_struct.ClusterHitInfo)
         expected_result['event_number'] = hits['event_number']
         expected_result['frame'] = hits['frame']
         expected_result['column'] = hits['column']

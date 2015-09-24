@@ -1,40 +1,29 @@
-# Data structure definitions to be used within python
+# Data structure definitions to be used by numpy within python
 
-import tables as tb
+import numpy as np
 
+HitInfo = np.dtype([('event_number', '<i8'),
+                    ('frame', '<u1'),
+                    ('column', '<u2'),
+                    ('row', '<u2'),
+                    ('charge', '<u2')])
 
-class HitInfo(tb.IsDescription):
-    event_number = tb.Int64Col(pos=0)
-    frame = tb.UInt8Col(pos=1)
-    column = tb.UInt16Col(pos=2)
-    row = tb.UInt16Col(pos=3)
-    charge = tb.UInt16Col(pos=4)
-
-
-class MetaInfoEvent(tb.IsDescription):
-    event_number = tb.Int64Col(pos=0)
-    time_stamp = tb.Float64Col(pos=1)
-    error_code = tb.UInt32Col(pos=2)
-
-
-class ClusterHitInfo(tb.IsDescription):
-    event_number = tb.Int64Col(pos=0)
-    frame = tb.UInt8Col(pos=1)
-    column = tb.UInt16Col(pos=2)
-    row = tb.UInt16Col(pos=3)
-    charge = tb.UInt16Col(pos=4)
-    cluster_ID = tb.UInt16Col(pos=5)
-    is_seed = tb.UInt8Col(pos=6)
-    cluster_size = tb.UInt16Col(pos=7)
-    n_cluster = tb.UInt16Col(pos=8)
+ClusterHitInfo = np.dtype([('event_number', '<i8'),
+                           ('frame', '<u1'),
+                           ('column', '<u2'),
+                           ('row', '<u2'),
+                           ('charge', '<u2'),
+                           ('cluster_ID', '<u2'),
+                           ('is_seed', '<u1'),
+                           ('cluster_size', '<u2'),
+                           ('n_cluster', '<u2')])
 
 
-class ClusterInfo(tb.IsDescription):
-    event_number = tb.Int64Col(pos=0)
-    ID = tb.UInt16Col(pos=1)
-    size = tb.UInt16Col(pos=2)
-    charge = tb.UInt16Col(pos=3)
-    seed_column = tb.UInt16Col(pos=4)
-    seed_row = tb.UInt16Col(pos=5)
-    mean_column = tb.Float32Col(pos=6)
-    mean_row = tb.Float32Col(pos=7)
+ClusterInfo = np.dtype([('event_number', '<i8'),
+                        ('ID', '<u2'),
+                        ('size', '<u2'),
+                        ('charge', '<u2'),
+                        ('seed_column', '<u2'),
+                        ('seed_row', '<u2'),
+                        ('mean_column', 'f4'),
+                        ('mean_row', 'f4')])
