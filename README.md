@@ -2,14 +2,14 @@
 
 pyPixelClusterizer is an easy to use pixel hit-clusterizer for Python. It clusters hits on an event basis in space and time. 
 
-The hits have to be a numpy recarray with data types as defined in data_struct.HitInfo. The hit fields are:
+The hits have to be a numpy recarray with data types as defined in data_struct.HitInfo. The fields are:
 - event_number
 - frame
 - column
 - row
 - charge
 
-Cluster information (data_struct.ClusterInfo) is created with the following field:
+Cluster information (data_struct.ClusterInfo) is created with the following fields:
 - event_number
 - ID
 - size
@@ -19,7 +19,7 @@ Cluster information (data_struct.ClusterInfo) is created with the following fiel
 - mean_column
 - mean_row
 
-Also cluster hit information (data_struct.ClusterHitInfo) is created. The cluster hit information is the hit array extended by the field:
+Also cluster hit information (data_struct.ClusterHitInfo) is created. The cluster hit information is the hit information extended by the following fields:
 - cluster_ID
 - is_seed
 - cluster_size
@@ -27,7 +27,9 @@ Also cluster hit information (data_struct.ClusterHitInfo) is created. The cluste
 
 # Installation
 
-TBD
+The stable code is hosted on PyPI and can be installed by typing:
+
+pip install pyPixelClusterizer
 
 # Usage
 
