@@ -306,6 +306,12 @@ void Clusterizer::addHit(const unsigned int& pHitIndex)
 	if (tFrame > _framelastHit)
 		_framelastHit = tFrame;
 
+	if ((tCol >= _maxColumn) || (tRow >= _maxRow)) {
+		std::stringstream tMessage;
+		tMessage << "The column/row value is out of range " << tCol << "/" << tRow << " > " << _maxColumn << "/" << _maxRow << ". Col/row have to start at 1!";
+		throw std::out_of_range(tMessage.str());
+	}
+
 	if (tCol > _maxColHitPos)
 		_maxColHitPos = tCol;
 	if (tCol < _minColHitPos)
@@ -314,12 +320,6 @@ void Clusterizer::addHit(const unsigned int& pHitIndex)
 		_minRowHitPos = tRow;
 	if (tRow > _maxRowHitPos)
 		_maxRowHitPos = tRow;
-
-	if ((tCol > _maxColumn) || (tRow > _maxRow)) {
-		std::stringstream tMessage;
-		tMessage << "The column/row value is out of range " << tCol << "/" << tRow << " > " << _maxColumn << "/" << _maxRow << ". Col/row have to start at 1!";
-		throw std::out_of_range(tMessage.str());
-	}
 
 	if (_hitMap[(size_t) tCol + (size_t) tRow * (size_t) _maxColumn + (size_t) tFrame * (size_t) _maxColumn * (size_t) _maxRow] == -1) {
 		_hitMap[(size_t) tCol + (size_t) tRow * (size_t) _maxColumn + (size_t) tFrame * (size_t) _maxColumn * (size_t) _maxRow] = tCharge;
