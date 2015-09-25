@@ -1,5 +1,4 @@
 ''' Example showing how to use the clusterizer'''
-from tables import dtype_from_descr
 import numpy as np
 import sys
 
@@ -22,7 +21,7 @@ def pprint_array(array):  # just to print the results in a nice way
 
 if __name__ == "__main__":
     # create some fake data
-    hits = np.ones(shape=(3, ), dtype=dtype_from_descr(data_struct.HitInfo))
+    hits = np.ones(shape=(3, ), dtype=data_struct.HitInfo)
 
     hits[0]['column'], hits[0]['row'], hits[0]['charge'], hits[0]['event_number'] = 5, 5, 1, 0
     hits[1]['column'], hits[1]['row'], hits[1]['charge'], hits[1]['event_number'] = 6, 6, 1, 0

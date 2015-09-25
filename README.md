@@ -35,13 +35,11 @@ pip install pyPixelClusterizer
 
 import numpy as np
 
-from tables import dtype_from_descr
-
 from pyPixelClusterizer.hit_clusterizer import HitClusterizer
 
 from pyPixelClusterizer import data_struct
 
-hits = np.ones(shape=(3, ), dtype=dtype_from_descr(data_struct.HitInfo))  # create some data
+hits = np.ones(shape=(3, ), dtype=data_struct.HitInfo)  # create some data
 
 clusterizer = HitClusterizer()  # initialize clusterizer
 
