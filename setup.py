@@ -17,7 +17,7 @@ else:
                                sources=['pyPixelClusterizer/cpp/hit_clusterizer.cpp'],
                                language="c++")]
 
-version = '1.0.1'
+version = '1.0.2'
 author = 'David-Leon Pohl'
 author_email = 'pohl@physik.uni-bonn.de'
 
