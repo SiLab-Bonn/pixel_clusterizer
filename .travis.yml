@@ -1,17 +1,16 @@
 language: python
-
 python:
-  - 2.7
-  - 3.3
-  - 3.4
-  - 3.5
+- 2.7
+- 3.3
+- 3.4
+- 3.5
 
 sudo: false
 
 cache:
   directories:
-    - $HOME/.pip-cache/
-
+  - $HOME/.pip-cache/
+  
 addons:
   apt:
     packages:
@@ -21,12 +20,24 @@ addons:
     
 notifications:
   email:
-    - pohl@physik.uni-bonn.de
-
+  - pohl@physik.uni-bonn.de
+  
 install:
-  - pip install --upgrade pip
-  - pip install -r requirements.txt --cache-dir $HOME/.pip-cache
-  - python setup.py develop
+- pip install --upgrade pip
+- pip install -r requirements.txt --cache-dir $HOME/.pip-cache
+- python setup.py develop
 
-# Run test
 script: nosetests
+
+deploy:
+  provider: pypi
+  user: DavidLP
+  password:
+    secure: vDfygeuZ6CMuF3PXuIwjFXN2LYeUGwAl8p31atCgjgI1D/bQiUgTF1fqr5HGSb+NGOf+s+UmAcaaSoRGR+9Gu4lhAn/PxxyEbF10TvjTIMQbxj3/5X/Mij+zge5fcRjSStcTTwgBAVtzP53+YU+9Zt5SQJ/on7mBkvHT6ZrHfqbwmQRysfCUPHIksHRC5Ks0YVtZfWaucfBHxTsCJVg8t3HK0Jd0bnd5BmseB1Cn43U/p/mfdYp4vm/iUXhcbRTgdQGYefOKi7mtA9nGEqquMXoMfPHYRASctS0iLz21VxIUKXLc0GvS/fKgqkW0Rp2hWmyBTLHvKoMlZuYzAq9f6K8tfcqy8UDJ49TaeqpkFFEfnt/LumT1yaF6goOKeksl+OIby2Nm7Y5bn+YRJ2Vt6673HIuX2w4xeB0UD8aPf1zKu4FFMgk+YowGiyefTAWCwqBkZwAIf2YLN6zJxed1+hQLYkbrrGoruqeu8B+/zfI11kj4UeKfB4T1k6gyZj7owGXHm4ylHLaTs80/0kw7gF0K9Z9BXvIllBc33tKE78teqAftTd6dhR8UtChdx0UidJp3t+t17jbMDD66s+cMcJK736gPz3qOlRoZz8HQ4RDsoii+KtK9y3zxWGHhfenBQhJhoNPNPKsiaVbLH74bN8PV/NTPmmG4uQwJ8BezFiw=
+  on:
+    tags: true
+    repo: SiLab-Bonn/pyPixelClusterizer
+    
+env:  # binstar authentification
+  global:
+    secure: HEXqb7EACVqpboQtZOiQOPlykOv8EjCmg9RHO9Vb466hVfI/etmo1CWjLy382ww7Awz9fB5pvc1iRMGDPAsQaExZzxOlZAwGWii3TSvmqFnE+SuCjAykwsM/n0DsVdh4+Lwqoz0oWbjtxWtddlBNApcIjFF5MyrpwaE+uH8EI80BlSWvMWRmDxGTswkKuB2ROAu3a611x5Q+mdSJeeaDrPgcK4zH7m+K4op54zqqYXIW3fSSQUc6J353ux6HGi9KUAfuUNqZXIQV4HcpUS0cErxg+3z3257RupmdaJF60bKUfPXg+FJTSo0nk7ICuPXXyGrhCZTBsQ4EIdHJ6olHFj/MtrPAdD1FynKmaXqwWBRQVg9lH2erXFajc598FvbqDiCviQAw6ZcW0U/RAU7UDTpdz0HrBwi9nZnvug2rjzq60UnNJW+2EffS5PbcKcIz3j7k6lx9laXCxwyQq5RFGKWdYh98Nts/mLB0tqb6aFhLoZ18deVjleXOLic/gdTJTqpuyv41fWZOMskEKwxqPLGTqICJdveu60KTb+iwFbdGj8/JJHtphERBKMuGxAXW+LmWd1TonEy6aGXWgKIkjKKnJIjntSgbD1P4e2A5/hZks/G/5I4c5kJn7qnssEt/Z/B6byYXhQG+8bfq195gBxLEsAooH6mnG1H2QIOqsEo=
