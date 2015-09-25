@@ -25,11 +25,18 @@ class TestClusterizer(unittest.TestCase):
     def tearDownClass(cls):  # remove created files
         pass
 
-    def test_hit_definition(self):  # colum/row has to startat 1, otherwise IndexError exception
-        clusterizer = HitClusterizer()
+    def test_hit_definition(self):  # colum/row has to start at 1 and , otherwise IndexError exception
+        clusterizer = HitClusterizer(n_columns=10, n_rows=10)
         hits = np.zeros(shape=(1, ), dtype=data_struct.HitInfo)
         with self.assertRaises(IndexError):
-            clusterizer.add_hits(hits)  # cluster hits
+            clusterizer.add_hits(hits)  # cluster hits with illigal column/row index = 0/0
+        hits = np.ones(shape=(1, ), dtype=data_struct.HitInfo)
+        hits['column'] = 11
+        with self.assertRaises(IndexError):
+            clusterizer.add_hits(hits)  # column = 11 is too large for n_columns=10
+        clusterizer.reset()
+        hits['column'] = 10
+        clusterizer.add_hits(hits)  # column = 10 has too fit for n_columns=10
 
     def test_clustering(self):  # check with multiple jumps data
         # Create hits and cluster them
