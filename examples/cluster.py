@@ -1,5 +1,6 @@
 ''' Example showing how to use the clusterizer'''
 import numpy as np
+from builtins import str
 import sys
 
 from pyPixelClusterizer.hit_clusterizer import HitClusterizer
@@ -15,7 +16,9 @@ def pprint_array(array):  # just to print the results in a nice way
     for row in array:
         print('')
         for i, column in enumerate(row):
-            print ' ' * (offsets[i] / 2), column, '\t',
+            sys.stdout.write(' ' * (offsets[i] / 2))
+            sys.stdout.write(str(column))
+            sys.stdout.write('\t')
     print('')
 
 
