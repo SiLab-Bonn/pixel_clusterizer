@@ -58,4 +58,4 @@ if __name__ == "__main__":
     print('Hits with cluster info:')
     pprint_array(cluster_hits)
     print('Cluster info:')
-    pprint_array(cluster[:clusterizer.get_n_clusters()])
+    pprint_array(cluster)
