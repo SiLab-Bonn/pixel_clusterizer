@@ -1,2 +1,3 @@
-numpy
-cython
+future  # Python 2/3 compatibility
+numpy  # fast c array data structures 
+cython  # C++ extension wrapper
