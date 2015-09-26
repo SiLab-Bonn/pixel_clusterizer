@@ -1,6 +1,6 @@
-# pyPixelClusterizer [![Build Status](https://travis-ci.org/SiLab-Bonn/pyPixelClusterizer.svg?branch=master)](https://travis-ci.org/SiLab-Bonn/pyPixelClusterizer) [![Build Status](https://ci.appveyor.com/api/projects/status/github/SiLab-Bonn/pyPixelClusterizer)](https://ci.appveyor.com/project/DavidLP/pyPixelClusterizer)
+# Pixel Clusterizer [![Build Status](https://travis-ci.org/SiLab-Bonn/pyPixelClusterizer.svg?branch=master)](https://travis-ci.org/SiLab-Bonn/pyPixelClusterizer) [![Build Status](https://ci.appveyor.com/api/projects/status/github/SiLab-Bonn/pyPixelClusterizer)](https://ci.appveyor.com/project/DavidLP/pyPixelClusterizer)
 
-pyPixelClusterizer is an easy to use pixel hit-clusterizer for Python. It clusters hits on an event basis in space and time. 
+pixel_clusterizer is an easy to use pixel hit-clusterizer for Python. It clusters hits on an event basis in space and time. 
 
 The hits have to be a numpy recarray with data types as defined in data_struct.HitInfo. The fields are:
 - event_number
@@ -29,15 +29,15 @@ Also cluster hit information (data_struct.ClusterHitInfo) is created. The cluste
 
 The stable code is hosted on PyPI and can be installed by typing:
 
-pip install pyPixelClusterizer
+pip install pixel_clusterizer
 
 # Usage
 
 import numpy as np
 
-from pyPixelClusterizer.hit_clusterizer import HitClusterizer
+from pixel_clusterizer.clusterizer import HitClusterizer
 
-from pyPixelClusterizer import data_struct
+from pixel_clusterizer import data_struct
 
 hits = np.ones(shape=(3, ), dtype=data_struct.HitInfo)  # create some data
 
