@@ -4,4 +4,4 @@ include requirements.*
 #recursive-include docs *
 recursive-include examples *
 recursive-include tests *
-recursive-include pyPixelClusterizer *
+recursive-include pixel_clusterizer *

@@ -1,4 +1,4 @@
-# Pixel Clusterizer [![Build Status](https://travis-ci.org/SiLab-Bonn/pyPixelClusterizer.svg?branch=master)](https://travis-ci.org/SiLab-Bonn/pyPixelClusterizer) [![Build Status](https://ci.appveyor.com/api/projects/status/github/SiLab-Bonn/pyPixelClusterizer)](https://ci.appveyor.com/project/DavidLP/pyPixelClusterizer)
+# Pixel Clusterizer [![Build Status](https://travis-ci.org/SiLab-Bonn/pixel_clusterizer.svg?branch=master)](https://travis-ci.org/SiLab-Bonn/pixel_clusterizer) [![Build Status](https://ci.appveyor.com/api/projects/status/github/SiLab-Bonn/pixel_clusterizer)](https://ci.appveyor.com/project/DavidLP/pixel_clusterizer)
 
 pixel_clusterizer is an easy to use pixel hit-clusterizer for Python. It clusters hits on an event basis in space and time. 
 
