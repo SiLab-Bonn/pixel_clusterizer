@@ -11,13 +11,13 @@ except ImportError:
     pass
 
 if have_cython:
-    cpp_extension = cythonize(Extension('pyPixelClusterizer.hit_clusterizer', ['pyPixelClusterizer/hit_clusterizer.pyx', 'pyPixelClusterizer/cpp/Clusterizer.cpp', 'pyPixelClusterizer/cpp/Basis.cpp']))
+    cpp_extension = cythonize(Extension('pixel_clusterizer.clusterizer', ['pixel_clusterizer/clusterizer.pyx', 'pixel_clusterizer/cpp/Clusterizer.cpp', 'pixel_clusterizer/cpp/Basis.cpp']))
 else:
-    cpp_extension = [Extension('pyPixelClusterizer.clusterizer',
-                               sources=['pyPixelClusterizer/cpp/hit_clusterizer.cpp'],
+    cpp_extension = [Extension('pixel_clusterizer.clusterizer',
+                               sources=['pixel_clusterizer/cpp/clusterizer.cpp'],
                                language="c++")]
 
-version = '1.0.2'
+version = '1.0.3'
 author = 'David-Leon Pohl'
 author_email = 'pohl@physik.uni-bonn.de'
 
@@ -26,10 +26,10 @@ with open('requirements.txt') as f:
     install_requires = f.read().splitlines()
 
 setup(
-    name='pyPixelClusterizer',
+    name='pixel_clusterizer',
     version=version,
     description='A clusterizer to cluster hits of a pixel detector with Python. The clustering happens in C++ on numpy arrays to increase the speed.',
-    url='https://github.com/SiLab-Bonn/pyPixelClusterizer',
+    url='https://github.com/SiLab-Bonn/pixel_clusterizer',
     license='GNU LESSER GENERAL PUBLIC LICENSE Version 2.1',
     long_description='',
     author=author,

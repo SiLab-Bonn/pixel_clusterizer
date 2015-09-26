@@ -1,10 +1,10 @@
-''' Example showing how to use the clusterizer'''
+''' Example how to use the clusterizer'''
 import numpy as np
 from builtins import str
 import sys
 
-from pyPixelClusterizer.hit_clusterizer import HitClusterizer
-from pyPixelClusterizer import data_struct
+from pixel_clusterizer.clusterizer import HitClusterizer
+from pixel_clusterizer import data_struct
 
 
 def pprint_array(array):  # just to print the results in a nice way

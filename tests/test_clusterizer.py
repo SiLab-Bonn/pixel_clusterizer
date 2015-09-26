@@ -1,11 +1,11 @@
-''' Script to check the correctness of the analysis. The analysis is done on raw data and all results are compared to a recorded analysis.
+''' Script to check the correctness of the clustering.
 '''
 
 import unittest
 import numpy as np
 
-from pyPixelClusterizer.hit_clusterizer import HitClusterizer
-from pyPixelClusterizer import data_struct
+from pixel_clusterizer.clusterizer import HitClusterizer
+from pixel_clusterizer import data_struct
 
 
 def create_hits(n_hits, max_column, max_row):
