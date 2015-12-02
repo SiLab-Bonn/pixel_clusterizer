@@ -35,20 +35,19 @@ cdef extern from "cpp/Clusterizer.h":
 
         void setClusterHitInfoArraySize(const unsigned int& rSize)
         void setClusterInfoArraySize(const unsigned int& rSize)
-        
+
         void setXclusterDistance(const unsigned int & pDx)
         void setYclusterDistance(const unsigned int & pDy)
         void setFrameclusterDistance(const unsigned int & pdFrame)
         void setMinClusterHits(const unsigned int & pMinNclusterHits)
         void setMaxClusterHits(const unsigned int & pMaxNclusterHits)
         void setMaxClusterHitCharge(const unsigned int & pMaxClusterHitCharge)
+        void setMaxClusterCharge(const unsigned int & pMaxClusterCharge)
 
         void setMaxHitCharge(const unsigned int & pMaxHitCharge)
 
         void getClusterSizeHist(unsigned int & rNparameterValues, unsigned int *& rClusterSize, cpp_bool copy)
         void getClusterChargeHist(unsigned int & rNparameterValues, unsigned int *& rClusterCharge, cpp_bool copy)
-
-        # void clusterize()
 
         unsigned int getNclusters()
 
@@ -59,7 +58,7 @@ cdef cnp.uint32_t* data_32
 cdef ClusterHitInfo* cluster_hits
 cdef ClusterInfo* cluster_info
 cdef unsigned int size = 0
-cdef cluster_hit_dt = cnp.dtype([('event_number', '<i8'), ('frame', '<u1'), ('column', '<u2'), ('row', '<u2'), ('charge', '<u2'), ('cluster_ID', '<u2'), ('is_seed', '<u1'), ('cluster_size', '<u2'), ('n_cluster', '<u2')])
+cdef cluster_hit_dt = cnp.dtype([('event_number', '<i8'), ('frame', '<u1'), ('column', '<u2'), ('row', '<u2'), ('charge', '<u2'), ('cluster_ID', '<i2'), ('is_seed', '<u1'), ('cluster_size', '<u2'), ('n_cluster', '<u2')])
 cdef cluster_info_dt = cnp.dtype([('event_number', '<i8'), ('ID', '<u2'), ('size', '<u2'), ('charge', '<u2'), ('seed_column', '<u2'), ('seed_row', '<u2'), ('mean_column', 'f4'), ('mean_row', 'f4')])
 
 cdef data_to_numpy_array_uint32(cnp.uint32_t* ptr, cnp.npy_intp N):
@@ -121,8 +120,12 @@ cdef class HitClusterizer:
     def set_max_cluster_hits(self, value):
         self.thisptr.setMaxClusterHits(< const unsigned int &> value)
     def set_max_cluster_hit_charge(self, value):
+        raise NotImplementedError('This feature does not work right now and is deactivated!')
         self.thisptr.setMaxClusterHitCharge(< const unsigned int &> value)
-    def set_max_charge(self, value):
+    def set_max_cluster_charge(self, value):
+        raise NotImplementedError('This feature does not work right now and is deactivated!')
+        self.thisptr.setMaxClusterCharge(< const unsigned int &> value)
+    def set_max_hit_charge(self, value):
         self.thisptr.setMaxHitCharge(<const unsigned int &> value)
     def get_cluster_size_hist(self):
         self.thisptr.getClusterSizeHist(< unsigned int &> size, < unsigned int *&> data_32, < cpp_bool > False)
@@ -132,7 +135,7 @@ cdef class HitClusterizer:
         self.thisptr.getClusterChargeHist(< unsigned int &> size, < unsigned int *&> data_32, < cpp_bool > False)
         if data_32 != NULL:
             array = data_to_numpy_array_uint32(data_32, size)
-            return array.reshape((128, 1024), order='F')  # make linear array to 3d array (col,row,parameter)
+            return array.reshape((20, 100), order='F')  # make linear array to 3d array (col,row,parameter)
     def get_n_clusters(self):
         return < unsigned int > self.thisptr.getNclusters()
     def reset(self):
