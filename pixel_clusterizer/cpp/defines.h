@@ -29,7 +29,7 @@ typedef struct ClusterHitInfo{
   unsigned short int column;       //column value (unsigned char: 0 to 255)
   unsigned short int row;     //row value (unsigned short int: 0 to 65.535)
   unsigned short int charge;          //tot value (unsigned char: 0 to 255)
-  unsigned short clusterID;	  //the cluster id of the hit
+  short clusterID;	  //the cluster id of the hit
   unsigned char isSeed;	  	  //flag to mark seed pixel
   unsigned short clusterSize; //the cluster size of the cluster belonging to the hit
   unsigned short nCluster;	  //the number of cluster in the event

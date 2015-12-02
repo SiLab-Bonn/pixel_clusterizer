@@ -16,7 +16,7 @@ cdef packed struct numpy_cluster_hit_info:
     cnp.uint16_t column  # column value (unsigned char: 0 to 255)
     cnp.uint16_t row  # row value (unsigned short int: 0 to 65.535)
     cnp.uint16_t charge  # ToT value (unsigned char: 0 to 255)
-    cnp.uint16_t cluster_ID  # the cluster id of the hit
+    cnp.int16_t cluster_ID  # the cluster id of the hit
     cnp.uint8_t is_seed  # flag to mark seed pixel
     cnp.uint16_t cluster_size  # the cluster id of the hit
     cnp.uint16_t n_cluster  # the cluster id of the hit
