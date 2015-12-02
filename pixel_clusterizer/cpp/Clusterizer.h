@@ -61,6 +61,7 @@ public:
 	void setMinClusterHits(const unsigned int&  pMinNclusterHits);		//minimum hits per cluster allowed, otherwise cluster omitted
 	void setMaxClusterHits(const unsigned int&  pMaxNclusterHits);		//maximal hits per cluster allowed, otherwise cluster omitted
 	void setMaxClusterHitCharge(const unsigned int&  pMaxClusterHitCharge);	//maximal Charge for a cluster hit, otherwise cluster omitted
+	void setMaxClusterCharge(const unsigned int&  pMaxClusterCharge);	//maximal Charge for a cluster, otherwise cluster omitted
 	void setMaxHitCharge(const unsigned int&  pMaxHitCharge);			//minimum Charge a hit is considered to be a hit
 
 	unsigned int getNclusters();										//returns the number of clusters//main function to start the clustering of the hit array
@@ -131,7 +132,8 @@ private:
 	unsigned short _dx;													//max distance in x between two hits that they belong to a cluster
 	unsigned short _dy;													//max distance in y between two hits that they belong to a cluster
 	unsigned short _dFrame; 											//time window the clustering is done in
-	unsigned short _maxClusterHitCharge; 								//the maximum number of cluster hit Charge allowed, if exeeded cluster is omitted
+	unsigned short _maxClusterHitCharge; 								//the maximum cluster hit charge allowed, if exeeded cluster is omitted
+	unsigned short _maxClusterCharge; 									//the maximum cluster charge allowed, if exeeded cluster is omitted
 	unsigned short _minClusterHits; 									//the minimum number of cluster hits allowed, if exeeded clustering aborted
 	unsigned short _maxClusterHits; 									//the maximum number of cluster hits allowed, if exeeded clustering aborted
 	unsigned int _runTime; 												//artificial value to represent the run time needed for clustering
@@ -146,7 +148,7 @@ private:
 	unsigned short _minRowHitPos;										//minimum row with a hit for the actual event data
 	unsigned short _maxRowHitPos;										//maximum row with a hit for the actual event data
 	short _framefirstHit;										        //relative start Frame value of the first hit [0:15]
-	short _framelastHit;										            //relative stop Frame value of the last hit [0:15]
+	short _framelastHit;										        //relative stop Frame value of the last hit [0:15]
 	float _actualClusterCharge;											//temporary value holding the total Charge value of the actual cluster
 	unsigned int _actualClusterMaxCharge;								//temporary value holding the maximum Charge value of the actual cluster
 	unsigned int _actualRelativeClusterFrame; 							//temporary value holding the relative Frame start value of the actual cluster [0:15]

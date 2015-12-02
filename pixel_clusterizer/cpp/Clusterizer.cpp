@@ -43,12 +43,13 @@ void Clusterizer::setStandardSettings()
 	_nEventHits = 0;
 	_dx = 1;  // column
 	_dy = 2;  // row
-	_dFrame = 4;  // max allowed timewalk of same cluster hits
+	_dFrame = 4;  // max allowed time walk of same cluster hits
 	_minClusterHits = 1;
 	_maxClusterHits = 30;	//std. setting for maximum hits per cluster allowed
 	_runTime = 0;
 	_nHits = 0;
 	_maxClusterHitCharge = 13;
+	_maxClusterCharge = 200;
 	_createClusterHitInfoArray = false;
 	_createClusterInfoArray = true;
 	_minColHitPos = _maxColumn - 1;
@@ -152,6 +153,12 @@ void Clusterizer::setMaxClusterHitCharge(const unsigned int& pMaxClusterHitCharg
 	_maxClusterHitCharge = pMaxClusterHitCharge;
 }
 
+void Clusterizer::setMaxClusterCharge(const unsigned int& pMaxClusterCharge)
+{
+	info("setMaxClusterCharge: " + IntToStr(pMaxClusterCharge));
+	_maxClusterCharge = pMaxClusterCharge;
+}
+
 void Clusterizer::setMaxHitCharge(const unsigned int& pMaxHitCharge)
 {
 	info("setMaxHitCharge: " + IntToStr(pMaxHitCharge));
@@ -247,7 +254,7 @@ bool Clusterizer::clusterize()
 						_actualClusterID++;									//  increase the cluster id for this event
 					}
 					else
-						warning("clusterize: cluster size too small");
+						info("Clusterize: cluster size too small");
 				}
 				if (_nHits == 0)											//saves a lot of average run time, the loop is aborted if every hit is in a cluster (_nHits == 0)
 					return true;
@@ -297,9 +304,6 @@ void Clusterizer::addHit(const unsigned int& pHitIndex)
 
 	_nEventHits++;
 
-	if (tCharge > _maxHitCharge)	// ommit hits with a Charge that is too high
-		return;
-
 	if (_nHits == 0)
 		_framefirstHit = tFrame;
 
@@ -336,6 +340,12 @@ void Clusterizer::addHit(const unsigned int& pHitIndex)
 	if (_createClusterHitInfoArray) {
 		if (_clusterHitInfo == 0)
 			throw std::runtime_error("Cluster hit array is not defined and cannot be filled");
+		if (pHitIndex >= _clusterHitInfoSize){
+			std::stringstream tError;
+			tError << "Clusterizer::addHit: hit index " << pHitIndex << " is out of range (0.." << _clusterHitInfoSize << ")";
+			error(tError.str());
+			throw std::out_of_range(tError.str());
+		}
 		_NclustersHits++;
 		_clusterHitInfo[pHitIndex].eventNumber = _hitInfo[pHitIndex].eventNumber;
 		_clusterHitInfo[pHitIndex].frame = _hitInfo[pHitIndex].frame;
@@ -343,8 +353,8 @@ void Clusterizer::addHit(const unsigned int& pHitIndex)
 		_clusterHitInfo[pHitIndex].row = _hitInfo[pHitIndex].row;
 		_clusterHitInfo[pHitIndex].charge = _hitInfo[pHitIndex].charge;
 		_clusterHitInfo[pHitIndex].isSeed = 0;
-		_clusterHitInfo[pHitIndex].clusterSize = 666;
-		_clusterHitInfo[pHitIndex].nCluster = 666;
+		_clusterHitInfo[pHitIndex].clusterSize = 0;
+		_clusterHitInfo[pHitIndex].nCluster = 0;
 	}
 }
 
@@ -361,43 +371,53 @@ void Clusterizer::searchNextHits(const unsigned short& pCol, const unsigned shor
 		showHits();
 	}
 
-	_actualClusterSize++;	//increase the Chargeal hits for this cluster value
-
 	short unsigned int tCharge = _hitMap[(size_t) pCol + (size_t) pRow * (size_t) _maxColumn + (size_t) pFrame * (size_t) _maxColumn * (size_t) _maxRow];
 
-	if (tCharge >= _actualClusterMaxCharge && tCharge <= _maxHitCharge) {	//seed finding
-		_actualClusterSeed_column = pCol;
-		_actualClusterSeed_row = pRow;
-		_actualClusterSeed_relframe = pFrame;
-		_actualClusterMaxCharge = tCharge;
-	}
+	if (tCharge <= _maxHitCharge) {
+		_actualClusterSize++;	//increase the Chargeal hits for this cluster value
 
-	if (_createClusterHitInfoArray) {
-		if (_clusterHitInfo == 0)
-			throw std::runtime_error("Cluster hit array is not defined and cannot be filled");
-		if (_hitIndexMap[(size_t) pCol + (size_t) pRow * (size_t) _maxColumn + (size_t) pFrame * (size_t) _maxColumn * (size_t) _maxRow] < _clusterHitInfoSize)
-			_clusterHitInfo[_hitIndexMap[(size_t) pCol + (size_t) pRow * (size_t) _maxColumn + (size_t) pFrame * (size_t) _maxColumn * (size_t) _maxRow]].clusterID = _actualClusterID;
-		else {
-			std::stringstream tInfo;
-			tInfo << "Clusterizer: searchNextHits(...): hit index " << _hitIndexMap[(long) pCol + (long) pRow * (long) _maxColumn + (long) pFrame * (long) _maxColumn * (long) _maxRow] << " is out of range (0.." << _clusterHitInfoSize << ")";
-			throw std::out_of_range(tInfo.str());
+		if (tCharge >= _actualClusterMaxCharge && tCharge <= _maxHitCharge) {	//seed finding
+			_actualClusterSeed_column = pCol;
+			_actualClusterSeed_row = pRow;
+			_actualClusterSeed_relframe = pFrame;
+			_actualClusterMaxCharge = tCharge;
+		}
+
+		if (_createClusterHitInfoArray) {
+			if (_clusterHitInfo == 0)
+				throw std::runtime_error("Cluster hit array is not defined and cannot be filled");
+			if (_hitIndexMap[(size_t) pCol + (size_t) pRow * (size_t) _maxColumn + (size_t) pFrame * (size_t) _maxColumn * (size_t) _maxRow] < _clusterHitInfoSize)
+				_clusterHitInfo[_hitIndexMap[(size_t) pCol + (size_t) pRow * (size_t) _maxColumn + (size_t) pFrame * (size_t) _maxColumn * (size_t) _maxRow]].clusterID = _actualClusterID;
+			else {
+				std::stringstream tInfo;
+				tInfo << "Clusterizer: searchNextHits(...): hit index " << _hitIndexMap[(long) pCol + (long) pRow * (long) _maxColumn + (long) pFrame * (long) _maxColumn * (long) _maxRow] << " is out of range (0.." << _clusterHitInfoSize << ")";
+				throw std::out_of_range(tInfo.str());
+			}
+		}
+
+		// TODO: Fixme
+//		// Omit cluster with a hit charge too high, or size too big or total charge too high
+//		// Clustering is not aborted to delete all hits from this cluster from the hit array
+//		if (tCharge > (short int) _maxClusterHitCharge || _actualClusterSize > (int) _maxClusterHits || _actualClusterCharge > _maxClusterCharge){
+//			_abortCluster = true;
+//			std::cout<<"ABORT"<<std::endl;
+//		}
+
+		_actualClusterCharge += _chargeMap[(long) pCol + (long) pRow * (long) _maxColumn + (long) tCharge * (long) _maxColumn * (long) _maxRow];	//add charge of the hit to the cluster Charge
+		_actualClusterX += (float) ((float) pCol + 0.5) * (_chargeMap[(long) pCol + (long) pRow * (long) _maxColumn + (long) tCharge * (long) _maxColumn * (long) _maxRow] + 1);	//add x position of actual cluster weigthed by the charge
+		_actualClusterY += (float) ((float) pRow + 0.5) * (_chargeMap[(long) pCol + (long) pRow * (long) _maxColumn + (long) tCharge * (long) _maxColumn * (long) _maxRow] + 1);	//add y position of actual cluster weigthed by the charge
+
+		if (Basis::debugSet()) {
+	//		std::cout<<"Clusterizer::searchNextHits"<<std::endl;
+	//		std::cout<<"  _chargeMap[pCol][pRow][tCharge] "<<_chargeMap[pCol][pRow][tCharge]<<std::endl;
+	//		std::cout<<"  ((double) pCol+0.5) * __PIXELSIZEX "<<((double) pCol+0.5) * __PIXELSIZEX<<std::endl;
+	//		std::cout<<"  ((double) pRow+0.5) * __PIXELSIZEY "<<((double) pRow+0.5) * __PIXELSIZEY<<std::endl;
+	//		std::cout<<"  _actualClusterX "<<_actualClusterX<<std::endl;
+	//		std::cout<<"  _actualClusterY "<<_actualClusterY<<std::endl;
 		}
 	}
-
-	if (tCharge > (short int) _maxClusterHitCharge || _actualClusterSize > (int) _maxClusterHits)	//omit cluster with a hit Charge higher than _maxClusterHitCharge, clustering is not aborted to delete all hits from this cluster from the hit array
-		_abortCluster = true;
-
-	_actualClusterCharge += _chargeMap[(long) pCol + (long) pRow * (long) _maxColumn + (long) tCharge * (long) _maxColumn * (long) _maxRow];	//add charge of the hit to the cluster Charge
-	_actualClusterX += (float) ((float) pCol + 0.5) * (_chargeMap[(long) pCol + (long) pRow * (long) _maxColumn + (long) tCharge * (long) _maxColumn * (long) _maxRow] + 1);	//add x position of actual cluster weigthed by the charge
-	_actualClusterY += (float) ((float) pRow + 0.5) * (_chargeMap[(long) pCol + (long) pRow * (long) _maxColumn + (long) tCharge * (long) _maxColumn * (long) _maxRow] + 1);	//add y position of actual cluster weigthed by the charge
-
-	if (Basis::debugSet()) {
-//		std::cout<<"Clusterizer::searchNextHits"<<std::endl;
-//		std::cout<<"  _chargeMap[pCol][pRow][tCharge] "<<_chargeMap[pCol][pRow][tCharge]<<std::endl;
-//		std::cout<<"  ((double) pCol+0.5) * __PIXELSIZEX "<<((double) pCol+0.5) * __PIXELSIZEX<<std::endl;
-//		std::cout<<"  ((double) pRow+0.5) * __PIXELSIZEY "<<((double) pRow+0.5) * __PIXELSIZEY<<std::endl;
-//		std::cout<<"  _actualClusterX "<<_actualClusterX<<std::endl;
-//		std::cout<<"  _actualClusterY "<<_actualClusterY<<std::endl;
+	else{
+		_clusterHitInfo[_hitIndexMap[(size_t) pCol + (size_t) pRow * (size_t) _maxColumn + (size_t) pFrame * (size_t) _maxColumn * (size_t) _maxRow]].clusterID = -1;//-1;
 	}
 
 	if (deleteHit(pCol, pRow, pFrame))	//delete hit and return if no hit is in the array anymore
@@ -592,6 +612,7 @@ void Clusterizer::allocateHitMap()
 	}
 	catch (std::bad_alloc& exception) {
 		error(std::string("allocateHitMap: ") + std::string(exception.what()));
+		throw;
 	}
 }
 
@@ -641,6 +662,7 @@ void Clusterizer::allocateHitIndexMap()
 	}
 	catch (std::bad_alloc& exception) {
 		error(std::string("allocateHitIndexMap: ") + std::string(exception.what()));
+		throw;
 	}
 }
 
@@ -661,6 +683,7 @@ void Clusterizer::allocateChargeMap()
 	}
 	catch (std::bad_alloc& exception) {
 		error(std::string("allocateChargeMap: ") + std::string(exception.what()));
+		throw;
 	}
 }
 
@@ -675,6 +698,7 @@ void Clusterizer::allocateResultHistograms()
 	}
 	catch (std::bad_alloc& exception) {
 		error(std::string("allocateResultHistograms: ") + std::string(exception.what()));
+		throw;
 	}
 }
 
@@ -720,7 +744,6 @@ void Clusterizer::clearActualClusterData()
 {
 	_actualClusterCharge = 0;
 	_actualClusterSize = 0;
-	_actualClusterCharge = 0;
 	_actualRelativeClusterFrame = 0;
 	_actualClusterX = 0;
 	_actualClusterY = 0;
@@ -759,6 +782,10 @@ void Clusterizer::addCluster()
 {
 	_actualClusterX /= (_actualClusterCharge + _actualClusterSize);  // normalize cluster x position
 	_actualClusterY /= (_actualClusterCharge + _actualClusterSize);  // normalize cluster y position
+
+	if (_abortCluster)
+		return;
+
 	if (_createClusterInfoArray) {
 		if (_clusterInfo == 0)
 			throw std::runtime_error("Cluster info array is not defined and cannot be filled");
@@ -778,7 +805,7 @@ void Clusterizer::addCluster()
 
 	_Nclusters++;
 
-	//set cluster seed infos
+	// Set cluster seed infos
 	if (_createClusterHitInfoArray) {
 		if (_hitIndexMap[(size_t) _actualClusterSeed_column + (size_t) _actualClusterSeed_row * (size_t) _maxColumn + (size_t) _actualClusterSeed_relframe * (size_t) _maxColumn * (size_t) _maxRow] < _clusterHitInfoSize)
 			_clusterHitInfo[_hitIndexMap[(size_t) _actualClusterSeed_column + (size_t) _actualClusterSeed_row * (size_t) _maxColumn + (size_t) _actualClusterSeed_relframe * (size_t) _maxColumn * (size_t) _maxRow]].isSeed = 1;
@@ -789,12 +816,16 @@ void Clusterizer::addCluster()
 
 void Clusterizer::addHitClusterInfo(const unsigned int& pHitIndex)
 {
+	if (_abortCluster)
+		return;
 	if (_createClusterHitInfoArray) {
 		if (_clusterInfo == 0)
 			throw std::runtime_error("Cluster info array is not defined but needed");
 		if (_clusterHitInfo == 0)
 			throw std::runtime_error("Cluster hit array is not defined and cannot be filled");
 		for (unsigned int iHitIndex = pHitIndex - _nEventHits; iHitIndex < pHitIndex; ++iHitIndex) {   // loop over cluster hits of actual event
+			if (_clusterHitInfo[iHitIndex].clusterID < 0)  // Hit was omitted for clustering
+				continue;
 			unsigned int clusterIndex = _Nclusters - _actualClusterID + _clusterHitInfo[iHitIndex].clusterID;
 			_clusterHitInfo[iHitIndex].clusterSize = _clusterInfo[clusterIndex].size;
 			_clusterHitInfo[iHitIndex].nCluster = _actualClusterID;
