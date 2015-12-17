@@ -8,10 +8,10 @@ from pixel_clusterizer.clusterizer import HitClusterizer
 from pixel_clusterizer import data_struct
 
 
-def create_hits(n_hits, max_column, max_row):
+def create_hits(n_hits, max_column, max_row, max_frame, max_charge):
     hits = np.ones(shape=(n_hits, ), dtype=data_struct.HitInfo)
     for i in range(n_hits):
-        hits[i]['event_number'], hits[i]['frame'], hits[i]['column'], hits[i]['row'], hits[i]['charge'] = i / 3, i % 129, i % max_column + 1, 2 * i % max_row + 1, i % 2
+        hits[i]['event_number'], hits[i]['frame'], hits[i]['column'], hits[i]['row'], hits[i]['charge'] = i / 3, i % max_frame, i % max_column + 1, 2 * i % max_row + 1, i % max_charge
     return hits
 
 
@@ -26,7 +26,8 @@ class TestClusterizer(unittest.TestCase):
         pass
 
     def test_hit_definition(self):  # colum/row has to start at 1 and , otherwise IndexError exception
-        clusterizer = HitClusterizer(n_columns=10, n_rows=10)
+        clusterizer = HitClusterizer(n_columns=10, n_rows=10, n_frames=2, n_charges=2)
+        clusterizer.set_warning_output(False)  # Supress eent alignment warning
         hits = np.zeros(shape=(1, ), dtype=data_struct.HitInfo)
         with self.assertRaises(IndexError):
             clusterizer.add_hits(hits)  # cluster hits with illigal column/row index = 0/0
@@ -34,18 +35,26 @@ class TestClusterizer(unittest.TestCase):
         hits['column'] = 11
         with self.assertRaises(IndexError):
             clusterizer.add_hits(hits)  # column = 11 is too large for n_columns=10
+        hits['frame'] = 2
+        with self.assertRaises(IndexError):
+            clusterizer.add_hits(hits)  # frame = 2 is too large for n_frames=2
+        hits['charge'] = 2
+        with self.assertRaises(IndexError):
+            clusterizer.add_hits(hits)  # charge = 2 is too large for n_charges=2
         clusterizer.reset()
         hits['column'] = 10
+        hits['frame'] = 1
+        hits['charge'] = 1
         clusterizer.add_hits(hits)  # column = 10 has too fit for n_columns=10
 
     def test_clustering(self):  # check with multiple jumps data
         # Create hits and cluster them
-        clusterizer = HitClusterizer()
-
+        clusterizer = HitClusterizer(n_charges=2)
         # TEST 1
-        hits = create_hits(10, 100, 100)
+        hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
+
         clusterizer.add_hits(hits)  # cluster hits
-        cluster_hits, cluster = clusterizer.get_hit_cluster(), clusterizer.get_cluster()
+        cluster_hits, clusters = clusterizer.get_hit_cluster(), clusterizer.get_cluster()
         # Define expected output
         expected_result = np.zeros(shape=(4, ), dtype=data_struct.ClusterInfo)
         expected_result['event_number'] = [0, 1, 2, 3]
@@ -57,13 +66,13 @@ class TestClusterizer(unittest.TestCase):
         expected_result['mean_row'] = [3.5, 9.5, 15.5, 19.5]
         # Test results
         self.assertEqual(cluster_hits.shape[0], 0)  # hit clustering not activated, thus this array has to be empty
-        self.assertTrue((cluster == expected_result).all())
+        self.assertTrue((clusters == expected_result).all())
 
         # TEST 2
         clusterizer.create_cluster_hit_info_array(True)
-        hits = create_hits(10, 100, 100)
+        hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
         clusterizer.add_hits(hits)  # cluster hits
-        cluster_hits, cluster = clusterizer.get_hit_cluster(), clusterizer.get_cluster()
+        cluster_hits, clusters = clusterizer.get_hit_cluster(), clusterizer.get_cluster()
         # Define expected output
         expected_result = np.zeros(shape=(10, ), dtype=data_struct.ClusterHitInfo)
         expected_result['event_number'] = hits['event_number']
@@ -85,7 +94,7 @@ class TestClusterizer(unittest.TestCase):
         hits[1]['column'], hits[1]['row'], hits[1]['charge'], hits[1]['event_number'] = 18, 36, 6, 19
 
         # create clusterizer object
-        clusterizer = HitClusterizer(n_columns=100, n_rows=100)
+        clusterizer = HitClusterizer(n_columns=100, n_rows=100, n_frames=2, n_charges=31)
         clusterizer.create_cluster_hit_info_array(True)
 
         # Case 1: Test max hit charge cut, accept all hits
@@ -160,12 +169,12 @@ class TestClusterizer(unittest.TestCase):
         hits[0]['column'], hits[0]['row'], hits[0]['charge'], hits[0]['event_number'] = 17, 36, 3, 19
         hits[1]['column'], hits[1]['row'], hits[1]['charge'], hits[1]['event_number'] = 18, 36, 6, 19
 
-        clusterizer = HitClusterizer(n_columns=10, n_rows=10)
+        clusterizer = HitClusterizer(n_columns=10, n_rows=10, n_frames=2, n_charges=4)
 
         with self.assertRaises(IndexError):
             clusterizer.add_hits(hits)  # hits col/row too large
 
-        clusterizer = HitClusterizer(n_columns=100, n_rows=100)
+        clusterizer = HitClusterizer(n_columns=100, n_rows=100, n_frames=2, n_charges=7)
         clusterizer.set_cluster_info_array_size(0)  # set cluster array size to 0
         hits['event_number'] = 20
 
