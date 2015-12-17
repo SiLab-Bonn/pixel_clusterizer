@@ -17,7 +17,7 @@ else:
                                sources=['pixel_clusterizer/cpp/clusterizer.cpp'],
                                language="c++")]
 
-version = '1.1.0'
+version = '1.1.1'
 author = 'David-Leon Pohl'
 author_email = 'pohl@physik.uni-bonn.de'
 
