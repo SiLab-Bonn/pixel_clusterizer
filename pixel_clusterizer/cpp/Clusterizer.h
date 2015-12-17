@@ -39,7 +39,7 @@
 class Clusterizer: public Basis
 {
 public:
-	Clusterizer(unsigned int maxCol = 1000, unsigned int maxRow=1000);
+	Clusterizer(unsigned int maxCol = 1000, unsigned int maxRow=1000, unsigned int maxFrame=1, unsigned int maxCharge=1);
 	~Clusterizer(void);
 	//main functions
 	void addHits(HitInfo*& rHitInfo, const unsigned int& rNhits);		//add hits to cluster, starts clustering, warning hits have to be aligned at events
@@ -72,7 +72,7 @@ private:
 	inline void searchNextHits(const unsigned short& pCol, const unsigned short& pRow, const unsigned short& pRelFrame);			//search for a hit next to the actual one in time (Frames) and space (col, row)
 	inline bool deleteHit(const unsigned short& pCol, const unsigned short& pRow, const unsigned short& pRelFrame);				//delete hit at position pCol,pRow from hit map, returns true if hit array is empty
 	inline bool hitExists(const unsigned short& pCol, const unsigned short& pRow, const unsigned short& pRelFrame);				//check if the hit exists
-	void initChargeCalibMap();											//sets the calibration map to all entries = 0
+	void initChargeMap();											//sets the calibration map to all entries = 0
 	void addClusterToResults();											//adds the actual cluster data to the result arrays
 	bool clusterize();
 
@@ -129,6 +129,8 @@ private:
 	//cluster settings
 	unsigned int _maxColumn;											//maximum column number
 	unsigned int _maxRow;												//maximum row number
+	unsigned int _maxCharge;											//maximum charge ADC value
+	unsigned int _maxFrame;												//maximum time frame index
 	unsigned short _dx;													//max distance in x between two hits that they belong to a cluster
 	unsigned short _dy;													//max distance in y between two hits that they belong to a cluster
 	unsigned short _dFrame; 											//time window the clustering is done in

@@ -20,7 +20,7 @@ cdef extern from "cpp/Clusterizer.h":
     cdef cppclass ClusterInfo:
         ClusterInfo()
     cdef cppclass Clusterizer(Basis):
-        Clusterizer(unsigned int maxCol, unsigned int maxRow) except +
+        Clusterizer(unsigned int maxCol, unsigned int maxRow, unsigned int maxFrame, unsigned int maxCharge) except +
         void setErrorOutput(cpp_bool pToggle)
         void setWarningOutput(cpp_bool pToggle)
         void setInfoOutput(cpp_bool pToggle)
@@ -59,7 +59,7 @@ cdef ClusterHitInfo* cluster_hits
 cdef ClusterInfo* cluster_info
 cdef unsigned int size = 0
 cdef cluster_hit_dt = cnp.dtype([('event_number', '<i8'), ('frame', '<u1'), ('column', '<u2'), ('row', '<u2'), ('charge', '<u2'), ('cluster_ID', '<i2'), ('is_seed', '<u1'), ('cluster_size', '<u2'), ('n_cluster', '<u2')])
-cdef cluster_info_dt = cnp.dtype([('event_number', '<i8'), ('ID', '<u2'), ('size', '<u2'), ('charge', '<u2'), ('seed_column', '<u2'), ('seed_row', '<u2'), ('mean_column', 'f4'), ('mean_row', 'f4')])
+cdef cluster_info_dt = cnp.dtype([('event_number', '<i8'), ('ID', '<u2'), ('size', '<u2'), ('charge', 'f4'), ('seed_column', '<u2'), ('seed_row', '<u2'), ('mean_column', 'f4'), ('mean_row', 'f4')])
 
 cdef data_to_numpy_array_uint32(cnp.uint32_t* ptr, cnp.npy_intp N):
     cdef cnp.ndarray[cnp.uint32_t, ndim=1] arr = cnp.PyArray_SimpleNewFromData(1, <cnp.npy_intp*> &N, cnp.NPY_UINT32, <cnp.uint32_t*> ptr)
@@ -77,8 +77,8 @@ cdef cluster_info_data_to_numpy_array(void* ptr, cnp.npy_intp N):
 
 cdef class HitClusterizer:
     cdef Clusterizer * thisptr  # hold a C++ instance which we're wrapping
-    def __cinit__(self, n_columns=1000, n_rows=1000):
-        self.thisptr = new Clusterizer(<unsigned int> n_columns, <unsigned int> n_rows)
+    def __cinit__(self, n_columns=1000, n_rows=1000, n_frames=1, n_charges=1):
+        self.thisptr = new Clusterizer(<unsigned int> n_columns, <unsigned int> n_rows, <unsigned int> n_frames, <unsigned int> n_charges)
     def __dealloc__(self):
         del self.thisptr
     def set_debug_output(self, toggle):

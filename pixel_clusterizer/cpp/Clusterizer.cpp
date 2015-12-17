@@ -1,9 +1,11 @@
 #include "Clusterizer.h"
 
-Clusterizer::Clusterizer(unsigned int maxCol, unsigned int maxRow)
+Clusterizer::Clusterizer(unsigned int maxCol, unsigned int maxRow, unsigned int maxFrame, unsigned int maxCharge)
 {
 	_maxColumn = maxCol;
 	_maxRow = maxRow;
+	_maxCharge = maxCharge;
+	_maxFrame = maxFrame;
 	setSourceFileName("Clusterizer");
 	setStandardSettings();
 	allocateClusterHitArray();
@@ -12,7 +14,7 @@ Clusterizer::Clusterizer(unsigned int maxCol, unsigned int maxRow)
 	allocateHitIndexMap();
 	allocateChargeMap();
 	allocateResultHistograms();
-	initChargeCalibMap();
+	initChargeMap();
 	reset();
 }
 
@@ -131,7 +133,7 @@ void Clusterizer::setYclusterDistance(const unsigned int& pDy)
 void Clusterizer::setFrameclusterDistance(const unsigned int& pDbCID)
 {
 	info("setFrameclusterDistance: " + IntToStr(pDbCID));
-	if (pDbCID < __MAXFRAME - 1)
+	if (pDbCID < _maxFrame - 1)
 		_dFrame = pDbCID;
 }
 
@@ -228,6 +230,8 @@ void Clusterizer::getCluster(ClusterInfo*& rClusterInfo, unsigned int& rSize, bo
 
 bool Clusterizer::clusterize()
 {
+	if (_nHits == 0)
+		return true;
 	if (Basis::debugSet()) {
 		std::cout << "Clusterizer::clusterize(): Status:\n";
 		std::cout << "  _nHits " << _nHits << std::endl;
@@ -296,6 +300,7 @@ void Clusterizer::test()
 void Clusterizer::addHit(const unsigned int& pHitIndex)
 {
 	debug("addHit");
+
 	uint64_t tEvent = _hitInfo[pHitIndex].eventNumber;
 	unsigned short tCol = _hitInfo[pHitIndex].column - 1;
 	unsigned short tRow = _hitInfo[pHitIndex].row - 1;
@@ -304,17 +309,17 @@ void Clusterizer::addHit(const unsigned int& pHitIndex)
 
 	_nEventHits++;
 
+	if ((tCol >= _maxColumn) || (tRow >= _maxRow || tFrame >= _maxFrame || tCharge >= _maxCharge)) {
+		std::stringstream tMessage;
+		tMessage << "The column/row/frame/charge value is out of range " << tCol << "/" << tRow << "/" << tFrame << "/" << tCharge << " >= " << _maxColumn << "/" << _maxRow << "/" << _maxFrame<< "/" << _maxCharge << ". Col/row have to start at 1!";
+		throw std::out_of_range(tMessage.str());
+	}
+
 	if (_nHits == 0)
 		_framefirstHit = tFrame;
 
 	if (tFrame > _framelastHit)
 		_framelastHit = tFrame;
-
-	if ((tCol >= _maxColumn) || (tRow >= _maxRow)) {
-		std::stringstream tMessage;
-		tMessage << "The column/row value is out of range " << tCol << "/" << tRow << " > " << _maxColumn << "/" << _maxRow << ". Col/row have to start at 1!";
-		throw std::out_of_range(tMessage.str());
-	}
 
 	if (tCol > _maxColHitPos)
 		_maxColHitPos = tCol;
@@ -324,6 +329,7 @@ void Clusterizer::addHit(const unsigned int& pHitIndex)
 		_minRowHitPos = tRow;
 	if (tRow > _maxRowHitPos)
 		_maxRowHitPos = tRow;
+//	std::cout<<"DEBUG 1"<<std::endl;
 
 	if (_hitMap[(size_t) tCol + (size_t) tRow * (size_t) _maxColumn + (size_t) tFrame * (size_t) _maxColumn * (size_t) _maxRow] == -1) {
 		_hitMap[(size_t) tCol + (size_t) tRow * (size_t) _maxColumn + (size_t) tFrame * (size_t) _maxColumn * (size_t) _maxRow] = tCharge;
@@ -356,6 +362,7 @@ void Clusterizer::addHit(const unsigned int& pHitIndex)
 		_clusterHitInfo[pHitIndex].clusterSize = 0;
 		_clusterHitInfo[pHitIndex].nCluster = 0;
 	}
+//	std::cout<<"DEBUG 4"<<std::endl;
 }
 
 void Clusterizer::searchNextHits(const unsigned short& pCol, const unsigned short& pRow, const unsigned short& pFrame)
@@ -493,20 +500,20 @@ bool Clusterizer::deleteHit(const unsigned short& pCol, const unsigned short& pR
 
 bool Clusterizer::hitExists(const unsigned short& pCol, const unsigned short& pRow, const unsigned short& pFrame)
 {
-	if (pCol >= 0 && pCol < _maxColumn && pRow >= 0 && pRow < _maxRow && pFrame >= 0 && pFrame < __MAXFRAME)
+	if (pCol >= 0 && pCol < _maxColumn && pRow >= 0 && pRow < _maxRow && pFrame >= 0 && pFrame < _maxFrame)
 		if (_hitMap[(long) pCol + (long) pRow * (long) _maxColumn + (long) pFrame * (long) _maxColumn * (long) _maxRow] != -1)
 			return true;
 	return false;
 }
 
-void Clusterizer::initChargeCalibMap()
+void Clusterizer::initChargeMap()
 {
-	info("initChargeCalibMap");
+	info("initChargeMap");
 
 	for (size_t iCol = 0; iCol < (size_t) _maxColumn; ++iCol) {
 		for (size_t iRow = 0; iRow < (size_t) _maxRow; ++iRow) {
-			for (size_t iCharge = 0; iCharge < (size_t) __MAXCHARGELOOKUP; ++iCharge)
-				_chargeMap[(size_t) iCol + (size_t) iRow * (size_t) _maxColumn + (size_t) iCharge * (size_t) _maxColumn * (size_t) _maxRow] = (float) iCharge + 1.;
+			for (size_t iCharge = 0; iCharge < (size_t) _maxCharge; ++iCharge)
+				_chargeMap[(size_t) iCol + (size_t) iRow * (size_t) _maxColumn + (size_t) iCharge * (size_t) _maxColumn * (size_t) _maxRow] = (float) iCharge + float (1.);
 		}
 	}
 }
@@ -517,7 +524,7 @@ void Clusterizer::initHitMap()
 
 	for (size_t iCol = 0; iCol < (size_t) _maxColumn; ++iCol) {
 		for (size_t iRow = 0; iRow < (size_t) _maxRow; ++iRow) {
-			for (size_t iFrame = 0; iFrame < (size_t) __MAXFRAME; ++iFrame)
+			for (size_t iFrame = 0; iFrame < (size_t) _maxFrame; ++iFrame)
 				_hitMap[(size_t) iCol + (size_t) iRow * (size_t) _maxColumn + (size_t) iFrame * (size_t) _maxColumn * (size_t) _maxRow] = -1;
 		}
 	}
@@ -608,7 +615,7 @@ void Clusterizer::allocateHitMap()
 	info("allocateHitMap()");
 	deleteHitMap();
 	try {
-		_hitMap = new short[(long) (_maxColumn - 1) + ((long) _maxRow - 1) * (long) _maxColumn + ((long) __MAXFRAME - 1) * (long) _maxColumn * (long) _maxRow + 1];
+		_hitMap = new short[(long) (_maxColumn - 1) + ((long) _maxRow - 1) * (long) _maxColumn + ((long) _maxFrame - 1) * (long) _maxColumn * (long) _maxRow + 1];
 	}
 	catch (std::bad_alloc& exception) {
 		error(std::string("allocateHitMap: ") + std::string(exception.what()));
@@ -623,7 +630,7 @@ void Clusterizer::clearHitMap()
 	if (_nHits != 0) {
 		for (size_t iCol = 0; iCol < (size_t) _maxColumn; ++iCol) {
 			for (size_t iRow = 0; iRow < (size_t) _maxRow; ++iRow) {
-				for (size_t iFrame = 0; iFrame < (size_t) __MAXFRAME; ++iFrame) {
+				for (size_t iFrame = 0; iFrame < (size_t) _maxFrame; ++iFrame) {
 					if (_hitMap[(size_t) iCol + (size_t) iRow * (size_t) _maxColumn + (size_t) iFrame * (size_t) _maxColumn * (size_t) _maxRow] != -1) {
 						_hitMap[(size_t) iCol + (size_t) iRow * (size_t) _maxColumn + (size_t) iFrame * (size_t) _maxColumn * (size_t) _maxRow] = -1;
 						_nHits--;
@@ -658,7 +665,7 @@ void Clusterizer::allocateHitIndexMap()
 	info("allocateHitIndexMap()");
 	deleteHitIndexMap();
 	try {
-		_hitIndexMap = new unsigned int[(long) (_maxColumn - 1) + ((long) _maxRow - 1) * (long) _maxColumn + ((long) __MAXFRAME - 1) * (long) _maxColumn * (long) _maxRow + 1];
+		_hitIndexMap = new unsigned int[(long) (_maxColumn - 1) + ((long) _maxRow - 1) * (long) _maxColumn + ((long) _maxFrame - 1) * (long) _maxColumn * (long) _maxRow + 1];
 	}
 	catch (std::bad_alloc& exception) {
 		error(std::string("allocateHitIndexMap: ") + std::string(exception.what()));
@@ -679,7 +686,7 @@ void Clusterizer::allocateChargeMap()
 	info("allocateChargeMap()");
 	deleteChargeMap();
 	try {
-		_chargeMap = new float[(long) (_maxColumn - 1) + ((long) _maxRow - 1) * (long) _maxColumn + ((long) __MAXCHARGELOOKUP - 1) * (long) _maxColumn * (long) _maxRow + 1];
+		_chargeMap = new float[(long) (_maxColumn - 1) + ((long) _maxRow - 1) * (long) _maxColumn + ((long) _maxCharge - 1) * (long) _maxColumn * (long) _maxRow + 1];
 	}
 	catch (std::bad_alloc& exception) {
 		error(std::string("allocateChargeMap: ") + std::string(exception.what()));
@@ -767,7 +774,7 @@ void Clusterizer::showHits()
 	if (_nHits < 100) {
 		for (size_t iCol = 0; iCol < _maxColumn; ++iCol) {
 			for (size_t iRow = 0; iRow < _maxRow; ++iRow) {
-				for (size_t iFrame = 0; iFrame < __MAXFRAME; ++iFrame) {
+				for (size_t iFrame = 0; iFrame < _maxFrame; ++iFrame) {
 					if (_hitMap[(size_t) iCol + (size_t) iRow * (size_t) _maxColumn + (size_t) iFrame * (size_t) _maxColumn * (size_t) _maxRow] != -1)
 						std::cout << "x/y/Frame/Charge = " << iCol << "/" << iRow << "/" << iFrame << "/" << _hitMap[(size_t) iCol + (size_t) iRow * (size_t) _maxColumn + (size_t) iFrame * (size_t) _maxColumn * (size_t) _maxRow] << std::endl;
 				}
