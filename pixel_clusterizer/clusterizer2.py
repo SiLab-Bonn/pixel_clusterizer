@@ -49,7 +49,9 @@ def _merge_cluster(i, j, hits, is_seed, cluster_id, max_cluster_charge, max_clus
         max_cluster_charge = hits[j].charge
     actual_cluster_id = cluster_id[j]  # Correct the actual cluster id
     cluster_id[i] = actual_cluster_id  # Actual hit belongs to other already existing cluster
-    max_cluster_id = max_cluster_id - 1  # Actual new cluster ID is not used, since actual hit belongs to already existing cluster
+    max_cluster_id -= 1  # Actual new cluster ID is not used, since actual hit belongs to already existing cluster
+
+    return max_cluster_charge, max_cluster_id
 
 #@njit
 def cluster_hits(hits, cluster, x_cluster_distance=1, y_cluster_distance=1, frame_cluster_distance=4):
@@ -110,19 +112,10 @@ def cluster_hits(hits, cluster, x_cluster_distance=1, y_cluster_distance=1, fram
 
                 # Check if event hit is already assigned to a acluster, can happen since the hits are not sorted
                 if cluster_id[j] != -1 and cluster_id[j] < actual_cluster_id:  # event hit belongs already to a cluster A, thus actual hit is not a new cluster hit and actual hit also belongs to cluster A
-                    _merge_cluster(i, j, hits, is_seed, cluster_id, max_cluster_charge, max_cluster_id)
-#                     is_seed[i] = 0  # Event hit is not necessarily seed anymore
-#                     if hits[j].charge >= max_cluster_charge:  # Old cluster hit can be the seed, if charge is equal max_cluster_charge to keep lowest index max charge hit seed hit
-#                         max_cluster_charge = hits[j].charge
-#                     actual_cluster_id = cluster_id[j]  # Correct the actual cluster id
-#                     cluster_id[i] = actual_cluster_id  # Actual hit belongs to other already existing cluster
-#                     max_cluster_id -= 1  # Actual new cluster ID is not used, since actual hit belongs to already existing cluster
-                    print max_cluster_id
-                    raise
-                    _correct_cluster_id(hits, actual_event_number, actual_cluster_id, actual_event_hit_index_start, cluster_id)  # Make the cluster index increase by 1
+                    max_cluster_charge, max_cluster_id = _merge_cluster(i, j, hits, is_seed, cluster_id, max_cluster_charge, max_cluster_id)  # Merge the new cluster to the already existing old
+                    _correct_cluster_id(hits, actual_event_number, actual_cluster_id, actual_event_hit_index_start, cluster_id)  # Correct the cluster indices to make them increase by 1
                 else:
-                    actual_cluster_size += 1
-                    cluster_id[j] = actual_cluster_id
+                    cluster_id[j] = actual_cluster_id  # Add event hit to actual cluster 
 
                 # Check if event hit has a higher charge, then make it the seed hit
                 if hits[j].charge > max_cluster_charge:
