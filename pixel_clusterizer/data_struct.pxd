@@ -24,7 +24,7 @@ cdef packed struct numpy_cluster_hit_info:
 cdef packed struct numpy_cluster_info:
     cnp.int64_t event_number  # event number value (unsigned long long: 0 to 18,446,744,073,709,551,615)
     cnp.uint16_t ID  # the cluster id of the cluster
-    cnp.uint16_t size  # sum charge of all cluster hits
+    cnp.uint16_t n_hits  # sum charge of all cluster hits
     cnp.float32_t charge  # sum charge of all cluster hits
     cnp.uint16_t seed_column  # column value (unsigned char: 0 to 255)
     cnp.uint16_t seed_row  # row value (unsigned short int: 0 to 65.535)

@@ -21,7 +21,7 @@ ClusterHitInfo = np.dtype([('event_number', '<i8'),
 
 ClusterInfo = np.dtype([('event_number', '<i8'),
                         ('ID', '<u2'),
-                        ('size', '<u2'),
+                        ('n_hits', '<u2'),
                         ('charge', 'f4'),
                         ('seed_column', '<u2'),
                         ('seed_row', '<u2'),
