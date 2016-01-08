@@ -1,5 +1,5 @@
 import numpy as np
-from numba import njit
+from numba import njit, jit
 import sys
 
 
@@ -15,12 +15,12 @@ def pprint_array(array):  # just to print the results in a nice way
     for row in array:
         print('')
         for i, column in enumerate(row):
-            sys.stdout.write(' ' * (offsets[i] / 2))
+            #sys.stdout.write(' ' * (offsets[i] / 2))
             sys.stdout.write(str(column))
             sys.stdout.write('\t')
     print('')
 
-# @njit
+@njit
 def _correct_cluster_id(hits, actual_event_number, actual_cluster_id, actual_event_hit_index, cluster_id):
     ' Substracts one from all cluster IDs of the event, starting from cluster id actual_cluster_id'
     for i in range(actual_event_hit_index, hits.shape[0]):
@@ -30,12 +30,12 @@ def _correct_cluster_id(hits, actual_event_number, actual_cluster_id, actual_eve
             cluster_id[i] -= 1
 
 
-# @njit
+@njit
 def _new_event(event_number, actual_event_number):
     'Detect a new event by checking if the event number of the actual hit is the actual event number'
     return event_number != actual_event_number
 
-# @njit
+@njit
 def _merge_cluster(i, j, hits, cluster, is_seed, cluster_id, max_cluster_charge, next_cluster_id, actual_event_cluster_index):
     is_seed[i] = 0  # Event hit is not necessarily seed anymore
     if hits[j].charge >= max_cluster_charge:  # Old cluster hit can be the seed, if charge is equal max_cluster_charge to keep lowest index max charge hit seed hit
@@ -59,7 +59,7 @@ def _merge_cluster(i, j, hits, cluster, is_seed, cluster_id, max_cluster_charge,
 
     return max_cluster_charge, next_cluster_id, actual_cluster_id
 
-# @njit
+@njit
 def _finish_event(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, actual_event_hit_index, new_actual_event_hit_index, next_cluster_id, actual_event_cluster_index):
     ''' Set hit and cluster information of the last finished event (like number of cluster in this event (n_cluster),  cluster charge ...). '''
     for i in range(actual_event_hit_index, new_actual_event_hit_index):
@@ -84,7 +84,7 @@ def _finish_event(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, a
             cluster[i].mean_column /= cluster[i].charge
             cluster[i].mean_row /= cluster[i].charge
 
-# @njit
+@njit
 def cluster_hits(hits, cluster, x_cluster_distance=1, y_cluster_distance=1, frame_cluster_distance=4):
     # Additional cluster info for the hit array
     cluster_id = np.zeros(shape=hits.shape, dtype=np.int16) - 1  # Cluster ID -1 means hit not assigned to cluster
@@ -93,21 +93,24 @@ def cluster_hits(hits, cluster, x_cluster_distance=1, y_cluster_distance=1, fram
     n_cluster = np.zeros(shape=hits.shape, dtype=np.int16)  # Number of clusters in the event the hit belongs to
 
     # Temporary variables that are reset for each cluster or event
-    actual_event_number, actual_event_hit_index, actual_event_cluster_index, actual_cluster_id, max_cluster_charge, next_cluster_id, actual_n_cluster = 0, 0, 0, 0, 0, 0, 0
+    actual_event_number, actual_event_hit_index, actual_event_cluster_index, actual_cluster_id, max_cluster_charge, next_cluster_id = 0, 0, 0, 0, 0, 0
 
     # Outer loop over all hits in the array (refered to as actual hit)
     for i in range(hits.shape[0]):
 
         # Check for new event and reset event variables
         if _new_event(hits[i].event_number, actual_event_number):
+            print(0)
             _finish_event(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, actual_event_hit_index, i, next_cluster_id, actual_event_cluster_index)
             actual_event_hit_index = i
             actual_event_cluster_index = actual_event_cluster_index + next_cluster_id
             actual_event_number = hits[i].event_number
+            #print(next_cluster_id)
             next_cluster_id = 0  # First cluster has ID 1
 
         # Check if actual hit is already asigned to a cluster, if not define new actual cluster containing with the actual hit as the first hit
         if cluster_id[i] == -1:  # Actual hit was never assigned to a cluster
+            print(1)
             actual_cluster_id = next_cluster_id  # Set actual cluster id
             next_cluster_id += 1  # Create new cluster ID that was not used before
             max_cluster_charge = hits[i].charge  # One hit with max_cluster_charge is seed
@@ -156,7 +159,7 @@ def cluster_hits(hits, cluster, x_cluster_distance=1, y_cluster_distance=1, fram
 
         # cluster_size[i] = actual_cluster_size
 
-        print i, cluster_id, is_seed
+        # print(i, cluster_id, is_seed)
 
     # Last event is assumed to be finished at the end of the hit array, thus add info
     _finish_event(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, actual_event_hit_index, i + 1, next_cluster_id, actual_event_cluster_index)
@@ -167,7 +170,7 @@ if __name__ == '__main__':
     # create some fake data
     hits = np.ones(shape=(20, ), dtype=data_struct.HitInfo)
     cluster = np.zeros(shape=(hits.shape[0], ), dtype=data_struct.ClusterInfo)
-
+ 
     hits[0]['column'], hits[0]['row'], hits[0]['charge'], hits[0]['event_number'] = 0, 0, 30, 0
     hits[1]['column'], hits[1]['row'], hits[1]['charge'], hits[1]['event_number'] = 0, 2, 6, 0
     hits[2]['column'], hits[2]['row'], hits[2]['charge'], hits[2]['event_number'] = 0, 6, 30, 0
@@ -193,7 +196,7 @@ if __name__ == '__main__':
 # create some fake data
 #     hits = np.ones(shape=(5, ), dtype=data_struct.HitInfo)
 #     cluster = np.zeros(shape=(hits.shape[0], ), dtype=data_struct.ClusterInfo)
-# 
+#  
 #     hits[0]['column'], hits[0]['row'], hits[0]['charge'], hits[0]['event_number'] = 0, 0, 30, 0
 #     hits[1]['column'], hits[1]['row'], hits[1]['charge'], hits[1]['event_number'] = 0, 1, 6, 0
 #     hits[2]['column'], hits[2]['row'], hits[2]['charge'], hits[2]['event_number'] = 0, 2, 30, 0
