@@ -1,6 +1,7 @@
 import numpy as np
 from numba import njit, jit
 import sys
+import logging
 
 
 from pixel_clusterizer import data_struct
@@ -15,11 +16,13 @@ def pprint_array(array):  # just to print the results in a nice way
     for row in array:
         print('')
         for i, column in enumerate(row):
-            #sys.stdout.write(' ' * (offsets[i] / 2))
+            sys.stdout.write(' ' * (offsets[i] / 2))
             sys.stdout.write(str(column))
             sys.stdout.write('\t')
     print('')
+    
 
+# Fast functions that are compiled in time via numba
 @njit
 def _correct_cluster_id(hits, actual_event_number, actual_cluster_id, actual_event_hit_index, cluster_id):
     ' Substracts one from all cluster IDs of the event, starting from cluster id actual_cluster_id'
@@ -37,9 +40,10 @@ def _new_event(event_number, actual_event_number):
 
 @njit
 def _merge_cluster(i, j, hits, cluster, is_seed, cluster_id, max_cluster_charge, next_cluster_id, actual_event_cluster_index):
-    is_seed[i] = 0  # Event hit is not necessarily seed anymore
+    #is_seed[j] = 0  # Event hit is not necessarily seed anymore
     if hits[j].charge >= max_cluster_charge:  # Old cluster hit can be the seed, if charge is equal max_cluster_charge to keep lowest index max charge hit seed hit
         max_cluster_charge = hits[j].charge
+        is_seed[j] = 1
     actual_cluster_id = cluster_id[j]  # Correct the actual cluster id
 
     # Merge cluster infos
@@ -84,8 +88,8 @@ def _finish_event(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, a
             cluster[i].mean_column /= cluster[i].charge
             cluster[i].mean_row /= cluster[i].charge
 
-@njit
-def cluster_hits(hits, cluster, x_cluster_distance=1, y_cluster_distance=1, frame_cluster_distance=4):
+#@njit
+def cluster_hits(hits, cluster, x_cluster_distance=1, y_cluster_distance=2, frame_cluster_distance=4):
     # Additional cluster info for the hit array
     cluster_id = np.zeros(shape=hits.shape, dtype=np.int16) - 1  # Cluster ID -1 means hit not assigned to cluster
     is_seed = np.zeros(shape=hits.shape, dtype=np.uint8)  # Seed 1 means hit is seed; lowest index hit with max charge hit is seed, thus there is always only one seed in a cluster
@@ -100,17 +104,19 @@ def cluster_hits(hits, cluster, x_cluster_distance=1, y_cluster_distance=1, fram
 
         # Check for new event and reset event variables
         if _new_event(hits[i].event_number, actual_event_number):
-            print(0)
+            #print(0)
             _finish_event(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, actual_event_hit_index, i, next_cluster_id, actual_event_cluster_index)
             actual_event_hit_index = i
             actual_event_cluster_index = actual_event_cluster_index + next_cluster_id
             actual_event_number = hits[i].event_number
             #print(next_cluster_id)
             next_cluster_id = 0  # First cluster has ID 1
+            
+        print i, cluster_id[i]
 
         # Check if actual hit is already asigned to a cluster, if not define new actual cluster containing with the actual hit as the first hit
         if cluster_id[i] == -1:  # Actual hit was never assigned to a cluster
-            print(1)
+            #print(1)
             actual_cluster_id = next_cluster_id  # Set actual cluster id
             next_cluster_id += 1  # Create new cluster ID that was not used before
             max_cluster_charge = hits[i].charge  # One hit with max_cluster_charge is seed
@@ -166,10 +172,44 @@ def cluster_hits(hits, cluster, x_cluster_distance=1, y_cluster_distance=1, fram
     return cluster_id, is_seed, cluster_size, n_cluster, actual_event_cluster_index + next_cluster_id
 
 
+class HitClusterizer(object):
+    
+    def __init__(self, n_columns=None, n_rows=None, n_frames=None, n_charges=None, max_hits=10000):
+        if any([n_columns, n_rows, n_frames, n_charges]):
+            logging.warning('Depreciated: n_columns, n_rows, n_frames, n_charges variables do not have to be defined anymore!')    
+            
+        self.hits_clustered = np.zeros(shape=(max_hits, ), dtype=data_struct.ClusterHitInfo)
+        self.cluster = np.zeros(shape=(max_hits, ), dtype=data_struct.ClusterInfo).view(np.recarray)  # Only recarrays no structured arrays are supported by numba
+        
+        self.n_cluster = 0
+        self.n_hits = 0
+        
+        self._create_cluster_hit_info_array = False
+        
+    def create_cluster_hit_info_array(self, value=True):
+        self._create_cluster_hit_info_array = value
+    
+    def add_hits(self, hits):
+        # The hit info is extended by the cluster info; this is only possible by creating a new hit info array
+        
+        self.hits_clustered['column'][self.n_hits:hits.shape[0]] = hits['column']
+        self.hits_clustered['row'][self.n_hits:hits.shape[0]] = hits['row']
+        self.hits_clustered['charge'][self.n_hits:hits.shape[0]] = hits['charge']
+        self.hits_clustered['event_number'][self.n_hits:hits.shape[0]] = hits['event_number']        
+        
+        self.hits_clustered['cluster_ID'][self.n_hits:hits.shape[0]], self.hits_clustered['is_seed'][self.n_hits:hits.shape[0]], self.hits_clustered['cluster_size'][self.n_hits:hits.shape[0]], self.hits_clustered['n_cluster'][self.n_hits:hits.shape[0]], self.n_cluster = cluster_hits(hits.view(np.recarray), self.cluster)
+
+        return self.hits_clustered[:self.n_hits], self.cluster[:self.n_cluster]
+    
+    def get_hit_cluster(self):
+        return self.hits_clustered[:self.n_hits]
+    
+    def get_cluster(self):
+        return self.cluster[:self.n_cluster]
+
 if __name__ == '__main__':
     # create some fake data
-    hits = np.ones(shape=(20, ), dtype=data_struct.HitInfo)
-    cluster = np.zeros(shape=(hits.shape[0], ), dtype=data_struct.ClusterInfo)
+    hits = np.ones(shape=(10, ), dtype=data_struct.HitInfo)
  
     hits[0]['column'], hits[0]['row'], hits[0]['charge'], hits[0]['event_number'] = 0, 0, 30, 0
     hits[1]['column'], hits[1]['row'], hits[1]['charge'], hits[1]['event_number'] = 0, 2, 6, 0
@@ -182,16 +222,16 @@ if __name__ == '__main__':
     hits[8]['column'], hits[8]['row'], hits[8]['charge'], hits[8]['event_number'] = 0, 16, 6, 0
     hits[9]['column'], hits[9]['row'], hits[9]['charge'], hits[9]['event_number'] = 0, 13, 6, 0
 
-    hits[10]['column'], hits[10]['row'], hits[10]['charge'], hits[10]['event_number'] = 0, 0, 30, 1
-    hits[11]['column'], hits[11]['row'], hits[11]['charge'], hits[11]['event_number'] = 0, 2, 6, 1
-    hits[12]['column'], hits[12]['row'], hits[12]['charge'], hits[12]['event_number'] = 0, 6, 30, 1
-    hits[13]['column'], hits[13]['row'], hits[13]['charge'], hits[13]['event_number'] = 0, 4, 6, 1
-    hits[14]['column'], hits[14]['row'], hits[14]['charge'], hits[14]['event_number'] = 0, 8, 6, 1
-    hits[15]['column'], hits[15]['row'], hits[15]['charge'], hits[15]['event_number'] = 0, 1, 30, 1
-    hits[16]['column'], hits[16]['row'], hits[16]['charge'], hits[16]['event_number'] = 0, 15, 6, 1
-    hits[17]['column'], hits[17]['row'], hits[17]['charge'], hits[17]['event_number'] = 0, 14, 30, 1
-    hits[18]['column'], hits[18]['row'], hits[18]['charge'], hits[18]['event_number'] = 0, 16, 6, 1
-    hits[19]['column'], hits[19]['row'], hits[19]['charge'], hits[19]['event_number'] = 0, 13, 6, 1
+#     hits[10]['column'], hits[10]['row'], hits[10]['charge'], hits[10]['event_number'] = 0, 0, 30, 1
+#     hits[11]['column'], hits[11]['row'], hits[11]['charge'], hits[11]['event_number'] = 0, 2, 6, 1
+#     hits[12]['column'], hits[12]['row'], hits[12]['charge'], hits[12]['event_number'] = 0, 6, 30, 1
+#     hits[13]['column'], hits[13]['row'], hits[13]['charge'], hits[13]['event_number'] = 0, 4, 6, 1
+#     hits[14]['column'], hits[14]['row'], hits[14]['charge'], hits[14]['event_number'] = 0, 8, 6, 1
+#     hits[15]['column'], hits[15]['row'], hits[15]['charge'], hits[15]['event_number'] = 0, 1, 30, 1
+#     hits[16]['column'], hits[16]['row'], hits[16]['charge'], hits[16]['event_number'] = 0, 15, 6, 1
+#     hits[17]['column'], hits[17]['row'], hits[17]['charge'], hits[17]['event_number'] = 0, 14, 30, 1
+#     hits[18]['column'], hits[18]['row'], hits[18]['charge'], hits[18]['event_number'] = 0, 16, 6, 1
+#     hits[19]['column'], hits[19]['row'], hits[19]['charge'], hits[19]['event_number'] = 0, 13, 6, 1
 
 # create some fake data
 #     hits = np.ones(shape=(5, ), dtype=data_struct.HitInfo)
@@ -204,14 +244,9 @@ if __name__ == '__main__':
 #     hits[4]['column'], hits[4]['row'], hits[4]['charge'], hits[4]['event_number'] = 0, 8, 6, 0
 
     pprint_array(hits)
+    
+    clusterizer = HitClusterizer()
+    clusterizer.add_hits(hits)
 
-    hits_clustered = np.zeros(shape=hits.shape, dtype=data_struct.ClusterHitInfo)
-    hits_clustered['column'] = hits['column']
-    hits_clustered['row'] = hits['row']
-    hits_clustered['charge'] = hits['charge']
-    hits_clustered['event_number'] = hits['event_number']
-
-    hits_clustered['cluster_ID'], hits_clustered['is_seed'], hits_clustered['cluster_size'], hits_clustered['n_cluster'], n_cluster = cluster_hits(hits.view(np.recarray), cluster.view(np.recarray))
-
-    pprint_array(hits_clustered)
-    pprint_array(cluster[:n_cluster])
+    pprint_array(clusterizer.get_hit_cluster())
+    pprint_array(clusterizer.get_cluster())
