@@ -67,17 +67,9 @@ class TestClusterizer(unittest.TestCase):
         expected_result['mean_column'] = [2.5, 5.5, 8.5, 10.5]
         expected_result['mean_row'] = [3.5, 9.5, 15.5, 19.5]
         # Test results
-       # self.assertEqual(cluster_hits.shape[0], 0)  # hit clustering not activated, thus this array has to be empty
-        
-        
-        print hits
-        print clusters
-        print expected_result
-        
-        print (expected_result == clusters)
-        
+        #self.assertEqual(cluster_hits.shape[0], 0)  # hit clustering not activated, thus this array has to be empty
         self.assertTrue((clusters == expected_result).all())
-# 
+ 
 #         # TEST 2
 #         clusterizer.create_cluster_hit_info_array(True)
 #         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
@@ -94,7 +86,10 @@ class TestClusterizer(unittest.TestCase):
 #         expected_result['cluster_size'] = [3, 3, 3, 3, 3, 3, 3, 3, 3, 1]
 #         expected_result['n_cluster'] = 1
 #         # Test results
-#         self.assertEqual(cluster_hits.shape[0], 10)  # hit clustering not activated, thus this array has to be empty
+#         self.assertEqual(cluster_hits.shape[0], 10)  # hit clustering activated, thus this array have 10 entries
+#         
+#         print cluster_hits, expected_result
+#         print cluster_hits == expected_result
 #         self.assertTrue(np.array_equal(cluster_hits, expected_result))
 
     @unittest.SkipTest
