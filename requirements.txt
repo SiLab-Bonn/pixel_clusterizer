@@ -1,3 +1,4 @@
 future  # Python 2/3 compatibility
 numpy  # fast c array data structures 
 numba==0.22.1  # JIT for numpy
+docutils  # Needed by numba exeptions; dependency not automatically solved...
