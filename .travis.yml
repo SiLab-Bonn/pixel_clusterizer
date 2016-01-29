@@ -18,7 +18,7 @@ before_install:
   - chmod +x miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
-  - conda install numpy numba==0.22.1 future
+  - conda install --yes numpy numba==0.22.1 future
   - conda info -a
   
 install:
