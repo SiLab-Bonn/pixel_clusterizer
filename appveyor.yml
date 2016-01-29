@@ -13,7 +13,7 @@ install:
   - conda install --yes numpy numba=0.22.1 future
   - conda info -a
   - conda list
-  - python.exe setup.py develop
+  - python setup.py develop
 
 test_script:
   - nosetests
