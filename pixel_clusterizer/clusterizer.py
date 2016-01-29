@@ -96,7 +96,7 @@ def is_in_max_difference(value_1, value_2, max_difference):
 
 
 @njit()
-def cluster_hits(hits, cluster, n_hits, x_cluster_distance=1, y_cluster_distance=2, frame_cluster_distance=4, max_n_cluster_hits=30, max_cluster_hit_charge=13):
+def cluster_hits(hits, cluster, n_hits, x_cluster_distance=1, y_cluster_distance=2, frame_cluster_distance=4, max_n_cluster_hits=30, max_cluster_hit_charge=13, ignore_same_hits=True):
     # Additional cluster info for the hit array
     cluster_id = np.zeros(shape=hits.shape, dtype=np.int16) - 1  # Cluster ID -1 means hit not assigned to cluster
     is_seed = np.zeros(shape=hits.shape, dtype=np.uint8)  # Seed 1 means hit is seed; lowest index hit with max charge hit is seed, thus there is always only one seed in a cluster
@@ -182,30 +182,33 @@ def cluster_hits(hits, cluster, n_hits, x_cluster_distance=1, y_cluster_distance
 
                 # Check if event hit belongs to actual hit and thus to the actual cluster
                 if is_in_max_difference(hits[actual_inner_loop_hit_index].column, hits[k].column, x_cluster_distance) and is_in_max_difference(hits[actual_inner_loop_hit_index].row, hits[k].row, y_cluster_distance) and is_in_max_difference(hits[actual_inner_loop_hit_index].frame, hits[k].frame, frame_cluster_distance):
-                    actual_cluster_size += 1
-                    actual_cluster_hit_index += 1
-                    if actual_cluster_hit_index >= max_n_cluster_hits:
-                        raise OutOfRangeError('There is a cluster with more than the specified max_cluster_hits. Increase this parameter!')
-                    actual_cluster_hit_indices[actual_cluster_hit_index] = k - actual_event_hit_index
-                    cluster_id[k] = actual_cluster_id  # Add event hit to actual cluster
+                    if not ignore_same_hits or hits[actual_inner_loop_hit_index].column != hits[k].column or hits[actual_inner_loop_hit_index].row != hits[k].row:
+                        actual_cluster_size += 1
+                        actual_cluster_hit_index += 1
+                        if actual_cluster_hit_index >= max_n_cluster_hits:
+                            raise OutOfRangeError('There is a cluster with more than the specified max_cluster_hits. Increase this parameter!')
+                        actual_cluster_hit_indices[actual_cluster_hit_index] = k - actual_event_hit_index
+                        cluster_id[k] = actual_cluster_id  # Add event hit to actual cluster
 
-                    # Add cluster position as sum of all hit positions weighted by the charge (center of gravity)
-                    # the position is in the center of the pixel (column = 0 == mean_column = 0.5)
-                    cluster[actual_event_cluster_index + actual_cluster_id].mean_column += (hits[k].column + 0.5) * (hits[k].charge + 1)
-                    cluster[actual_event_cluster_index + actual_cluster_id].mean_row += (hits[k].row + 0.5) * (hits[k].charge + 1)
-                    cluster[actual_event_cluster_index + actual_cluster_id].n_hits += 1
-                    cluster[actual_event_cluster_index + actual_cluster_id].charge += hits[k].charge
+                        # Add cluster position as sum of all hit positions weighted by the charge (center of gravity)
+                        # the position is in the center of the pixel (column = 0 == mean_column = 0.5)
+                        cluster[actual_event_cluster_index + actual_cluster_id].mean_column += (hits[k].column + 0.5) * (hits[k].charge + 1)
+                        cluster[actual_event_cluster_index + actual_cluster_id].mean_row += (hits[k].row + 0.5) * (hits[k].charge + 1)
+                        cluster[actual_event_cluster_index + actual_cluster_id].n_hits += 1
+                        cluster[actual_event_cluster_index + actual_cluster_id].charge += hits[k].charge
 
-                    # Check if event hit has a higher charge, then make it the seed hit
-                    if hits[k].charge > max_cluster_charge:
-                        # Event hit is seed and not actual hit, thus switch the seed flag
-                        is_seed[k] = 1
-                        is_seed[seed_index] = 0
-                        seed_index = k
-                        max_cluster_charge = hits[k].charge
-                        # Set new seed hit in the cluster
-                        cluster[actual_event_cluster_index + actual_cluster_id].seed_column = hits[k].column
-                        cluster[actual_event_cluster_index + actual_cluster_id].seed_row = hits[k].row
+                        # Check if event hit has a higher charge, then make it the seed hit
+                        if hits[k].charge > max_cluster_charge:
+                            # Event hit is seed and not actual hit, thus switch the seed flag
+                            is_seed[k] = 1
+                            is_seed[seed_index] = 0
+                            seed_index = k
+                            max_cluster_charge = hits[k].charge
+                            # Set new seed hit in the cluster
+                            cluster[actual_event_cluster_index + actual_cluster_id].seed_column = hits[k].column
+                            cluster[actual_event_cluster_index + actual_cluster_id].seed_row = hits[k].row
+                    else:
+                        cluster_id[k] = -2  # Mark a ignored hit with index = -2
 
         # Set cluster size info for actual cluster hits
         for j in actual_cluster_hit_indices:  # Loop over all hits of the actual cluster; actual_cluster_hit_indices is updated within the loop if new hit are found
@@ -228,7 +231,8 @@ class HitClusterizer(object):
         self._x_cluster_distance = 1
         self._y_cluster_distance = 2
         self._frame_cluster_distance = 4
-        self._max_cluster_hits = 30
+        self._max_cluster_hits = 300
+        self._ignore_same_hits = True
 
         self.hits_clustered = np.zeros(shape=(self._max_hits, ), dtype=data_struct.ClusterHitInfo)
         self.cluster = np.zeros(shape=(self._max_hits, ), dtype=data_struct.ClusterInfo).view(np.recarray)  # Only recarrays no structured arrays are supported by numba
@@ -254,6 +258,9 @@ class HitClusterizer(object):
     def set_max_cluster_hits(self, value):
         self._max_cluster_hits = value
 
+    def ignore_same_hits(self, value):  # Ignore same hit in an event for clustering
+        self._ignore_same_hits = value
+
     def create_cluster_hit_info_array(self, value=True):  # TODO: do not create cluster hit info of false to save time
         self._create_cluster_hit_info_array = value
 
@@ -267,7 +274,7 @@ class HitClusterizer(object):
         self.hits_clustered['charge'][self.n_hits:hits.shape[0]] = hits['charge']
         self.hits_clustered['event_number'][self.n_hits:hits.shape[0]] = hits['event_number']
 
-        self.hits_clustered['cluster_ID'][self.n_hits:hits.shape[0]], self.hits_clustered['is_seed'][self.n_hits:hits.shape[0]], self.hits_clustered['cluster_size'][self.n_hits:hits.shape[0]], self.hits_clustered['n_cluster'][self.n_hits:hits.shape[0]], self.n_cluster = cluster_hits(hits.view(np.recarray), self.cluster, n_hits=hits.shape[0], x_cluster_distance=self._x_cluster_distance, y_cluster_distance=self._y_cluster_distance, frame_cluster_distance=self._frame_cluster_distance, max_n_cluster_hits=self._max_cluster_hits, max_cluster_hit_charge=self._max_cluster_hit_charge)
+        self.hits_clustered['cluster_ID'][self.n_hits:hits.shape[0]], self.hits_clustered['is_seed'][self.n_hits:hits.shape[0]], self.hits_clustered['cluster_size'][self.n_hits:hits.shape[0]], self.hits_clustered['n_cluster'][self.n_hits:hits.shape[0]], self.n_cluster = cluster_hits(hits.view(np.recarray), self.cluster, n_hits=hits.shape[0], x_cluster_distance=self._x_cluster_distance, y_cluster_distance=self._y_cluster_distance, frame_cluster_distance=self._frame_cluster_distance, max_n_cluster_hits=self._max_cluster_hits, max_cluster_hit_charge=self._max_cluster_hit_charge, ignore_same_hits=self._ignore_same_hits)
 
         self.n_hits += hits.shape[0]
 
@@ -294,7 +301,7 @@ if __name__ == '__main__':
         for i in range(n_hits):
             hits[i]['event_number'], hits[i]['frame'], hits[i]['column'], hits[i]['row'], hits[i]['charge'] = i / 3, i % max_frame, i % max_column + 1, 2 * i % max_row + 1, i % max_charge
         return hits
- 
+
     hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
 
     clusterizer = HitClusterizer()
