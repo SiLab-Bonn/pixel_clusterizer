@@ -10,7 +10,7 @@ platform:
 install:
   # Miniconda setup + necessary external packages
   - set PATH=C:\Miniconda;C:\Miniconda\Scripts;%PATH%  # Miniconda is already installed on appveyor: https://github.com/appveyor/ci/issues/359
-  - conda install --yes numpy numba=0.22.1 future
+  - conda install --yes numpy numba=0.22.1 future nose
   - conda info -a
   - conda list
   - python setup.py develop
