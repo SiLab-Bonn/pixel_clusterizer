@@ -9,7 +9,7 @@ notifications:
   email:
   - pohl@physik.uni-bonn.de
   
-before_install:
+install:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
      wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
     else
@@ -20,8 +20,6 @@ before_install:
   - export PATH="$HOME/miniconda/bin:$PATH"
   - conda install --yes numpy numba==0.22.1 future
   - conda info -a
-  
-install:
   - python setup.py develop
 
 script: nosetests
