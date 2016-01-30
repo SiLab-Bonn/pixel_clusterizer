@@ -2,20 +2,35 @@ build: false  # Tell appveyor to not use msbuild
 
 environment:
   matrix:
-    - PYTHON: 2.7
-    - PYTHON: 3.5
+    - PYTHON_VERSION: 2.7
+      MINICONDA: C:\Miniconda
+      PYTHON_ARCH: "32"
+    - PYTHON_VERSION: 2.7
+      MINICONDA: C:\Miniconda-x64
+      PYTHON_ARCH: "64"
+    - PYTHON_VERSION: 3.4
+      MINICONDA: C:\Miniconda3
+      PYTHON_ARCH: "32"
+    - PYTHON_VERSION: 3.4
+      MINICONDA: C:\Miniconda3-x64
+      PYTHON_ARCH: "64"
+    - PYTHON_VERSION: 3.5
+      MINICONDA: C:\Miniconda35
+      PYTHON_ARCH: "32"
+    - PYTHON_VERSION: 3.5
+      MINICONDA: C:\Miniconda35-x64
+      PYTHON_ARCH: "64"
 
-platform:
-  - x86
-  - x64
+init:
+  - "ECHO %PYTHON_VERSION% %MINICONDA%"
 
 install:
-  # Miniconda setup + necessary external packages
-  - set PATH=C:\Miniconda;C:\Miniconda\Scripts;%PATH%  # Miniconda is already installed on appveyor: https://github.com/appveyor/ci/issues/359
+  # Miniconda Python setup + external packages installation
+  - set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%  # Miniconda is already installed on appveyor: https://github.com/appveyor/ci/issues/359
   - conda install --yes numpy numba=0.22.1 future nose docutils
   - conda info -a
   - conda list
-  - python setup.py develop
+  - python setup.py develop  # Install pixel_clusterizer
 
 test_script:
   - nosetests
