@@ -3,6 +3,7 @@ from numba import njit
 
 from docutils.utils.roman import OutOfRangeError
 
+
 # Fast functions that are compiled in time via numba
 @njit()
 def _new_event(event_number, actual_event_number):
@@ -246,6 +247,15 @@ class HitClusterizer(object):
 
     def set_max_hits(self, value):
         self._max_hits = value
+        self.hits_clustered = np.zeros(shape=(self._max_hits, ), dtype=self._hit_clustered_struct)
+        self.cluster = np.zeros(shape=(self._max_hits, ), dtype=np.dtype([('event_number', '<i8'),
+                        ('ID', '<u2'),
+                        ('n_hits', '<u2'),
+                        ('charge', 'f4'),
+                        ('seed_column', '<u2'),
+                        ('seed_row', '<u2'),
+                        ('mean_column', 'f4'),
+                        ('mean_row', 'f4')]))
 
     def set_max_hit_charge(self, value):
         self._max_cluster_hit_charge = value
