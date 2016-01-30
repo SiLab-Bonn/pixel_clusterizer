@@ -147,7 +147,7 @@ class TestClusterizer(unittest.TestCase):
         expected_result['cluster_ID'] = [-1, 0]
         expected_result['is_seed'] = [0, 1]
         expected_result['cluster_size'] = [0, 1]
-        expected_result['n_cluster'] = [0, 1]
+        expected_result['n_cluster'] = [1, 1]
 
         self.assertTrue(np.array_equal(cluster_hits, expected_result))
 
