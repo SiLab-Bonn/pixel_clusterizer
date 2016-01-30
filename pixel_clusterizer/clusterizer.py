@@ -223,7 +223,7 @@ class HitClusterizer(object):
         raise NotImplementedError
 
     def set_hit_fields(self, hit_fields):  # Dictionary translating the hit fields event_number, column, row, charge, frame to chosen ones
-        self._hit_fields_mapping = dict((v, k) for k, v in hit_fields.iteritems())  # Create also the inverse dictionary for faster lookup
+        self._hit_fields_mapping = dict((v, k) for k, v in hit_fields.items())  # Create also the inverse dictionary for faster lookup
         try:
             self._hit_fields_mapping['event_number'], self._hit_fields_mapping['column'], self._hit_fields_mapping['row'], self._hit_fields_mapping['charge'], self._hit_fields_mapping['frame']
         except KeyError:

@@ -18,7 +18,7 @@ def create_hits(n_hits, max_column, max_row, max_frame, max_charge, hit_dtype=np
         for i in range(n_hits):
             hits[i]['event_number'], hits[i]['frame'], hits[i]['column'], hits[i]['row'], hits[i]['charge'] = i / 3, i % max_frame, i % max_column + 1, 2 * i % max_row + 1, i % max_charge
     else:
-        hit_fields_inverse = dict((v, k) for k, v in hit_fields.iteritems())
+        hit_fields_inverse = dict((v, k) for k, v in hit_fields.items())
         for i in range(n_hits):
             hits[i][hit_fields_inverse['event_number']], hits[i][hit_fields_inverse['frame']], hits[i][hit_fields_inverse['column']], hits[i][hit_fields_inverse['row']], hits[i][hit_fields_inverse['charge']] = i / 3, i % max_frame, i % max_column + 1, 2 * i % max_row + 1, i % max_charge
     return hits
