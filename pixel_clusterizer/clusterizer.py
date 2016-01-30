@@ -1,26 +1,7 @@
 import numpy as np
-from numba import njit, jit
-import sys
-import logging
+from numba import njit
 
-from pixel_clusterizer import data_struct
 from docutils.utils.roman import OutOfRangeError
-
-
-def pprint_array(array):  # just to print the results in a nice way
-    offsets = []
-    for column_name in array.dtype.names:
-        sys.stdout.write(column_name)
-        sys.stdout.write('\t')
-        offsets.append(column_name.count(''))
-    for row in array:
-        print('')
-        for i, column in enumerate(row):
-            sys.stdout.write(' ' * (offsets[i] / 2))
-            sys.stdout.write(str(column))
-            sys.stdout.write('\t')
-    print('')
-
 
 # Fast functions that are compiled in time via numba
 @njit()
@@ -185,26 +166,86 @@ def cluster_hits(hits, cluster, n_hits, x_cluster_distance=1, y_cluster_distance
 
 
 class HitClusterizer(object):
+
     ''' Clusterizer class providing an interface for the jitted functions and storing settings.'''
-    def __init__(self, max_hits=10000):
+
+    def __init__(self, hit_fields=None, hit_dtype=None):
         # Std. settings
         self._create_cluster_hit_info_array = False
         self._max_cluster_hit_charge = 13
-        self._max_hits = max_hits
-        self._x_cluster_distance = 1
+        self._max_hits = 10000
+        self._x_cluster_distance = 2
         self._y_cluster_distance = 2
         self._frame_cluster_distance = 4
         self._max_cluster_hits = 300
         self._ignore_same_hits = True
 
-        self.hits_clustered = np.zeros(shape=(self._max_hits, ), dtype=data_struct.ClusterHitInfo)
-        self.cluster = np.zeros(shape=(self._max_hits, ), dtype=data_struct.ClusterInfo).view(np.recarray)  # Only recarrays no structured arrays are supported by numba
+        # Set the translation dictionary for the important hit value names
+        if hit_fields:
+            self.set_hit_fields(hit_fields)
+        else:
+            self.set_hit_fields({'event_number': 'event_number',
+                                 'column': 'column',
+                                 'row': 'row',
+                                 'charge': 'charge',
+                                 'frame': 'frame'
+                                 })
+
+        # Set the result data struct for clustered hits
+        if hit_dtype:
+            self.set_hit_dtype(hit_dtype)
+        else:
+            self._hit_clustered_struct = np.dtype([('event_number', '<i8'),
+                           ('frame', '<u1'),
+                           ('column', '<u2'),
+                           ('row', '<u2'),
+                           ('charge', '<u2'),
+                           ('cluster_ID', '<i2'),
+                           ('is_seed', '<u1'),
+                           ('cluster_size', '<u2'),
+                           ('n_cluster', '<u2')])
+
+        self.hits_clustered = np.zeros(shape=(self._max_hits, ), dtype=self._hit_clustered_struct)
+        self.cluster = np.zeros(shape=(self._max_hits, ), dtype=np.dtype([('event_number', '<i8'),
+                        ('ID', '<u2'),
+                        ('n_hits', '<u2'),
+                        ('charge', 'f4'),
+                        ('seed_column', '<u2'),
+                        ('seed_row', '<u2'),
+                        ('mean_column', 'f4'),
+                        ('mean_row', 'f4')]))
 
         self.n_cluster = 0
         self.n_hits = 0
 
     def reset(self):
         raise NotImplementedError
+
+    def set_hit_fields(self, hit_fields):  # Dictionary translating the hit fields event_number, column, row, charge, frame to chosen ones
+        self._hit_fields_mapping = dict((v, k) for k, v in hit_fields.iteritems())  # Create also the inverse dictionary for faster lookup
+        try:
+            self._hit_fields_mapping['event_number'], self._hit_fields_mapping['column'], self._hit_fields_mapping['row'], self._hit_fields_mapping['charge'], self._hit_fields_mapping['frame']
+        except KeyError:
+            raise ValueError('The hit fields event_number, column, row, charge and frame have to be defined!')
+        self._hit_fields_mapping_inverse = hit_fields
+
+    def set_hit_dtype(self, hit_dtype):  # The data type of the resulting hits clustered array
+        hit_clustered_dtype = []
+        for dtype_name, dtype in hit_dtype.descr:
+            try:
+                hit_clustered_dtype.append((self._hit_fields_mapping_inverse[dtype_name], dtype))
+            except KeyError:  # The hit has an unknown field, thus also add it to the hit_clustered
+                hit_clustered_dtype.append((dtype_name, dtype))
+        hit_clustered_dtype.extend([('cluster_ID', '<i2'), ('is_seed', '<u1'), ('cluster_size', '<u2'), ('n_cluster', '<u2')])
+        self._hit_clustered_struct = np.dtype(hit_clustered_dtype)
+        try:
+            self._hit_clustered_struct['event_number'], self._hit_clustered_struct['column'], self._hit_clustered_struct['row'], self._hit_clustered_struct['charge'], self._hit_clustered_struct['frame']
+        except KeyError:
+            raise ValueError('The clustered hit struct has to have a valid mapping to the fields: event_number, column, row, charge. Consider to set the mapping with set_hit_fields method first!')
+        self.hits_clustered = np.zeros(shape=(self._max_hits, ), dtype=self._hit_clustered_struct)
+
+    def set_max_hits(self, value):
+        self._max_hits = value
 
     def set_max_hit_charge(self, value):
         self._max_cluster_hit_charge = value
@@ -230,16 +271,19 @@ class HitClusterizer(object):
     def cluster_hits(self, hits):
         self.n_hits = 0  # Effectively deletes the already clustered hits
         self._delete_cluster()  # Delete the already created cluster
-        # The hit info is extended by the cluster info; this is only possible by creating a new hit info array
-        self.hits_clustered['frame'][self.n_hits:hits.shape[0]] = hits['frame']
-        self.hits_clustered['column'][self.n_hits:hits.shape[0]] = hits['column']
-        self.hits_clustered['row'][self.n_hits:hits.shape[0]] = hits['row']
-        self.hits_clustered['charge'][self.n_hits:hits.shape[0]] = hits['charge']
-        self.hits_clustered['event_number'][self.n_hits:hits.shape[0]] = hits['event_number']
+        self._check_dtype_compatibility(hits)
+        # The hit info is extended by the cluster info; this is only possible by creating a new hit info array and copy data
+        self.hits_clustered['frame'][self.n_hits:hits.shape[0]] = hits[self._hit_fields_mapping['frame']]
+        self.hits_clustered['column'][self.n_hits:hits.shape[0]] = hits[self._hit_fields_mapping['column']]
+        self.hits_clustered['row'][self.n_hits:hits.shape[0]] = hits[self._hit_fields_mapping['row']]
+        self.hits_clustered['charge'][self.n_hits:hits.shape[0]] = hits[self._hit_fields_mapping['charge']]
+        self.hits_clustered['event_number'][self.n_hits:hits.shape[0]] = hits[self._hit_fields_mapping['event_number']]
 
-        self.hits_clustered['cluster_ID'][self.n_hits:hits.shape[0]], self.hits_clustered['is_seed'][self.n_hits:hits.shape[0]], self.hits_clustered['cluster_size'][self.n_hits:hits.shape[0]], self.hits_clustered['n_cluster'][self.n_hits:hits.shape[0]], self.n_cluster = cluster_hits(hits.view(np.recarray), self.cluster, n_hits=hits.shape[0], x_cluster_distance=self._x_cluster_distance, y_cluster_distance=self._y_cluster_distance, frame_cluster_distance=self._frame_cluster_distance, max_n_cluster_hits=self._max_cluster_hits, max_cluster_hit_charge=self._max_cluster_hit_charge, ignore_same_hits=self._ignore_same_hits)
+        self.hits_clustered['cluster_ID'][self.n_hits:hits.shape[0]], self.hits_clustered['is_seed'][self.n_hits:hits.shape[0]], self.hits_clustered['cluster_size'][self.n_hits:hits.shape[0]], self.hits_clustered['n_cluster'][self.n_hits:hits.shape[0]], self.n_cluster = cluster_hits(self.hits_clustered[self.n_hits:hits.shape[0]].view(np.recarray), self.cluster.view(np.recarray), n_hits=hits.shape[0], x_cluster_distance=self._x_cluster_distance, y_cluster_distance=self._y_cluster_distance, frame_cluster_distance=self._frame_cluster_distance, max_n_cluster_hits=self._max_cluster_hits, max_cluster_hit_charge=self._max_cluster_hit_charge, ignore_same_hits=self._ignore_same_hits)
 
         self.n_hits += hits.shape[0]
+        self.hits_clustered.dtype.names = self._map_hit_field_names(self.hits_clustered.dtype.names)  # Rename the data fields for the result
+        self.cluster.dtype.names = self._map_cluster_field_names(self.cluster.dtype.names)  # Rename the data fields for the result
 
         return self.hits_clustered[:self.n_hits], self.cluster[:self.n_cluster]
 
@@ -254,6 +298,39 @@ class HitClusterizer(object):
         return cluster
 
     def _delete_cluster(self):
-        self.cluster = np.zeros(shape=(self._max_hits, ), dtype=data_struct.ClusterInfo).view(np.recarray)  # Only recarrays no structured arrays are supported by numba
+        self.cluster = np.zeros(shape=(self._max_hits, ), dtype=np.dtype([('event_number', '<i8'),
+                        ('ID', '<u2'),
+                        ('n_hits', '<u2'),
+                        ('charge', 'f4'),
+                        ('seed_column', '<u2'),
+                        ('seed_row', '<u2'),
+                        ('mean_column', 'f4'),
+                        ('mean_row', 'f4')]))
         self.n_cluster = 0
 
+    def _map_hit_field_names(self, dtype_names):  # Maps the hit field names from the internal convention to the external defined one
+        unpatched_field_names = list(dtype_names)
+        for index, unpatched_field_name in enumerate(unpatched_field_names):
+            if unpatched_field_name in self._hit_fields_mapping.keys():
+                unpatched_field_names[index] = self._hit_fields_mapping[unpatched_field_name]
+        return tuple(unpatched_field_names)
+
+    def _map_cluster_field_names(self, dtype_names):  # Maps the cluster field names from the internal convention to the external defined one
+        unpatched_field_names = list(dtype_names)
+        for index, unpatched_field_name in enumerate(unpatched_field_names):
+            if unpatched_field_name in self._hit_fields_mapping.keys():
+                unpatched_field_names[index] = self._hit_fields_mapping[unpatched_field_name]
+            elif unpatched_field_name == 'mean_column' and 'column' in self._hit_fields_mapping.keys():
+                unpatched_field_names[index] = 'mean_' + self._hit_fields_mapping['column']
+            elif unpatched_field_name == 'mean_row' and 'row' in self._hit_fields_mapping.keys():
+                unpatched_field_names[index] = 'mean_' + self._hit_fields_mapping['row']
+            elif unpatched_field_name == 'seed_column' and 'column' in self._hit_fields_mapping.keys():
+                unpatched_field_names[index] = 'seed_' + self._hit_fields_mapping['column']
+            elif unpatched_field_name == 'seed_row' and 'row' in self._hit_fields_mapping.keys():
+                unpatched_field_names[index] = 'seed_' + self._hit_fields_mapping['row']
+        return tuple(unpatched_field_names)
+
+    def _check_dtype_compatibility(self, hits):
+        ''' Takes the hit array and checks if the important data fields have the same data type than the hit clustered array'''
+        if self.hits_clustered['frame'].dtype != hits[self._hit_fields_mapping['frame']].dtype or self.hits_clustered['column'].dtype != hits[self._hit_fields_mapping['column']].dtype or self.hits_clustered['row'].dtype != hits[self._hit_fields_mapping['row']].dtype or self.hits_clustered['charge'].dtype != hits[self._hit_fields_mapping['charge']].dtype or self.hits_clustered['event_number'].dtype != hits[self._hit_fields_mapping['event_number']].dtype:
+            raise TypeError('The hit data type is unexpected. Consider calling the method set_hit_dtype first!')
