@@ -1,17 +1,23 @@
 # Pixel Clusterizer [![Build Status](https://travis-ci.org/SiLab-Bonn/pixel_clusterizer.svg?branch=master)](https://travis-ci.org/SiLab-Bonn/pixel_clusterizer) [![Build Status](https://ci.appveyor.com/api/projects/status/github/SiLab-Bonn/pixel_clusterizer)](https://ci.appveyor.com/project/SiLab-Bonn/pixel_clusterizer)
 
-Pixel_clusterizer is an easy to use pixel hit-clusterizer for Python. It clusters hits on an event basis in space and time. 
-
-The hits have to be a numpy recarray with the fields:
+Pixel_clusterizer is an easy to use pixel hit-clusterizer for Python. It clusters hits on an event basis in space and time.
+ 
+The hits have to be defined as a numpy recarray. The array has to have the following fields:
 - event_number
 - frame
 - column
 - row
 - charge
 
-The data type does not matter.
+or a mapping of the names has to be provided. The data type does not matter.
 
-Cluster information is created with the following fields:
+The result of the clustering is the hit array extended by the following fields:
+- cluster_ID
+- is_seed
+- cluster_size
+- n_cluster
+
+A new array with cluster information is also created created and has the following fields:
 - event_number
 - ID
 - size
@@ -21,11 +27,7 @@ Cluster information is created with the following fields:
 - mean_column
 - mean_row
 
-Also cluster hit information is created. The cluster hit information is the hit information extended by the following fields:
-- cluster_ID
-- is_seed
-- cluster_size
-- n_cluster
+
 
 # Installation
 
