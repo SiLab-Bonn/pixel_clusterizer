@@ -4,10 +4,9 @@ from builtins import str
 import sys
 
 from pixel_clusterizer.clusterizer import HitClusterizer
-from pixel_clusterizer import data_struct
 
 
-def pprint_array(array):  # just to print the results in a nice way
+def pprint_array(array):  # Just to print the arrays in a nice way
     offsets = []
     for column_name in array.dtype.names:
         sys.stdout.write(column_name)
@@ -23,35 +22,44 @@ def pprint_array(array):  # just to print the results in a nice way
 
 
 if __name__ == "__main__":
-    # You can define your hit struct as you like; but it has to contain at least the field names defined in pixel_clusterizer.data_struct.HitInfo
+    # You can define your hit struct as you like; but it has to either contain the field names defined in pixel_clusterizer.data_struct.HitInfo or a mapping of the names have to be provided.
     # The field data types do NOT have to be the same!
-    HitStruct = np.dtype([('event_number', '<i8'),
+    hit_dtype = np.dtype([('event_number', '<i8'),
                           ('frame', '<u1'),
                           ('column', '<u4'),
                           ('row', '<u4'),
                           ('charge', '<u1'),
-                          ('parameter', '<i4')])
+                          ('custom_parameter', '<i4')])
 
     # Create some fake data
-    hits = np.ones(shape=(2, ), dtype=HitStruct)
-
-    hits[0]['column'], hits[0]['row'], hits[0]['charge'], hits[0]['event_number'] = 17, 36, 30, 19
+    hits = np.ones(shape=(3, ), dtype=hit_dtype)
+    hits[0]['column'], hits[0]['row'], hits[0]['charge'], hits[0]['event_number'] = 17, 36, 11, 19
     hits[1]['column'], hits[1]['row'], hits[1]['charge'], hits[1]['event_number'] = 18, 36, 6, 19
-#     hits[2]['column'], hits[2]['row'], hits[2]['charge'], hits[2]['event_number'] = 7, 7, 1, 19
+    hits[2]['column'], hits[2]['row'], hits[2]['charge'], hits[2]['event_number'] = 7, 7, 1, 19
 
-    # create clusterizer object
+    # Initialize clusterizer object
     clusterizer = HitClusterizer()
 
-    # all working settings are listed here with std. values
+    # All cluster settings are listed here with their std. values
     clusterizer.set_x_cluster_distance(2)  # cluster distance in columns
     clusterizer.set_y_cluster_distance(2)  # cluster distance in rows
     clusterizer.set_frame_cluster_distance(4)   # cluster distance in time frames
-    clusterizer.set_max_hit_charge(29)  # only add hits with charge <= 13
+    clusterizer.set_max_hit_charge(13)  # only add hits with charge <= 29
+    clusterizer.ignore_same_hits(True)  # Ignore same hits in an event for clustering
+    clusterizer.set_max_cluster_hits(300)  # Expected max hits per cluster; limited by available RAM, has to be large enough
+    clusterizer.set_max_hits(10000)  # Expected hits per cluster_hits call; limited by available RAM
+    clusterizer.set_hit_dtype(hit_dtype)  # Set the data type of the hits (parameter data types and names)
+    clusterizer.set_hit_fields({'event_number': 'event_number',  # Set the mapping of the hit names to the internal names (here there is no mapping done, this is the std. setting)
+                                'column': 'column',
+                                'row': 'row',
+                                'charge': 'charge',
+                                'frame': 'frame'
+                                })
 
     # Main functions
     cluster_hits, cluster = clusterizer.cluster_hits(hits)  # cluster hits
 
-    # print input / output histograms
+    # Print input / output histograms
     print('INPUT:')
     pprint_array(hits)
     print('OUTPUT:')
