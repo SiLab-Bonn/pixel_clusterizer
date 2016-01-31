@@ -299,7 +299,7 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
     def test_different_hit_data_types(self):
-        # Define a different hit data structure with same names but different data types and number of fields. Numba automatically recompiles and the result should not change
+        # Define a different hit data structure with standard names but different data types and number of fields. Numba automatically recompiles and the result should not change
         hit_data_types = []
         hit_data_types.append([('event_number', '<i8'),
                                ('frame', '<u1'),
@@ -360,7 +360,7 @@ class TestClusterizer(unittest.TestCase):
             self.assertTrue((hits_clustered == expected_hit_result).all())
 
     def test_custom_hit_fields(self):
-        # Define a different hit data structure with different names but common data types.
+        # Define a different hit data structure with different names but standard data types.
         hit_dtype = np.dtype([('eventNumber', '<i8'),
                               ('relBCID', '<u1'),
                               ('column', '<u2'),
@@ -418,6 +418,177 @@ class TestClusterizer(unittest.TestCase):
         expected_hit_result['n_cluster'] = 1
 
         self.assertTrue((clusters == expected_cluster_result).all())
+        self.assertTrue((hits_clustered == expected_hit_result).all())
+
+    def test_adding_cluster_field(self):
+        clusterizer = HitClusterizer()
+
+        hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
+
+        # Define expected cluster output with extra field
+        expected_cluster_result = np.zeros(shape=(4, ), dtype=np.dtype([('event_number', '<i8'),
+                                                                        ('ID', '<u2'),
+                                                                        ('n_hits', '<u2'),
+                                                                        ('charge', 'f4'),
+                                                                        ('seed_column', '<u2'),
+                                                                        ('seed_row', '<u2'),
+                                                                        ('mean_column', 'f4'),
+                                                                        ('mean_row', 'f4'),
+                                                                        ('extra_field', 'f4')]))
+        expected_cluster_result['event_number'] = [0, 1, 2, 3]
+        expected_cluster_result['n_hits'] = [3, 3, 3, 1]
+        expected_cluster_result['charge'] = [1, 2, 1, 1]
+        expected_cluster_result['seed_column'] = [2, 4, 8, 10]
+        expected_cluster_result['seed_row'] = [3, 7, 15, 19]
+        expected_cluster_result['mean_column'] = [2.5, 5.5, 8.5, 10.5]
+        expected_cluster_result['mean_row'] = [3.5, 9.5, 15.5, 19.5]
+        expected_cluster_result['extra_field'] = [0., 0., 0., 0.]
+
+        # Define expected hit clustered output
+        expected_hit_result = np.zeros(shape=(10, ), dtype=np.dtype([('event_number', '<i8'),
+                                                                     ('frame', '<u1'),
+                                                                     ('column', '<u2'),
+                                                                     ('row', '<u2'),
+                                                                     ('charge', '<u2'),
+                                                                     ('cluster_ID', '<i2'),
+                                                                     ('is_seed', '<u1'),
+                                                                     ('cluster_size', '<u2'),
+                                                                     ('n_cluster', '<u2')]))
+        expected_hit_result['event_number'] = hits['event_number']
+        expected_hit_result['frame'] = hits['frame']
+        expected_hit_result['column'] = hits['column']
+        expected_hit_result['row'] = hits['row']
+        expected_hit_result['charge'] = hits['charge']
+        expected_hit_result['is_seed'] = [0, 1, 0, 1, 0, 0, 0, 1, 0, 1]
+        expected_hit_result['cluster_size'] = [3, 3, 3, 3, 3, 3, 3, 3, 3, 1]
+        expected_hit_result['n_cluster'] = 1
+
+        clusterizer.add_cluster_field(description=('extra_field', 'f4'))
+        hits_clustered, clusters = clusterizer.cluster_hits(hits)
+
+        self.assertTrue((clusters == expected_cluster_result).all())
+        self.assertTrue((hits_clustered == expected_hit_result).all())
+
+    def test_set_end_of_cluster_function(self):
+        # Initialize clusterizer object
+        clusterizer = HitClusterizer()
+
+        hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
+
+        # Define expected output
+        expected_cluster_result = np.zeros(shape=(4, ), dtype=np.dtype([('event_number', '<i8'),
+                                                                        ('ID', '<u2'),
+                                                                        ('n_hits', '<u2'),
+                                                                        ('charge', 'f4'),
+                                                                        ('seed_column', '<u2'),
+                                                                        ('seed_row', '<u2'),
+                                                                        ('mean_column', 'f4'),
+                                                                        ('mean_row', 'f4'),
+                                                                        ('seed_charge', 'f4')]))
+        expected_cluster_result['event_number'] = [0, 1, 2, 3]
+        expected_cluster_result['n_hits'] = [3, 3, 3, 1]
+        expected_cluster_result['charge'] = [1, 2, 1, 1]
+        expected_cluster_result['seed_column'] = [2, 4, 8, 10]
+        expected_cluster_result['seed_row'] = [3, 7, 15, 19]
+        expected_cluster_result['mean_column'] = [2.5, 5.5, 8.5, 10.5]
+        expected_cluster_result['mean_row'] = [3.5, 9.5, 15.5, 19.5]
+        expected_cluster_result['seed_charge'] = [1., 1., 1., 1.]
+
+        #
+        expected_hit_result = np.zeros(shape=(10, ), dtype=np.dtype([('event_number', '<i8'),
+                                                                     ('frame', '<u1'),
+                                                                     ('column', '<u2'),
+                                                                     ('row', '<u2'),
+                                                                     ('charge', '<u2'),
+                                                                     ('cluster_ID', '<i2'),
+                                                                     ('is_seed', '<u1'),
+                                                                     ('cluster_size', '<u2'),
+                                                                     ('n_cluster', '<u2')]))
+        expected_hit_result['event_number'] = hits['event_number']
+        expected_hit_result['frame'] = hits['frame']
+        expected_hit_result['column'] = hits['column']
+        expected_hit_result['row'] = hits['row']
+        expected_hit_result['charge'] = hits['charge']
+        expected_hit_result['is_seed'] = [0, 1, 0, 1, 0, 0, 0, 1, 0, 1]
+        expected_hit_result['cluster_size'] = [3, 3, 3, 3, 3, 3, 3, 3, 3, 1]
+        expected_hit_result['n_cluster'] = 1
+
+        clusterizer.add_cluster_field(description=('seed_charge', 'f4'))  # Add an additional field to hold the result of the end_of_cluster_function calculation (here: seed charge)
+
+        # The end of loop function has to define all of the following arguments, even when they are not used
+        # It has to be compile able by numba in non python mode
+        # This end_of_cluster_function sets the additional seed_charge field
+        def end_of_cluster_function(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, actual_cluster_index, actual_event_hit_index, actual_cluster_hit_indices, seed_index):
+            cluster[actual_cluster_index].seed_charge = hits[seed_index].charge
+
+        clusterizer.set_end_of_cluster_function(end_of_cluster_function)  # Set the new end_of_cluster_function
+
+        # Main function
+        hits_clustered, cluster = clusterizer.cluster_hits(hits)  # cluster hits
+
+        self.assertTrue((cluster == expected_cluster_result).all())
+        self.assertTrue((hits_clustered == expected_hit_result).all())
+
+    def test_set_end_of_event_function(self):
+        # Initialize clusterizer object
+        clusterizer = HitClusterizer()
+
+        hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
+
+        # Define expected output
+        expected_cluster_result = np.zeros(shape=(4, ), dtype=np.dtype([('event_number', '<i8'),
+                                                                        ('ID', '<u2'),
+                                                                        ('n_hits', '<u2'),
+                                                                        ('charge', 'f4'),
+                                                                        ('seed_column', '<u2'),
+                                                                        ('seed_row', '<u2'),
+                                                                        ('mean_column', 'f4'),
+                                                                        ('mean_row', 'f4'),
+                                                                        ('n_cluster', '<u1')]))
+        expected_cluster_result['event_number'] = [0, 1, 2, 3]
+        expected_cluster_result['n_hits'] = [3, 3, 3, 1]
+        expected_cluster_result['charge'] = [1, 2, 1, 1]
+        expected_cluster_result['seed_column'] = [2, 4, 8, 10]
+        expected_cluster_result['seed_row'] = [3, 7, 15, 19]
+        expected_cluster_result['mean_column'] = [2.5, 5.5, 8.5, 10.5]
+        expected_cluster_result['mean_row'] = [3.5, 9.5, 15.5, 19.5]
+        expected_cluster_result['n_cluster'] = [1, 1, 1, 1]
+
+        #
+        expected_hit_result = np.zeros(shape=(10, ), dtype=np.dtype([('event_number', '<i8'),
+                                                                     ('frame', '<u1'),
+                                                                     ('column', '<u2'),
+                                                                     ('row', '<u2'),
+                                                                     ('charge', '<u2'),
+                                                                     ('cluster_ID', '<i2'),
+                                                                     ('is_seed', '<u1'),
+                                                                     ('cluster_size', '<u2'),
+                                                                     ('n_cluster', '<u2')]))
+        expected_hit_result['event_number'] = hits['event_number']
+        expected_hit_result['frame'] = hits['frame']
+        expected_hit_result['column'] = hits['column']
+        expected_hit_result['row'] = hits['row']
+        expected_hit_result['charge'] = hits['charge']
+        expected_hit_result['is_seed'] = [0, 1, 0, 1, 0, 0, 0, 1, 0, 1]
+        expected_hit_result['cluster_size'] = [3, 3, 3, 3, 3, 3, 3, 3, 3, 1]
+        expected_hit_result['n_cluster'] = 1
+
+        clusterizer.add_cluster_field(description=('n_cluster', '<u1'))  # Add an additional field to hold the result of the end_of_cluster_function calculation (here: seed charge)
+
+        # The end of loop function has to define all of the following arguments, even when they are not used
+        # It has to be compile able by numba in non python mode
+        # This end_of_event_function sets the additional n_cluster field
+        def end_of_event_function(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, actual_event_hit_index, new_actual_event_hit_index, next_cluster_id, actual_event_cluster_index):
+            # Set the number of clusters info (n_cluster)for clusters of the event
+            for i in range(actual_event_cluster_index, actual_event_cluster_index + next_cluster_id):
+                cluster[i].n_cluster = n_cluster[actual_event_hit_index]
+
+        clusterizer.set_end_of_event_function(end_of_event_function)  # Set the new end_of_cluster_function
+
+        # Main function
+        hits_clustered, cluster = clusterizer.cluster_hits(hits)  # cluster hits
+
+        self.assertTrue((cluster == expected_cluster_result).all())
         self.assertTrue((hits_clustered == expected_hit_result).all())
 
 if __name__ == '__main__':
