@@ -22,6 +22,9 @@ def _finish_event(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, a
         cluster[i].mean_column /= (cluster[i].charge + cluster[i].n_hits)
         cluster[i].mean_row /= (cluster[i].charge + cluster[i].n_hits)
 
+    # Call end of event function hook
+    _end_of_event_function(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, actual_event_hit_index, new_actual_event_hit_index, next_cluster_id, actual_event_cluster_index)
+
 
 @njit()
 def _reset_cluster_hit_indices(actual_cluster_hit_indices, actual_cluster_size):
@@ -40,7 +43,19 @@ def _is_in_max_difference(value_1, value_2, max_difference):
 
 
 @njit()
-def cluster_hits(hits, cluster, n_hits, x_cluster_distance=1, y_cluster_distance=2, frame_cluster_distance=4, max_n_cluster_hits=30, max_cluster_hit_charge=13, ignore_same_hits=True):
+def _end_of_cluster_function(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, actual_cluster_index, actual_event_hit_index, actual_cluster_hit_indices, seed_index):
+    ''' Empty function that can be overwritten with a new function that is called at the end of each cluster '''
+    pass
+
+
+@njit()
+def _end_of_event_function(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, actual_cluster_index, actual_event_hit_index, actual_cluster_hit_indices, seed_index):
+    ''' Empty function that can be overwritten with a new function that is called at the end of event '''
+    pass
+
+
+@njit()
+def _cluster_hits(hits, cluster, n_hits, x_cluster_distance=1, y_cluster_distance=2, frame_cluster_distance=4, max_n_cluster_hits=30, max_cluster_hit_charge=13, ignore_same_hits=True):
     ''' Main precompiled function that loopes over the hits and clusters them '''
     # Additional cluster info for the hit array
     cluster_id = np.zeros(shape=hits.shape, dtype=np.int16) - 1  # Cluster ID -1 means hit not assigned to cluster
@@ -161,6 +176,9 @@ def cluster_hits(hits, cluster, n_hits, x_cluster_distance=1, y_cluster_distance
                 break
             cluster_size[j + actual_event_hit_index] = actual_cluster_size
 
+        # Call end of cluster function hook
+        _end_of_cluster_function(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, actual_event_cluster_index + actual_cluster_id, actual_event_hit_index, actual_cluster_hit_indices, seed_index)
+
     # Last event is assumed to be finished at the end of the hit array, thus add info
     _finish_event(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, actual_event_hit_index, i + 1, next_cluster_id, actual_event_cluster_index)
     return cluster_id, is_seed, cluster_size, n_cluster, actual_event_cluster_index + next_cluster_id
@@ -196,33 +214,46 @@ class HitClusterizer(object):
         if hit_dtype:
             self.set_hit_dtype(hit_dtype)
         else:
-            self._hit_clustered_struct = np.dtype([('event_number', '<i8'),
-                           ('frame', '<u1'),
-                           ('column', '<u2'),
-                           ('row', '<u2'),
-                           ('charge', '<u2'),
-                           ('cluster_ID', '<i2'),
-                           ('is_seed', '<u1'),
-                           ('cluster_size', '<u2'),
-                           ('n_cluster', '<u2')])
+            self._hit_clustered_descr = [('event_number', '<i8'),
+                                         ('frame', '<u1'),
+                                         ('column', '<u2'),
+                                         ('row', '<u2'),
+                                         ('charge', '<u2'),
+                                         ('cluster_ID', '<i2'),
+                                         ('is_seed', '<u1'),
+                                         ('cluster_size', '<u2'),
+                                         ('n_cluster', '<u2')]
 
-        self.hits_clustered = np.zeros(shape=(self._max_hits, ), dtype=self._hit_clustered_struct)
-        self.cluster = np.zeros(shape=(self._max_hits, ), dtype=np.dtype([('event_number', '<i8'),
-                        ('ID', '<u2'),
-                        ('n_hits', '<u2'),
-                        ('charge', 'f4'),
-                        ('seed_column', '<u2'),
-                        ('seed_row', '<u2'),
-                        ('mean_column', 'f4'),
-                        ('mean_row', 'f4')]))
+        self._cluster_struct_descr = [('event_number', '<i8'),
+                                      ('ID', '<u2'),
+                                      ('n_hits', '<u2'),
+                                      ('charge', 'f4'),
+                                      ('seed_column', '<u2'),
+                                      ('seed_row', '<u2'),
+                                      ('mean_column', 'f4'),
+                                      ('mean_row', 'f4')]
+
+        self.hits_clustered = np.zeros(shape=(self._max_hits, ), dtype=self._hit_clustered_descr)
+        self.cluster = np.zeros(shape=(self._max_hits, ), dtype=np.dtype(self._cluster_struct_descr))
 
         self.n_cluster = 0
         self.n_hits = 0
 
-    def reset(self):
-        raise NotImplementedError
+        self.reset()
 
-    def set_hit_fields(self, hit_fields):  # Dictionary translating the hit fields event_number, column, row, charge, frame to chosen ones
+    def reset(self):  # Resets the maybe overwritten function hooks, otherwise they are stored as a module global and not reset on clusterizer initialization
+        global _end_of_cluster_function, _end_of_event_function
+
+        def end_of_cluster_function(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, actual_cluster_index, actual_event_hit_index, actual_cluster_hit_indices, seed_index):
+            return
+
+        def end_of_event_function(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, actual_cluster_index, actual_event_hit_index, actual_cluster_hit_indices, seed_index):
+            return
+        _end_of_cluster_function = njit()(end_of_cluster_function)
+        _end_of_event_function = njit()(end_of_event_function)
+
+    def set_hit_fields(self, hit_fields):
+        ''' Tell the clusterizer the meaning of the field names (e.g.: the field name x means column). '''
         self._hit_fields_mapping = dict((v, k) for k, v in hit_fields.items())  # Create also the inverse dictionary for faster lookup
         try:
             self._hit_fields_mapping['event_number'], self._hit_fields_mapping['column'], self._hit_fields_mapping['row'], self._hit_fields_mapping['charge'], self._hit_fields_mapping['frame']
@@ -230,32 +261,41 @@ class HitClusterizer(object):
             raise ValueError('The hit fields event_number, column, row, charge and frame have to be defined!')
         self._hit_fields_mapping_inverse = hit_fields
 
-    def set_hit_dtype(self, hit_dtype):  # The data type of the resulting hits clustered array
-        hit_clustered_dtype = []
+    def set_hit_dtype(self, hit_dtype):
+        ''' Set the data type of the hits. Clusterizer has to know the data type to produce the clustered hit result with the same data types.'''
+        hit_clustered_descr = []
         for dtype_name, dtype in hit_dtype.descr:
             try:
-                hit_clustered_dtype.append((self._hit_fields_mapping_inverse[dtype_name], dtype))
+                hit_clustered_descr.append((self._hit_fields_mapping_inverse[dtype_name], dtype))
             except KeyError:  # The hit has an unknown field, thus also add it to the hit_clustered
-                hit_clustered_dtype.append((dtype_name, dtype))
-        hit_clustered_dtype.extend([('cluster_ID', '<i2'), ('is_seed', '<u1'), ('cluster_size', '<u2'), ('n_cluster', '<u2')])
-        self._hit_clustered_struct = np.dtype(hit_clustered_dtype)
+                hit_clustered_descr.append((dtype_name, dtype))
+        hit_clustered_descr.extend([('cluster_ID', '<i2'), ('is_seed', '<u1'), ('cluster_size', '<u2'), ('n_cluster', '<u2')])
+        self._hit_clustered_descr = hit_clustered_descr
+        hit_clustered_dtype = np.dtype(hit_clustered_descr)  # Convert to numpy dtype for following sanity check
+        # Check if the minimum required fields are there
         try:
-            self._hit_clustered_struct['event_number'], self._hit_clustered_struct['column'], self._hit_clustered_struct['row'], self._hit_clustered_struct['charge'], self._hit_clustered_struct['frame']
+            hit_clustered_dtype['event_number'], hit_clustered_dtype['column'], hit_clustered_dtype['row'], hit_clustered_dtype['charge'], hit_clustered_dtype['frame']
         except KeyError:
             raise ValueError('The clustered hit struct has to have a valid mapping to the fields: event_number, column, row, charge. Consider to set the mapping with set_hit_fields method first!')
-        self.hits_clustered = np.zeros(shape=(self._max_hits, ), dtype=self._hit_clustered_struct)
+        self.hits_clustered = np.zeros(shape=(self._max_hits, ), dtype=np.dtype(self._hit_clustered_descr))  # Hit clustered result array has to be reinitialized with new data types
+
+    def add_cluster_field(self, description):
+        ''' Adds a field to the cluster result array. Hs to be defined as a numpy dtype entry, e.g.: ('parameter', '<i4') '''
+        self._cluster_struct_descr.append(description)
+        self.cluster = np.zeros(shape=(self._max_hits, ), dtype=np.dtype(self._cluster_struct_descr))  # Cluster result array has to be reinitialized with new data types
+
+    def set_end_of_cluster_function(self, function):
+        global _end_of_cluster_function
+        _end_of_cluster_function = njit()(function)  # Overwrite end of cluster function by new provided function
+
+    def set_end_of_event_function(self, function):
+        global _end_of_event_function
+        _end_of_event_function = njit()(function)  # Overwrite end of cluster function by new provided function
 
     def set_max_hits(self, value):
         self._max_hits = value
-        self.hits_clustered = np.zeros(shape=(self._max_hits, ), dtype=self._hit_clustered_struct)
-        self.cluster = np.zeros(shape=(self._max_hits, ), dtype=np.dtype([('event_number', '<i8'),
-                        ('ID', '<u2'),
-                        ('n_hits', '<u2'),
-                        ('charge', 'f4'),
-                        ('seed_column', '<u2'),
-                        ('seed_row', '<u2'),
-                        ('mean_column', 'f4'),
-                        ('mean_row', 'f4')]))
+        self.hits_clustered = np.zeros(shape=(self._max_hits, ), dtype=np.dtype(self._hit_clustered_descr))
+        self.cluster = np.zeros(shape=(self._max_hits, ), dtype=np.dtype(self._cluster_struct_descr))
 
     def set_max_hit_charge(self, value):
         self._max_cluster_hit_charge = value
@@ -289,7 +329,15 @@ class HitClusterizer(object):
         self.hits_clustered['charge'][self.n_hits:hits.shape[0]] = hits[self._hit_fields_mapping['charge']]
         self.hits_clustered['event_number'][self.n_hits:hits.shape[0]] = hits[self._hit_fields_mapping['event_number']]
 
-        self.hits_clustered['cluster_ID'][self.n_hits:hits.shape[0]], self.hits_clustered['is_seed'][self.n_hits:hits.shape[0]], self.hits_clustered['cluster_size'][self.n_hits:hits.shape[0]], self.hits_clustered['n_cluster'][self.n_hits:hits.shape[0]], self.n_cluster = cluster_hits(self.hits_clustered[self.n_hits:hits.shape[0]].view(np.recarray), self.cluster.view(np.recarray), n_hits=hits.shape[0], x_cluster_distance=self._x_cluster_distance, y_cluster_distance=self._y_cluster_distance, frame_cluster_distance=self._frame_cluster_distance, max_n_cluster_hits=self._max_cluster_hits, max_cluster_hit_charge=self._max_cluster_hit_charge, ignore_same_hits=self._ignore_same_hits)
+        self.hits_clustered['cluster_ID'][self.n_hits:hits.shape[0]], self.hits_clustered['is_seed'][self.n_hits:hits.shape[0]], self.hits_clustered['cluster_size'][self.n_hits:hits.shape[0]], self.hits_clustered['n_cluster'][self.n_hits:hits.shape[0]], self.n_cluster = _cluster_hits(self.hits_clustered[self.n_hits:hits.shape[0]].view(np.recarray),
+                                                                                                                                                                                                                                                                                             self.cluster.view(np.recarray),
+                                                                                                                                                                                                                                                                                             n_hits=hits.shape[0],
+                                                                                                                                                                                                                                                                                             x_cluster_distance=self._x_cluster_distance,
+                                                                                                                                                                                                                                                                                             y_cluster_distance=self._y_cluster_distance,
+                                                                                                                                                                                                                                                                                             frame_cluster_distance=self._frame_cluster_distance,
+                                                                                                                                                                                                                                                                                             max_n_cluster_hits=self._max_cluster_hits,
+                                                                                                                                                                                                                                                                                             max_cluster_hit_charge=self._max_cluster_hit_charge,
+                                                                                                                                                                                                                                                                                             ignore_same_hits=self._ignore_same_hits)
 
         self.n_hits += hits.shape[0]
         self.hits_clustered.dtype.names = self._map_hit_field_names(self.hits_clustered.dtype.names)  # Rename the data fields for the result
@@ -308,14 +356,7 @@ class HitClusterizer(object):
         return cluster
 
     def _delete_cluster(self):
-        self.cluster = np.zeros(shape=(self._max_hits, ), dtype=np.dtype([('event_number', '<i8'),
-                        ('ID', '<u2'),
-                        ('n_hits', '<u2'),
-                        ('charge', 'f4'),
-                        ('seed_column', '<u2'),
-                        ('seed_row', '<u2'),
-                        ('mean_column', 'f4'),
-                        ('mean_row', 'f4')]))
+        self.cluster = np.zeros(shape=(self._max_hits, ), dtype=np.dtype(self._cluster_struct_descr))
         self.n_cluster = 0
 
     def _map_hit_field_names(self, dtype_names):  # Maps the hit field names from the internal convention to the external defined one
@@ -343,4 +384,4 @@ class HitClusterizer(object):
     def _check_dtype_compatibility(self, hits):
         ''' Takes the hit array and checks if the important data fields have the same data type than the hit clustered array'''
         if self.hits_clustered['frame'].dtype != hits[self._hit_fields_mapping['frame']].dtype or self.hits_clustered['column'].dtype != hits[self._hit_fields_mapping['column']].dtype or self.hits_clustered['row'].dtype != hits[self._hit_fields_mapping['row']].dtype or self.hits_clustered['charge'].dtype != hits[self._hit_fields_mapping['charge']].dtype or self.hits_clustered['event_number'].dtype != hits[self._hit_fields_mapping['event_number']].dtype:
-            raise TypeError('The hit data type is unexpected. Consider calling the method set_hit_dtype first!')
+            raise TypeError('The hit data type is unexpected. Consider calling the method set_hit_dtype first! Got/Expected:', hits.dtype, self.hits_clustered.dtype)
