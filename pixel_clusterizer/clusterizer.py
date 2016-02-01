@@ -370,6 +370,7 @@ class HitClusterizer(object):
     def cluster_hits(self, hits):
         self.n_hits = 0  # Effectively deletes the already clustered hits
         self._delete_cluster()  # Delete the already created cluster
+        self.hits_clustered.dtype.names = self._unmap_hit_field_names(self.hits_clustered.dtype.names)  # Rename the data fields for the result
         self._check_struct_compatibility(hits)
         # The hit info is extended by the cluster info; this is only possible by creating a new hit info array and copy data
         self.hits_clustered['frame'][self.n_hits:hits.shape[0]] = hits[self._hit_fields_mapping['frame']]
@@ -413,6 +414,13 @@ class HitClusterizer(object):
         for index, unpatched_field_name in enumerate(unpatched_field_names):
             if unpatched_field_name in self._hit_fields_mapping.keys():
                 unpatched_field_names[index] = self._hit_fields_mapping[unpatched_field_name]
+        return tuple(unpatched_field_names)
+
+    def _unmap_hit_field_names(self, dtype_names):  # Maps the hit field names from the external convention to the internal defined one
+        unpatched_field_names = list(dtype_names)
+        for index, unpatched_field_name in enumerate(unpatched_field_names):
+            if unpatched_field_name in self._hit_fields_mapping_inverse.keys():
+                unpatched_field_names[index] = self._hit_fields_mapping_inverse[unpatched_field_name]
         return tuple(unpatched_field_names)
 
     def _map_cluster_field_names(self, dtype_names):  # Maps the cluster field names from the internal convention to the external defined one
