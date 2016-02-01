@@ -243,13 +243,13 @@ class HitClusterizer(object):
             self.set_cluster_dtype(cluster_dtype)
         else:
             self._cluster_descr = [('event_number', '<i8'),
-                                          ('ID', '<u2'),
-                                          ('n_hits', '<u2'),
-                                          ('charge', 'f4'),
-                                          ('seed_column', '<u2'),
-                                          ('seed_row', '<u2'),
-                                          ('mean_column', 'f4'),
-                                          ('mean_row', 'f4')]
+                                   ('ID', '<u2'),
+                                   ('n_hits', '<u2'),
+                                   ('charge', 'f4'),
+                                   ('seed_column', '<u2'),
+                                   ('seed_row', '<u2'),
+                                   ('mean_column', 'f4'),
+                                   ('mean_row', 'f4')]
 
         self.hits_clustered = np.zeros(shape=(self._max_hits, ), dtype=self._hit_clustered_descr)
         self.cluster = np.zeros(shape=(self._max_hits, ), dtype=np.dtype(self._cluster_descr))
@@ -271,7 +271,7 @@ class HitClusterizer(object):
         _end_of_event_function = njit()(end_of_event_function)
 
     def set_hit_fields(self, hit_fields):
-        ''' Tell the clusterizer the meaning of the field names (e.g.: the field name x means column). '''
+        ''' Tell the clusterizer the meaning of the field names (e.g.: the field name x means column). Field that are not mentioned here are NOT copied into the result array.'''
         self._hit_fields_mapping = dict((v, k) for k, v in hit_fields.items())  # Create also the inverse dictionary for faster lookup
         try:
             self._hit_fields_mapping['event_number'], self._hit_fields_mapping['column'], self._hit_fields_mapping['row'], self._hit_fields_mapping['charge'], self._hit_fields_mapping['frame']
@@ -370,14 +370,12 @@ class HitClusterizer(object):
     def cluster_hits(self, hits):
         self.n_hits = 0  # Effectively deletes the already clustered hits
         self._delete_cluster()  # Delete the already created cluster
-        self.hits_clustered.dtype.names = self._unmap_hit_field_names(self.hits_clustered.dtype.names)  # Rename the data fields for the result
+        self.hits_clustered.dtype.names = self._unmap_hit_field_names(self.hits_clustered.dtype.names)  # Reset the data fields from previous renaming
         self._check_struct_compatibility(hits)
+
         # The hit info is extended by the cluster info; this is only possible by creating a new hit info array and copy data
-        self.hits_clustered['frame'][self.n_hits:hits.shape[0]] = hits[self._hit_fields_mapping['frame']]
-        self.hits_clustered['column'][self.n_hits:hits.shape[0]] = hits[self._hit_fields_mapping['column']]
-        self.hits_clustered['row'][self.n_hits:hits.shape[0]] = hits[self._hit_fields_mapping['row']]
-        self.hits_clustered['charge'][self.n_hits:hits.shape[0]] = hits[self._hit_fields_mapping['charge']]
-        self.hits_clustered['event_number'][self.n_hits:hits.shape[0]] = hits[self._hit_fields_mapping['event_number']]
+        for internal_name, external_name in self._hit_fields_mapping.items():
+            self.hits_clustered[internal_name][self.n_hits:hits.shape[0]] = hits[external_name]
 
         self.hits_clustered['cluster_ID'][self.n_hits:hits.shape[0]], self.hits_clustered['is_seed'][self.n_hits:hits.shape[0]], self.hits_clustered['cluster_size'][self.n_hits:hits.shape[0]], self.hits_clustered['n_cluster'][self.n_hits:hits.shape[0]], self.n_cluster = _cluster_hits(self.hits_clustered[self.n_hits:hits.shape[0]].view(np.recarray),
                                                                                                                                                                                                                                                                                              self.cluster.view(np.recarray),
