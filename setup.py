@@ -12,7 +12,7 @@ with open('requirements.txt') as f:
 setup(
     name='pixel_clusterizer',
     version=version,
-    description='A clusterizer to cluster hits of a pixel detector with Python. The clustering happens with numba on numpy arrays to increase the speed.',
+    description='A fast, generic, and easy to use clusterizer to cluster hits of a pixel matrix in Python. The clustering happens with numba on numpy arrays to increase the speed.',
     url='https://github.com/SiLab-Bonn/pixel_clusterizer',
     license='GNU LESSER GENERAL PUBLIC LICENSE Version 2.1',
     long_description='',
