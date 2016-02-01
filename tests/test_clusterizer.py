@@ -359,6 +359,68 @@ class TestClusterizer(unittest.TestCase):
             self.assertTrue((clusters == expected_cluster_result).all())
             self.assertTrue((hits_clustered == expected_hit_result).all())
 
+    def test_different_cluster_data_types(self):
+        # Define a different hit data structure with standard names but different data types and number of fields. Numba automatically recompiles and the result should not change
+        cluster_data_types = []
+        cluster_data_types.append([('event_number', '<f8'),
+                                   ('ID', '<u2'),
+                                   ('n_hits', '<u2'),
+                                   ('charge', 'f4'),
+                                   ('seed_column', '<i2'),
+                                   ('seed_row', '<i2'),
+                                   ('mean_column', 'f4'),
+                                   ('mean_row', 'f4')])
+        cluster_data_types.append([('event_number', '<u8'),
+                                   ('ID', '<u2'),
+                                   ('n_hits', '<u2'),
+                                   ('charge', 'u4'),
+                                   ('seed_column', '<u2'),
+                                   ('seed_row', '<u2'),
+                                   ('mean_column', 'f4'),
+                                   ('mean_row', 'f4')])
+
+        # Initialize clusterizer
+        clusterizer = HitClusterizer()
+
+        # Create fake data with actual hit data structure
+        hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
+
+        expected_hit_result = np.zeros(shape=(10, ), dtype=np.dtype([('event_number', '<i8'),
+                                                                     ('frame', '<u1'),
+                                                                     ('column', '<u2'),
+                                                                     ('row', '<u2'),
+                                                                     ('charge', '<u2'),
+                                                                     ('cluster_ID', '<i2'),
+                                                                     ('is_seed', '<u1'),
+                                                                     ('cluster_size', '<u2'),
+                                                                     ('n_cluster', '<u2')]))
+        expected_hit_result['event_number'] = hits['event_number']
+        expected_hit_result['frame'] = hits['frame']
+        expected_hit_result['column'] = hits['column']
+        expected_hit_result['row'] = hits['row']
+        expected_hit_result['charge'] = hits['charge']
+        expected_hit_result['is_seed'] = [0, 1, 0, 1, 0, 0, 0, 1, 0, 1]
+        expected_hit_result['cluster_size'] = [3, 3, 3, 3, 3, 3, 3, 3, 3, 1]
+        expected_hit_result['n_cluster'] = 1
+
+        for cluster_data_type in cluster_data_types:
+            clusterizer.set_cluster_dtype(np.dtype(cluster_data_type))
+
+            # Define expected output
+            expected_cluster_result = np.zeros(shape=(4, ), dtype=np.dtype(cluster_data_type))
+            expected_cluster_result['event_number'] = [0, 1, 2, 3]
+            expected_cluster_result['n_hits'] = [3, 3, 3, 1]
+            expected_cluster_result['charge'] = [1, 2, 1, 1]
+            expected_cluster_result['seed_column'] = [2, 4, 8, 10]
+            expected_cluster_result['seed_row'] = [3, 7, 15, 19]
+            expected_cluster_result['mean_column'] = [2.5, 5.5, 8.5, 10.5]
+            expected_cluster_result['mean_row'] = [3.5, 9.5, 15.5, 19.5]
+
+            hits_clustered, clusters = clusterizer.cluster_hits(hits)  # Cluster hits
+            # Test results
+            self.assertTrue((clusters == expected_cluster_result).all())
+            self.assertTrue((hits_clustered == expected_hit_result).all())
+
     def test_custom_hit_fields(self):
         # Define a different hit data structure with different names but standard data types.
         hit_dtype = np.dtype([('eventNumber', '<i8'),
@@ -413,6 +475,61 @@ class TestClusterizer(unittest.TestCase):
         expected_hit_result['column'] = hits['column']
         expected_hit_result['row'] = hits['row']
         expected_hit_result['tot'] = hits['tot']
+        expected_hit_result['is_seed'] = [0, 1, 0, 1, 0, 0, 0, 1, 0, 1]
+        expected_hit_result['cluster_size'] = [3, 3, 3, 3, 3, 3, 3, 3, 3, 1]
+        expected_hit_result['n_cluster'] = 1
+
+    def test_custom_cluster_fields(self):
+        # Define a different cluster data structure with different names but standard data types.
+        cluster_dtype = np.dtype([('eventNumber', '<i8'),
+                                  ('ID', '<u2'),
+                                  ('size', '<u2'),
+                                  ('tot', 'f4'),
+                                  ('seed_column', '<u2'),
+                                  ('seed_row', '<u2'),
+                                  ('mean_column', 'f4'),
+                                  ('mean_row', 'f4')])
+
+        cluster_fields = {'eventNumber': 'event_number',
+                          'ID': 'ID',
+                          'size': 'n_hits',
+                          'tot': 'charge',
+                                'seed_column': 'seed_column',
+                                'seed_row': 'seed_row',
+                                'mean_column': 'mean_column',
+                                'mean_row': 'mean_row'
+                          }
+
+        # Initialize clusterizer and cluster test hits with self defined data type names
+        clusterizer = HitClusterizer(cluster_fields=cluster_fields, cluster_dtype=cluster_dtype)
+        hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
+        hits_clustered, clusters = clusterizer.cluster_hits(hits)
+
+        # Define expected output
+        expected_cluster_result = np.zeros(shape=(4, ), dtype=cluster_dtype)
+        expected_cluster_result['eventNumber'] = [0, 1, 2, 3]
+        expected_cluster_result['size'] = [3, 3, 3, 1]
+        expected_cluster_result['tot'] = [1, 2, 1, 1]
+        expected_cluster_result['seed_column'] = [2, 4, 8, 10]
+        expected_cluster_result['seed_row'] = [3, 7, 15, 19]
+        expected_cluster_result['mean_column'] = [2.5, 5.5, 8.5, 10.5]
+        expected_cluster_result['mean_row'] = [3.5, 9.5, 15.5, 19.5]
+
+        # Define expected output. Cluster hit data types are different and thus the expected results have to have different data types
+        expected_hit_result = np.zeros(shape=(10, ), dtype=np.dtype([('event_number', '<i8'),
+                                                                     ('frame', '<u1'),
+                                                                     ('column', '<u2'),
+                                                                     ('row', '<u2'),
+                                                                     ('charge', '<u2'),
+                                                                     ('cluster_ID', '<i2'),
+                                                                     ('is_seed', '<u1'),
+                                                                     ('cluster_size', '<u2'),
+                                                                     ('n_cluster', '<u2')]))
+        expected_hit_result['event_number'] = hits['event_number']
+        expected_hit_result['frame'] = hits['frame']
+        expected_hit_result['column'] = hits['column']
+        expected_hit_result['row'] = hits['row']
+        expected_hit_result['charge'] = hits['charge']
         expected_hit_result['is_seed'] = [0, 1, 0, 1, 0, 0, 0, 1, 0, 1]
         expected_hit_result['cluster_size'] = [3, 3, 3, 3, 3, 3, 3, 3, 3, 1]
         expected_hit_result['n_cluster'] = 1
