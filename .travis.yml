@@ -32,6 +32,7 @@ deploy:
   on:
     tags: true
     repo: SiLab-Bonn/pixel_clusterizer
+  distributions: "sdist bdist_wheel"
 
 env:
   global:
