@@ -140,7 +140,7 @@ def _cluster_hits(hits, cluster, n_hits, x_cluster_distance=1, y_cluster_distanc
                     break
 
                 # Check if event hit belongs to actual hit and thus to the actual cluster
-                if _is_in_max_difference(hits[actual_inner_loop_hit_index]['column'], hits[k]['column'], x_cluster_distance) and _is_in_max_difference(hits[actual_inner_loop_hit_index]['row'], hits[k]['row'], y_cluster_distance) and _is_in_max_difference(hits[actual_inner_loop_hit_index].frame, hits[k].frame, frame_cluster_distance):
+                if _is_in_max_difference(hits[actual_inner_loop_hit_index]['column'], hits[k]['column'], x_cluster_distance) and _is_in_max_difference(hits[actual_inner_loop_hit_index]['row'], hits[k]['row'], y_cluster_distance) and _is_in_max_difference(hits[actual_inner_loop_hit_index]['frame'], hits[k]['frame'], frame_cluster_distance):
                     if not ignore_same_hits or hits[actual_inner_loop_hit_index]['column'] != hits[k]['column'] or hits[actual_inner_loop_hit_index]['row'] != hits[k]['row']:
                         actual_cluster_size += 1
                         actual_cluster_hit_index += 1
