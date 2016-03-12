@@ -3,7 +3,7 @@ import numpy as np
 from builtins import str
 import sys
 
-from pixel_clusterizer.clusterizer import HitClusterizer
+from pixel_clusterizer import clusterizer
 
 
 def pprint_array(array):  # Just to print the arrays in a nice way
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     hits[2]['column'], hits[2]['row'], hits[2]['charge'], hits[2]['event_number'] = 7, 7, 1, 19
 
     # Initialize clusterizer object
-    clusterizer = HitClusterizer()
+    clusterizer = clusterizer.HitClusterizer()
 
     # All cluster settings are listed here with their std. values
     clusterizer.set_x_cluster_distance(2)  # cluster distance in columns
