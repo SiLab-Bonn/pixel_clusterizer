@@ -730,7 +730,7 @@ class TestClusterizer(unittest.TestCase):
 
             hits_clustered_chunked, cluster_chunked = None, None
             chunk_size = 6  # Chunk size has to be chosen to not split events between chunks!
-            for i in range(100 / chunk_size + 1):  # Cluster in chunks
+            for i in range(int(100 / chunk_size + 1)):  # Cluster in chunks
                 hits_chunk = hits[i * chunk_size:i * chunk_size + chunk_size]
                 hits_clustered_chunk, cluster_chunk = clusterizer.cluster_hits(hits_chunk)
                 if hits_clustered_chunked is None:
