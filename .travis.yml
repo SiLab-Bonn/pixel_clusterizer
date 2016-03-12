@@ -18,7 +18,7 @@ install:
   - chmod +x miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
-  - conda install --yes numpy numba==0.22.1 future nose docutils
+  - conda install --yes numpy numba future nose docutils
   - conda info -a
   - python setup.py develop
 
