@@ -20,9 +20,11 @@ install:
   - export PATH="$HOME/miniconda/bin:$PATH"
   - conda install --yes numpy numba future nose docutils
   - conda info -a
+  - pip install coverage coveralls
   - python setup.py develop
 
-script: nosetests
+script:
+  - nosetests --with-coverage --cover-package=pixel_clusterizer
 
 deploy:
   provider: pypi
@@ -37,3 +39,6 @@ deploy:
 env:
   global:
     secure: HEXqb7EACVqpboQtZOiQOPlykOv8EjCmg9RHO9Vb466hVfI/etmo1CWjLy382ww7Awz9fB5pvc1iRMGDPAsQaExZzxOlZAwGWii3TSvmqFnE+SuCjAykwsM/n0DsVdh4+Lwqoz0oWbjtxWtddlBNApcIjFF5MyrpwaE+uH8EI80BlSWvMWRmDxGTswkKuB2ROAu3a611x5Q+mdSJeeaDrPgcK4zH7m+K4op54zqqYXIW3fSSQUc6J353ux6HGi9KUAfuUNqZXIQV4HcpUS0cErxg+3z3257RupmdaJF60bKUfPXg+FJTSo0nk7ICuPXXyGrhCZTBsQ4EIdHJ6olHFj/MtrPAdD1FynKmaXqwWBRQVg9lH2erXFajc598FvbqDiCviQAw6ZcW0U/RAU7UDTpdz0HrBwi9nZnvug2rjzq60UnNJW+2EffS5PbcKcIz3j7k6lx9laXCxwyQq5RFGKWdYh98Nts/mLB0tqb6aFhLoZ18deVjleXOLic/gdTJTqpuyv41fWZOMskEKwxqPLGTqICJdveu60KTb+iwFbdGj8/JJHtphERBKMuGxAXW+LmWd1TonEy6aGXWgKIkjKKnJIjntSgbD1P4e2A5/hZks/G/5I4c5kJn7qnssEt/Z/B6byYXhQG+8bfq195gBxLEsAooH6mnG1H2QIOqsEo=
+
+after_success:
+  - coveralls
