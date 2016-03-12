@@ -708,6 +708,31 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue((cluster == expected_cluster_result).all())
         self.assertTrue((hits_clustered == expected_hit_result).all())
 
+    def test_chunked_clustering(self):  # Big tables have to be chunked and analyzed with clusterizer.cluster_hits(hits_chunk) calls
+        clusterizer = HitClusterizer()
+
+        hits = create_hits(n_hits=100, max_column=100, max_row=100, max_frame=1, max_charge=2)
+
+        hits_clustered, cluster = clusterizer.cluster_hits(hits)  # Cluster all at once
+        hits_clustered, cluster = hits_clustered.copy(), cluster.copy()  # Be aware that the returned array are references to be stored! An additional call of clusterizer.cluster_hits will overwrite the data
+
+        hits_clustered_chunked, cluster_chunked = None, None
+        chunk_size = 6  # Chunk size has to be chosen to not split events between chunks!
+        for i in range(100 / chunk_size + 1):  # Cluster in chunks
+            hits_chunk = hits[i * chunk_size:i * chunk_size + chunk_size]
+            hits_clustered_chunk, cluster_chunk = clusterizer.cluster_hits(hits_chunk)
+            if hits_clustered_chunked is None:
+                hits_clustered_chunked = hits_clustered_chunk.copy()
+            else:
+                hits_clustered_chunked = np.append(hits_clustered_chunked, hits_clustered_chunk)
+            if cluster_chunked is None:
+                cluster_chunked = cluster_chunk.copy()
+            else:
+                cluster_chunked = np.append(cluster_chunked, cluster_chunk)
+
+        self.assertTrue((hits_clustered == hits_clustered_chunked).all())
+        self.assertTrue((cluster == cluster_chunked).all())
+
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestClusterizer)
     unittest.TextTestRunner(verbosity=2).run(suite)
