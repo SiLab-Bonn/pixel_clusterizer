@@ -17,13 +17,16 @@ class HitClusterizer(object):
     def __init__(self, hit_fields=None, hit_dtype=None, cluster_fields=None, cluster_dtype=None, pure_python=False):
         self.pure_python = pure_python
         if self.pure_python:
+            print 'WARNING: PURE PYTHON MODE SET. USE FOR TESTING ONLY!'
             os.environ['NUMBA_DISABLE_JIT'] = '1'
         else:
             os.environ['NUMBA_DISABLE_JIT'] = '0'
 
+
         # Delayed import of cluster function module, since the flag to jit a function in this module is set on import
-        # To allow pure_python mode this is needed
-        self.cluster_functions = __import__('pixel_clusterizer', globals(), locals(), ['cluster_functions']).cluster_functions
+        # To allow pure_python mode this dirty hack is needed; issues occur when in the same python instance the mode is switched, since python does
+        # NOT provide a proper method to reload modules
+        self.cluster_functions = __import__('pixel_clusterizer.cluster_functions').cluster_functions
 
         # Std. settings
         self._create_cluster_hit_info_array = False
