@@ -24,7 +24,9 @@ install:
   - python setup.py develop
 
 script:
-  - nosetests --with-coverage --cover-package=pixel_clusterizer
+  - nosetests  # Run nosetests with jitted functions
+  - export PURE_PYTHON="1"
+  - nosetests --with-coverage --cover-package=pixel_clusterizer  # Run nosetests in python mode for coverage report
 
 deploy:
   provider: pypi
