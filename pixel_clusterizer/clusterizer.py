@@ -1,6 +1,6 @@
 import os
+import logging
 import numpy as np
-from numba import njit
 
 hit_dtype = np.dtype([('event_number', '<i8'),
                       ('frame', '<u1'),
@@ -17,16 +17,17 @@ class HitClusterizer(object):
     def __init__(self, hit_fields=None, hit_dtype=None, cluster_fields=None, cluster_dtype=None, pure_python=False):
         self.pure_python = pure_python
         if self.pure_python:
-            print 'WARNING: PURE PYTHON MODE SET. USE FOR TESTING ONLY!'
+            logging.warning('PURE PYTHON MODE: USE FOR TESTING ONLY! YOU CANNOT SWITCH THE MODE WITHIN ONE PYTHON INSTANCE!')
             os.environ['NUMBA_DISABLE_JIT'] = '1'
         else:
             os.environ['NUMBA_DISABLE_JIT'] = '0'
 
 
-        # Delayed import of cluster function module, since the flag to jit a function in this module is set on import
-        # To allow pure_python mode this dirty hack is needed; issues occur when in the same python instance the mode is switched, since python does
-        # NOT provide a proper method to reload modules
+        # Delayed import of numba.njit, since the environment 'NUMBA_DISABLE_JIT' is evaluated on import.
+        # To allow pure_python mode this dirty hack is needed; issues occur when within the same python instance the mode is switched, since python does
+        # NOT provide a proper method to reload modules.
         self.cluster_functions = __import__('pixel_clusterizer.cluster_functions').cluster_functions
+        self.njit = __import__('numba').njit
 
         # Std. settings
         self._create_cluster_hit_info_array = False
@@ -172,13 +173,13 @@ class HitClusterizer(object):
 
     def set_end_of_cluster_function(self, function):
         if not self.pure_python:
-            self.cluster_functions._end_of_cluster_function = njit()(function)  # Overwrite end of cluster function by new provided function
+            self.cluster_functions._end_of_cluster_function = self.njit()(function)  # Overwrite end of cluster function by new provided function
         else:
             self.cluster_functions._end_of_cluster_function = function
 
     def set_end_of_event_function(self, function):
         if not self.pure_python:
-            self.cluster_functions._end_of_event_function = njit()(function)  # Overwrite end of cluster function by new provided function
+            self.cluster_functions._end_of_event_function = self.njit()(function)  # Overwrite end of cluster function by new provided function
         else:
             self.cluster_functions._end_of_event_function = function
 
