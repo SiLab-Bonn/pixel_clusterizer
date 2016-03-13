@@ -1,4 +1,4 @@
-# Pixel Clusterizer [![Build Status](https://travis-ci.org/SiLab-Bonn/pixel_clusterizer.svg?branch=master)](https://travis-ci.org/SiLab-Bonn/pixel_clusterizer) [![Build Status](https://ci.appveyor.com/api/projects/status/github/SiLab-Bonn/pixel_clusterizer)](https://ci.appveyor.com/project/SiLab-Bonn/pixel_clusterizer) [![Coverage Status](https://coveralls.io/repos/SiLab-Bonn/pixel_clusterizer/badge.svg?branch=development&service=github)](https://coveralls.io/github/SiLab-Bonn/pixel_clusterizer?branch=master)
+# Pixel Clusterizer [![Build Status](https://travis-ci.org/SiLab-Bonn/pixel_clusterizer.svg?branch=master)](https://travis-ci.org/SiLab-Bonn/pixel_clusterizer) [![Build Status](https://ci.appveyor.com/api/projects/status/github/SiLab-Bonn/pixel_clusterizer)](https://ci.appveyor.com/project/SiLab-Bonn/pixel_clusterizer) [![Coverage Status](https://coveralls.io/repos/github/SiLab-Bonn/pixel_clusterizer/badge.svg?branch=master)](https://coveralls.io/github/SiLab-Bonn/pixel_clusterizer?branch=master)
 
 Pixel_clusterizer is an easy to use pixel hit-clusterizer for Python. It clusters hits on an event basis in space and time.
  
@@ -37,11 +37,12 @@ pip install pixel_clusterizer
 
 # Usage
 
+```
 import numpy as np
 
 from pixel_clusterizer import clusterizer
 
-hits = np.ones(shape=(3, ), dtype=clusterizer.hit_dtype)  # Create some data with std. hit data type
+hits = np.ones(shape=(3, ), dtype=clusterizer.hit_data_type)  # Create some data with std. hit data type
 
 cr = clusterizer.HitClusterizer()  # Initialize clusterizer
 
@@ -52,4 +53,10 @@ print (cluster)  # Print cluster
 print (hits_clustered)  # Print hits + cluster info
 
 Also take a look at the example folder!
+```
+
+# Test installation
+```
+nosetests pixel_clusterizer
+```
 
