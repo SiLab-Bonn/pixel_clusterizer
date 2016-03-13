@@ -2,12 +2,11 @@ import os
 import logging
 import numpy as np
 
-hit_dtype = np.dtype([('event_number', '<i8'),
+hit_data_type = np.dtype([('event_number', '<i8'),
                       ('frame', '<u1'),
-                      ('column', '<u4'),
-                      ('row', '<u4'),
-                      ('charge', '<u1'),
-                      ('custom_parameter', '<i4')])
+                      ('column', '<u2'),
+                      ('row', '<u2'),
+                      ('charge', '<u2')])
 
 
 class HitClusterizer(object):
@@ -15,13 +14,13 @@ class HitClusterizer(object):
     ''' Clusterizer class providing an interface for the jitted functions and stores settings.'''
 
     def __init__(self, hit_fields=None, hit_dtype=None, cluster_fields=None, cluster_dtype=None, pure_python=False):
+        # Activate pute python mode by setting the evnironment variable NUMBA_DISABLE_JIT
         self.pure_python = pure_python
         if self.pure_python:
             logging.warning('PURE PYTHON MODE: USE FOR TESTING ONLY! YOU CANNOT SWITCH THE MODE WITHIN ONE PYTHON INSTANCE!')
             os.environ['NUMBA_DISABLE_JIT'] = '1'
         else:
             os.environ['NUMBA_DISABLE_JIT'] = '0'
-
 
         # Delayed import of numba.njit, since the environment 'NUMBA_DISABLE_JIT' is evaluated on import.
         # To allow pure_python mode this dirty hack is needed; issues occur when within the same python instance the mode is switched, since python does
@@ -41,7 +40,7 @@ class HitClusterizer(object):
 
         # Set the translation dictionary for the important hit value names
         if hit_fields:
-            self.set_hit_fields(hit_fields)
+            self.set_hit_fields(hit_data_type)
         else:
             self.set_hit_fields({'event_number': 'event_number',
                                  'column': 'column',
@@ -274,6 +273,6 @@ class HitClusterizer(object):
         ''' Takes the hit array and checks if the important data fields have the same data type than the hit clustered array and that the field names are correct'''
         try:
             if self.hits_clustered['frame'].dtype != hits[self._hit_fields_mapping['frame']].dtype or self.hits_clustered['column'].dtype != hits[self._hit_fields_mapping['column']].dtype or self.hits_clustered['row'].dtype != hits[self._hit_fields_mapping['row']].dtype or self.hits_clustered['charge'].dtype != hits[self._hit_fields_mapping['charge']].dtype or self.hits_clustered['event_number'].dtype != hits[self._hit_fields_mapping['event_number']].dtype:
-                raise TypeError('The hit data type is unexpected. Consider calling the method set_hit_dtype first! Got/Expected:', hits.dtype, self.hits_clustered.dtype)
+                raise TypeError('The hit data type(s) do not match. Consider calling the method set_hit_dtype first! Got/Expected:', hits.dtype, self.hits_clustered.dtype)
         except ValueError:
             raise TypeError('The hit field names are unexpected. Consider calling the method set_hit_fields! Got:', hits.dtype.names)
