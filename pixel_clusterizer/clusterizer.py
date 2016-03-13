@@ -40,7 +40,7 @@ class HitClusterizer(object):
 
         # Set the translation dictionary for the important hit value names
         if hit_fields:
-            self.set_hit_fields(hit_data_type)
+            self.set_hit_fields(hit_fields)
         else:
             self.set_hit_fields({'event_number': 'event_number',
                                  'column': 'column',
