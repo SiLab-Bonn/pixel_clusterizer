@@ -108,8 +108,8 @@ def _cluster_hits(hits, cluster, n_hits, x_cluster_distance=1, y_cluster_distanc
         cluster[actual_event_cluster_index + actual_cluster_id]['ID'] = actual_cluster_id
         cluster[actual_event_cluster_index + actual_cluster_id]['n_hits'] = 1
         cluster[actual_event_cluster_index + actual_cluster_id]['charge'] = hits[i]['charge']
-        cluster[actual_event_cluster_index + actual_cluster_id]['mean_column'] += (hits[i]['column'] + 0.5) * (hits[i]['charge'] + 1)
-        cluster[actual_event_cluster_index + actual_cluster_id]['mean_row'] += (hits[i]['row'] + 0.5) * (hits[i]['charge'] + 1)
+        cluster[actual_event_cluster_index + actual_cluster_id]['mean_column'] += (hits[i]['column']) * (hits[i]['charge'] + 1)
+        cluster[actual_event_cluster_index + actual_cluster_id]['mean_row'] += (hits[i]['row']) * (hits[i]['charge'] + 1)
         cluster[actual_event_cluster_index + actual_cluster_id]['seed_column'] = hits[i]['column']
         cluster[actual_event_cluster_index + actual_cluster_id]['seed_row'] = hits[i]['row']
 
