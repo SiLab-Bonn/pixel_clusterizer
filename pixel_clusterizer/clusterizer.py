@@ -3,10 +3,10 @@ import logging
 import numpy as np
 
 hit_data_type = np.dtype([('event_number', '<i8'),
-                      ('frame', '<u1'),
-                      ('column', '<u2'),
-                      ('row', '<u2'),
-                      ('charge', '<u2')])
+                          ('frame', '<u1'),
+                          ('column', '<u2'),
+                          ('row', '<u2'),
+                          ('charge', '<u2')])
 
 
 class HitClusterizer(object):
@@ -17,7 +17,7 @@ class HitClusterizer(object):
         # Activate pute python mode by setting the evnironment variable NUMBA_DISABLE_JIT
         self.pure_python = pure_python
         if self.pure_python:
-            logging.warning('PURE PYTHON MODE: USE FOR TESTING ONLY! YOU CANNOT SWITCH THE MODE WITHIN ONE PYTHON INSTANCE!')
+            logging.warning('PURE PYTHON MODE: USE FOR TESTING ONLY! YOU CANNOT SWITCH THE MODE WITHIN ONE PYTHON INTERPRETER INSTANCE!')
             os.environ['NUMBA_DISABLE_JIT'] = '1'
         else:
             os.environ['NUMBA_DISABLE_JIT'] = '0'
