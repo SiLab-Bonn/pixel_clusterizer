@@ -16,7 +16,7 @@ def _finish_event(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, a
     for i in range(actual_event_hit_index, new_actual_event_hit_index):  # Set hit cluster info that is only known at the end of the event
         n_cluster[i] = next_cluster_id
 
-    # Normalize cluster position by the charge for center of gravity
+    # Normalize cluster index by the charge for center of gravity
     for i in range(actual_event_cluster_index, actual_event_cluster_index + next_cluster_id):
         cluster[i]['mean_column'] /= (cluster[i]['charge'] + cluster[i]['n_hits'])
         cluster[i]['mean_row'] /= (cluster[i]['charge'] + cluster[i]['n_hits'])
@@ -149,10 +149,9 @@ def _cluster_hits(hits, cluster, n_hits, x_cluster_distance=1, y_cluster_distanc
                         actual_cluster_hit_indices[actual_cluster_hit_index] = k - actual_event_hit_index
                         cluster_id[k] = actual_cluster_id  # Add event hit to actual cluster
 
-                        # Add cluster position as sum of all hit positions weighted by the charge (center of gravity)
-                        # the position is in the center of the pixel (column = 0 == mean_column = 0.5)
-                        cluster[actual_event_cluster_index + actual_cluster_id]['mean_column'] += (hits[k]['column'] + 0.5) * (hits[k]['charge'] + 1)
-                        cluster[actual_event_cluster_index + actual_cluster_id]['mean_row'] += (hits[k]['row'] + 0.5) * (hits[k]['charge'] + 1)
+                        # Add cluster index as sum of all hit indices weighted by the charge (center of gravity)
+                        cluster[actual_event_cluster_index + actual_cluster_id]['mean_column'] += (hits[k]['column']) * (hits[k]['charge'] + 1)
+                        cluster[actual_event_cluster_index + actual_cluster_id]['mean_row'] += (hits[k]['row']) * (hits[k]['charge'] + 1)
                         cluster[actual_event_cluster_index + actual_cluster_id]['n_hits'] += 1
                         cluster[actual_event_cluster_index + actual_cluster_id]['charge'] += hits[k]['charge']
 
