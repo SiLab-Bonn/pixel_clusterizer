@@ -94,8 +94,8 @@ class TestClusterizer(unittest.TestCase):
         expected_result['charge'] = [1, 2, 1, 1]
         expected_result['seed_column'] = [2, 4, 8, 10]
         expected_result['seed_row'] = [3, 7, 15, 19]
-        expected_result['mean_column'] = [2.5, 5.5, 8.5, 10.5]
-        expected_result['mean_row'] = [3.5, 9.5, 15.5, 19.5]
+        expected_result['mean_column'] = [2.0, 5.0, 8.0, 10.0]
+        expected_result['mean_row'] = [3.0, 9.0, 15.0, 19.0]
 
         # Test results
         self.assertTrue((clusters == expected_result).all())
@@ -163,8 +163,8 @@ class TestClusterizer(unittest.TestCase):
         expected_result['charge'] = [36]
         expected_result['seed_column'] = [17]
         expected_result['seed_row'] = [36]
-        expected_result['mean_column'] = [17.68420982]
-        expected_result['mean_row'] = [36.5]
+        expected_result['mean_column'] = [17.18420982]
+        expected_result['mean_row'] = [36.0]
 
         self.assertTrue(np.array_equal(cluster, expected_result))
 
@@ -209,8 +209,8 @@ class TestClusterizer(unittest.TestCase):
         expected_result['charge'] = [6]
         expected_result['seed_column'] = [18]
         expected_result['seed_row'] = [36]
-        expected_result['mean_column'] = [18.5]
-        expected_result['mean_row'] = [36.5]
+        expected_result['mean_column'] = [18.0]
+        expected_result['mean_row'] = [36.0]
         self.assertTrue(np.array_equal(cluster, expected_result))
 
         # Check cluster hit info
@@ -278,8 +278,8 @@ class TestClusterizer(unittest.TestCase):
         expected_cluster_result['charge'] = [12]
         expected_cluster_result['seed_column'] = [18]
         expected_cluster_result['seed_row'] = [36]
-        expected_cluster_result['mean_column'] = [18.5]
-        expected_cluster_result['mean_row'] = [37.5]
+        expected_cluster_result['mean_column'] = [18.0]
+        expected_cluster_result['mean_row'] = [37.0]
 
         clusterizer.ignore_same_hits(True)  # If a hit occured 2 times in an event it is ignored and gets the cluster index -2
         cluster_hits, cluster = clusterizer.cluster_hits(hits)  # Cluster hits
@@ -331,8 +331,8 @@ class TestClusterizer(unittest.TestCase):
         expected_cluster_result['charge'] = [1, 2, 1, 1]
         expected_cluster_result['seed_column'] = [2, 4, 8, 10]
         expected_cluster_result['seed_row'] = [3, 7, 15, 19]
-        expected_cluster_result['mean_column'] = [2.5, 5.5, 8.5, 10.5]
-        expected_cluster_result['mean_row'] = [3.5, 9.5, 15.5, 19.5]
+        expected_cluster_result['mean_column'] = [2.0, 5.0, 8.0, 10.0]
+        expected_cluster_result['mean_row'] = [3.0, 9.0, 15.0, 19.0]
 
         for hit_data_type in hit_data_types:
             clusterizer.set_hit_dtype(np.dtype(hit_data_type))
@@ -412,8 +412,8 @@ class TestClusterizer(unittest.TestCase):
             expected_cluster_result['charge'] = [1, 2, 1, 1]
             expected_cluster_result['seed_column'] = [2, 4, 8, 10]
             expected_cluster_result['seed_row'] = [3, 7, 15, 19]
-            expected_cluster_result['mean_column'] = [2.5, 5.5, 8.5, 10.5]
-            expected_cluster_result['mean_row'] = [3.5, 9.5, 15.5, 19.5]
+            expected_cluster_result['mean_column'] = [2.0, 5.0, 8.0, 10.0]
+            expected_cluster_result['mean_row'] = [3.0, 9.0, 15.0, 19.0]
 
             hits_clustered, clusters = clusterizer.cluster_hits(hits)  # Cluster hits
             # Test results
@@ -464,8 +464,8 @@ class TestClusterizer(unittest.TestCase):
         expected_cluster_result['tot'] = [1, 2, 1, 1]
         expected_cluster_result['seed_column'] = [2, 4, 8, 10]
         expected_cluster_result['seed_row'] = [3, 7, 15, 19]
-        expected_cluster_result['mean_column'] = [2.5, 5.5, 8.5, 10.5]
-        expected_cluster_result['mean_row'] = [3.5, 9.5, 15.5, 19.5]
+        expected_cluster_result['mean_column'] = [2.0, 5.0, 8.0, 10.0]
+        expected_cluster_result['mean_row'] = [3.0, 9.0, 15.0, 19.0]
 
         # Define expected output. Cluster hit data types are different and thus the expected results have to have different data types
         expected_hit_result = np.zeros(shape=(10, ), dtype=hit_clustered_dtype)
@@ -511,8 +511,8 @@ class TestClusterizer(unittest.TestCase):
         expected_cluster_result['tot'] = [1, 2, 1, 1]
         expected_cluster_result['seed_column'] = [2, 4, 8, 10]
         expected_cluster_result['seed_row'] = [3, 7, 15, 19]
-        expected_cluster_result['mean_column'] = [2.5, 5.5, 8.5, 10.5]
-        expected_cluster_result['mean_row'] = [3.5, 9.5, 15.5, 19.5]
+        expected_cluster_result['mean_column'] = [2.0, 5.0, 8.0, 10.0]
+        expected_cluster_result['mean_row'] = [3.0, 9.0, 15.0, 19.0]
 
         # Define expected output. Cluster hit data types are different and thus the expected results have to have different data types
         expected_hit_result = np.zeros(shape=(10, ), dtype=np.dtype([('event_number', '<i8'),
@@ -556,8 +556,8 @@ class TestClusterizer(unittest.TestCase):
         expected_cluster_result['charge'] = [1, 2, 1, 1]
         expected_cluster_result['seed_column'] = [2, 4, 8, 10]
         expected_cluster_result['seed_row'] = [3, 7, 15, 19]
-        expected_cluster_result['mean_column'] = [2.5, 5.5, 8.5, 10.5]
-        expected_cluster_result['mean_row'] = [3.5, 9.5, 15.5, 19.5]
+        expected_cluster_result['mean_column'] = [2.0, 5.0, 8.0, 10.0]
+        expected_cluster_result['mean_row'] = [3.0, 9.0, 15.0, 19.0]
         expected_cluster_result['extra_field'] = [0., 0., 0., 0.]
 
         # Define expected hit clustered output
@@ -606,8 +606,8 @@ class TestClusterizer(unittest.TestCase):
         expected_cluster_result['charge'] = [1, 2, 1, 1]
         expected_cluster_result['seed_column'] = [2, 4, 8, 10]
         expected_cluster_result['seed_row'] = [3, 7, 15, 19]
-        expected_cluster_result['mean_column'] = [2.5, 5.5, 8.5, 10.5]
-        expected_cluster_result['mean_row'] = [3.5, 9.5, 15.5, 19.5]
+        expected_cluster_result['mean_column'] = [2.0, 5.0, 8.0, 10.0]
+        expected_cluster_result['mean_row'] = [3.0, 9.0, 15.0, 19.0]
         expected_cluster_result['seed_charge'] = [1., 1., 1., 1.]
 
         #
@@ -666,8 +666,8 @@ class TestClusterizer(unittest.TestCase):
         expected_cluster_result['charge'] = [1, 2, 1, 1]
         expected_cluster_result['seed_column'] = [2, 4, 8, 10]
         expected_cluster_result['seed_row'] = [3, 7, 15, 19]
-        expected_cluster_result['mean_column'] = [2.5, 5.5, 8.5, 10.5]
-        expected_cluster_result['mean_row'] = [3.5, 9.5, 15.5, 19.5]
+        expected_cluster_result['mean_column'] = [2.0, 5.0, 8.0, 10.0]
+        expected_cluster_result['mean_row'] = [3.0, 9.0, 15.0, 19.0]
         expected_cluster_result['n_cluster'] = [1, 1, 1, 1]
 
         #
