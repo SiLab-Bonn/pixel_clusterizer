@@ -46,17 +46,12 @@ hits = np.ones(shape=(3, ), dtype=clusterizer.hit_data_type)  # Create some data
 
 cr = clusterizer.HitClusterizer()  # Initialize clusterizer
 
-hits_clustered, cluster = cr.cluster_hits(hits)  # Cluster hits  # add hits to clusterizer
+hits_clustered, cluster = cr.cluster_hits(hits)  # Cluster hits
 
-print (cluster)  # Print cluster
-
-print (hits_clustered)  # Print hits + cluster info
-
-Also take a look at the example folder!
 ```
+Also take a look at the example folder!
 
 # Test installation
 ```
 nosetests pixel_clusterizer
 ```
-
