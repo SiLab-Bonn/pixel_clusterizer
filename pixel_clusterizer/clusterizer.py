@@ -218,15 +218,17 @@ class HitClusterizer(object):
         for internal_name, external_name in self._hit_fields_mapping.items():
             self.hits_clustered[internal_name][self.n_hits:hits.shape[0]] = hits[external_name]
 
-        self.hits_clustered['cluster_ID'][self.n_hits:hits.shape[0]], self.hits_clustered['is_seed'][self.n_hits:hits.shape[0]], self.hits_clustered['cluster_size'][self.n_hits:hits.shape[0]], self.hits_clustered['n_cluster'][self.n_hits:hits.shape[0]], self.n_cluster = self.cluster_functions._cluster_hits(self.hits_clustered[self.n_hits:hits.shape[0]],
-                                                                                                                                                                                                                                                                                                                    self.cluster,
-                                                                                                                                                                                                                                                                                                                    n_hits=hits.shape[0],
-                                                                                                                                                                                                                                                                                                                    x_cluster_distance=self._x_cluster_distance,
-                                                                                                                                                                                                                                                                                                                    y_cluster_distance=self._y_cluster_distance,
-                                                                                                                                                                                                                                                                                                                    frame_cluster_distance=self._frame_cluster_distance,
-                                                                                                                                                                                                                                                                                                                    max_n_cluster_hits=self._max_cluster_hits,
-                                                                                                                                                                                                                                                                                                                    max_cluster_hit_charge=self._max_cluster_hit_charge,
-                                                                                                                                                                                                                                                                                                                    ignore_same_hits=self._ignore_same_hits)
+        self.hits_clustered['cluster_ID'][self.n_hits:hits.shape[0]], self.hits_clustered['is_seed'][self.n_hits:hits.shape[0]], self.hits_clustered['cluster_size'][self.n_hits:hits.shape[0]], self.hits_clustered['n_cluster'][self.n_hits:hits.shape[0]], self.n_cluster = \
+            self.cluster_functions._cluster_hits(
+                hits=self.hits_clustered[self.n_hits:hits.shape[0]],
+                cluster=self.cluster,
+                n_hits=hits.shape[0],
+                x_cluster_distance=self._x_cluster_distance,
+                y_cluster_distance=self._y_cluster_distance,
+                frame_cluster_distance=self._frame_cluster_distance,
+                max_n_cluster_hits=self._max_cluster_hits,
+                max_cluster_hit_charge=self._max_cluster_hit_charge,
+                ignore_same_hits=self._ignore_same_hits)
 
         self.n_hits += hits.shape[0]
         self.hits_clustered.dtype.names = self._map_hit_field_names(self.hits_clustered.dtype.names)  # Rename the data fields for the result
