@@ -66,7 +66,7 @@ def _cluster_hits(hits, cluster, n_hits, x_cluster_distance=1, y_cluster_distanc
     actual_event_number, actual_event_hit_index, actual_event_cluster_index, actual_cluster_id, max_cluster_charge, next_cluster_id, actual_cluster_size, actual_cluster_hit_index, seed_index = 0, 0, 0, 0, 0, 0, 0, 0, 0
     actual_cluster_hit_indices = np.zeros(shape=max_n_cluster_hits, dtype=np.int16) - 1  # The hit indices of the actual cluster, -1 means not assigned
 
-    # Outer loop over all hits in the array (refered to as actual hit)
+    # Outer loop over all hits in the array (referred to as actual hit)
     for i in range(hits.shape[0]):
         if i >= n_hits:
             break
