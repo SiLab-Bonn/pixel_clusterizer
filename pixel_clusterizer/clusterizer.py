@@ -9,11 +9,25 @@ hit_data_type = np.dtype([('event_number', '<i8'),
                           ('charge', '<u2')])
 
 
+def np_uint_type_chooser(number):
+    for dtype in [np.uint8, np.uint16, np.uint32, np.uint64]:
+        if number <= np.iinfo(dtype).max:
+            return dtype
+    raise ValueError('{} is too big!'.format(number))
+
+
+def np_int_type_chooser(number):
+    for dtype in [np.int8, np.int16, np.int32, np.int64]:
+        if number <= np.iinfo(dtype).max:
+            return dtype
+    raise ValueError('{} is too big!'.format(number))
+
+
 class HitClusterizer(object):
 
     ''' Clusterizer class providing an interface for the jitted functions and stores settings.'''
 
-    def __init__(self, hit_fields=None, hit_dtype=None, cluster_fields=None, cluster_dtype=None, pure_python=False):
+    def __init__(self, hit_fields=None, hit_dtype=None, cluster_fields=None, cluster_dtype=None, pure_python=False, max_hits=1000, max_cluster_hits=0, min_hit_charge=0, max_hit_charge=None, x_cluster_distance=1, y_cluster_distance=1, frame_cluster_distance=0, ignore_same_hits=True):
         # Activate pute python mode by setting the evnironment variable NUMBA_DISABLE_JIT
         self.pure_python = pure_python
         if self.pure_python:
@@ -27,16 +41,6 @@ class HitClusterizer(object):
         # NOT provide a proper method to reload modules.
         self.cluster_functions = __import__('pixel_clusterizer.cluster_functions').cluster_functions
         self.njit = __import__('numba').njit
-
-        # Std. settings
-        self._create_cluster_hit_info_array = False
-        self._max_cluster_hit_charge = 13
-        self._max_hits = 10000
-        self._x_cluster_distance = 2
-        self._y_cluster_distance = 2
-        self._frame_cluster_distance = 4
-        self._max_cluster_hits = 300
-        self._ignore_same_hits = True
 
         # Set the translation dictionary for the important hit value names
         if hit_fields:
@@ -90,19 +94,33 @@ class HitClusterizer(object):
                                    ('mean_column', 'f4'),
                                    ('mean_row', 'f4')]
 
-        self.hits_clustered = np.zeros(shape=(self._max_hits, ), dtype=self._hit_clustered_descr)
-        self.cluster = np.zeros(shape=(self._max_hits, ), dtype=np.dtype(self._cluster_descr))
+        # Std. settings
+        self.set_max_hits(max_hits)
+        self.set_max_cluster_hits(max_cluster_hits)
+        self.set_min_hit_charge(min_hit_charge)
+        self.set_max_hit_charge(max_hit_charge)
+        self.set_x_cluster_distance(x_cluster_distance)
+        self.set_y_cluster_distance(y_cluster_distance)
+        self.set_frame_cluster_distance(frame_cluster_distance)
+        self.ignore_same_hits(ignore_same_hits)
 
         self.n_cluster = 0
         self.n_hits = 0
 
         self.reset()
 
+    def _init_arrays(self):
+        try:
+            self.hits_clustered = np.zeros(shape=(self._max_hits, ), dtype=np.dtype(self._hit_clustered_descr))
+            self.cluster = np.zeros(shape=(self._max_hits, ), dtype=np.dtype(self._cluster_descr))
+        except AttributeError:
+            pass
+
     def reset(self):  # Resets the maybe overwritten function hooks, otherwise they are stored as a module global and not reset on clusterizer initialization
-        def end_of_cluster_function(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, actual_cluster_index, actual_event_hit_index, actual_cluster_hit_indices, seed_index):
+        def end_of_cluster_function(hits, cluster, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels):
             return
 
-        def end_of_event_function(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, actual_cluster_index, actual_event_hit_index, actual_cluster_hit_indices, seed_index):
+        def end_of_event_function(hits, cluster, start_event_hit_index, stop_event_hit_index, start_event_cluster_index, stop_event_cluster_index):
             return
         self.set_end_of_cluster_function(end_of_cluster_function)
         self.set_end_of_event_function(end_of_event_function)
@@ -142,7 +160,7 @@ class HitClusterizer(object):
             hit_clustered_dtype['event_number'], hit_clustered_dtype['column'], hit_clustered_dtype['row'], hit_clustered_dtype['charge'], hit_clustered_dtype['frame']
         except KeyError:
             raise ValueError('The clustered hit struct has to have a valid mapping to the fields: event_number, column, row, charge. Consider to set the mapping with set_hit_fields method first!')
-        self.hits_clustered = np.zeros(shape=(self._max_hits, ), dtype=np.dtype(self._hit_clustered_descr))  # Hit clustered result array has to be reinitialized with new data types
+        self._init_arrays()
 
     def set_cluster_dtype(self, cluster_dtype):
         ''' Set the data type of the cluster.'''
@@ -159,7 +177,7 @@ class HitClusterizer(object):
             cluster_dtype['event_number'], cluster_dtype['ID'], cluster_dtype['n_hits'], cluster_dtype['charge'], cluster_dtype['seed_column'], cluster_dtype['seed_row'], cluster_dtype['mean_column'], cluster_dtype['mean_row']
         except KeyError:
             raise ValueError('The cluster struct has to have a valid mapping to the fields: event_number, ID, n_hits, charge, seed_column, seed_row, mean_column and mean_row. Consider to set the mapping with set_hit_fields method first!')
-        self.cluster = np.zeros(shape=(self._max_hits, ), dtype=np.dtype(self._cluster_descr))  # Hit clustered result array has to be reinitialized with new data types
+        self._init_arrays()
 
     def add_cluster_field(self, description):
         ''' Adds a field or a list of fields to the cluster result array. Has to be defined as a numpy dtype entry, e.g.: ('parameter', '<i4') '''
@@ -168,7 +186,7 @@ class HitClusterizer(object):
                 self._cluster_descr.append(one_parameter)
         else:
             self._cluster_descr.append(description)
-        self.cluster = np.zeros(shape=(self._max_hits, ), dtype=np.dtype(self._cluster_descr))  # Cluster result array has to be reinitialized with new data types
+        self._init_arrays()
 
     def set_end_of_cluster_function(self, function):
         if not self.pure_python:
@@ -184,11 +202,21 @@ class HitClusterizer(object):
 
     def set_max_hits(self, value):
         self._max_hits = value
-        self.hits_clustered = np.zeros(shape=(self._max_hits, ), dtype=np.dtype(self._hit_clustered_descr))
-        self.cluster = np.zeros(shape=(self._max_hits, ), dtype=np.dtype(self._cluster_descr))
+        self._init_arrays()
+
+    def set_min_hit_charge(self, value):
+        ''' Charge values below this value will effectively ignore the hit.
+        Value has influence on clustering charge weighting.
+        '''
+        self._min_hit_charge = value
 
     def set_max_hit_charge(self, value):
-        self._max_cluster_hit_charge = value
+        ''' Charge values above this value will effectively ignore the hit.
+        Value of None or 0 will deactivate this feature.
+        '''
+        if value is None:
+            value = 0
+        self._max_hit_charge = value
 
     def set_x_cluster_distance(self, value):
         self._x_cluster_distance = value
@@ -205,10 +233,7 @@ class HitClusterizer(object):
     def ignore_same_hits(self, value):  # Ignore same hit in an event for clustering
         self._ignore_same_hits = value
 
-    def create_cluster_hit_info_array(self, value=True):  # TODO: do not create cluster hit info of false to save time
-        self._create_cluster_hit_info_array = value
-
-    def cluster_hits(self, hits):
+    def cluster_hits(self, hits, noisy_pixels=None, disabled_pixels=None):
         self.n_hits = 0  # Effectively deletes the already clustered hits
         self._delete_cluster()  # Delete the already created cluster
         self.hits_clustered.dtype.names = self._unmap_hit_field_names(self.hits_clustered.dtype.names)  # Reset the data fields from previous renaming
@@ -218,17 +243,28 @@ class HitClusterizer(object):
         for internal_name, external_name in self._hit_fields_mapping.items():
             self.hits_clustered[internal_name][self.n_hits:hits.shape[0]] = hits[external_name]
 
-        self.hits_clustered['cluster_ID'][self.n_hits:hits.shape[0]], self.hits_clustered['is_seed'][self.n_hits:hits.shape[0]], self.hits_clustered['cluster_size'][self.n_hits:hits.shape[0]], self.hits_clustered['n_cluster'][self.n_hits:hits.shape[0]], self.n_cluster = \
+        # Additional cluster info for the hit array
+        assigned_hit_array = np.zeros_like(hits, dtype=np.bool)
+
+        cluster_hit_indices_array_size = self._max_cluster_hits if self._max_cluster_hits > 0 else hits.shape[0]
+        cluster_hit_indices_dtype = np_int_type_chooser(cluster_hit_indices_array_size)
+        cluster_hit_indices = np.zeros(shape=cluster_hit_indices_array_size, dtype=cluster_hit_indices_dtype) - 1  # The hit indices of the actual cluster, -1 means not assigned
+
+        self.n_cluster = \
             self.cluster_functions._cluster_hits(
                 hits=self.hits_clustered[self.n_hits:hits.shape[0]],
                 cluster=self.cluster,
-                n_hits=hits.shape[0],
+                assigned_hit_array=assigned_hit_array,
+                cluster_hit_indices=cluster_hit_indices,
                 x_cluster_distance=self._x_cluster_distance,
                 y_cluster_distance=self._y_cluster_distance,
                 frame_cluster_distance=self._frame_cluster_distance,
                 max_n_cluster_hits=self._max_cluster_hits,
-                max_cluster_hit_charge=self._max_cluster_hit_charge,
-                ignore_same_hits=self._ignore_same_hits)
+                min_hit_charge=self._min_hit_charge,
+                max_hit_charge=self._max_hit_charge,
+                ignore_same_hits=self._ignore_same_hits,
+                noisy_pixels=np.array([[], []], dtype=np.uint16) if noisy_pixels is None else np.array(noisy_pixels, dtype=np.uint16),
+                disabled_pixels=np.array([[], []], dtype=np.uint16) if disabled_pixels is None else np.array(disabled_pixels, dtype=np.uint16))
 
         self.n_hits += hits.shape[0]
         self.hits_clustered.dtype.names = self._map_hit_field_names(self.hits_clustered.dtype.names)  # Rename the data fields for the result
