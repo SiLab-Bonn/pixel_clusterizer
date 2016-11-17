@@ -56,6 +56,18 @@ def _finish_cluster(hits, cluster, cluster_size, cluster_hit_indices, cluster_in
     cluster[cluster_index]['mean_column'] = float(total_weighted_column) / (cluster_charge + cluster_size * charge_correction)
     cluster[cluster_index]['mean_row'] = float(total_weighted_row) / (cluster_charge + cluster_size * charge_correction)
 
+    # Call end of cluster function hook
+    _end_of_cluster_function(
+        hits=hits,
+        cluster=cluster,
+        cluster_size=cluster_size,
+        cluster_hit_indices=cluster_hit_indices,
+        cluster_index=cluster_index,
+        cluster_id=cluster_id,
+        charge_correction=charge_correction,
+        noisy_pixels=noisy_pixels,
+        seed_hit_index=seed_hit_index)
+
     return True
 
 
@@ -68,6 +80,15 @@ def _finish_event(hits, cluster, start_event_hit_index, stop_event_hit_index, st
 
     for cluster_index in range(start_event_cluster_index, stop_event_cluster_index):
         cluster[cluster_index]['event_number'] = hits[start_event_hit_index]['event_number']
+
+    # Call end of event function hook
+    _end_of_event_function(
+        hits=hits,
+        cluster=cluster,
+        start_event_hit_index=start_event_hit_index,
+        stop_event_hit_index=stop_event_hit_index,
+        start_event_cluster_index=start_event_cluster_index,
+        stop_event_cluster_index=stop_event_cluster_index)
 
 
 @njit()
@@ -120,7 +141,7 @@ def _is_in_max_difference(value_1, value_2, max_difference):
 
 
 @njit()
-def _end_of_cluster_function(hits, cluster, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels):
+def _end_of_cluster_function(hits, cluster, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, seed_hit_index):
     ''' Empty function that can be overwritten with a new function that is called at the end of each cluster
     '''
     return
@@ -159,15 +180,6 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
         # Check for new event and reset event variables
         if _new_event(hits[i]['event_number'], event_number):
             _finish_event(
-                hits=hits,
-                cluster=cluster,
-                start_event_hit_index=start_event_hit_index,
-                stop_event_hit_index=i,
-                start_event_cluster_index=start_event_cluster_index,
-                stop_event_cluster_index=start_event_cluster_index + event_cluster_index)
-
-            # Call end of event function hook
-            _end_of_event_function(
                 hits=hits,
                 cluster=cluster,
                 start_event_hit_index=start_event_hit_index,
@@ -247,16 +259,7 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
                 cluster_id=event_cluster_index,
                 charge_correction=charge_correction,
                 noisy_pixels=noisy_pixels):
-            # Call end of cluster function hook
-            _end_of_cluster_function(
-                hits=hits,
-                cluster=cluster,
-                cluster_size=cluster_size,
-                cluster_hit_indices=cluster_hit_indices,
-                cluster_index=start_event_cluster_index + event_cluster_index,
-                cluster_id=event_cluster_index,
-                charge_correction=charge_correction,
-                noisy_pixels=noisy_pixels)
+
             event_cluster_index += 1
 
     # Last event is assumed to be finished at the end of the hit array, thus add info
@@ -268,13 +271,5 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
         start_event_cluster_index=start_event_cluster_index,
         stop_event_cluster_index=start_event_cluster_index + event_cluster_index)
 
-    # Call end of event function hook
-    _end_of_event_function(
-        hits=hits,
-        cluster=cluster,
-        start_event_hit_index=start_event_hit_index,
-        stop_event_hit_index=total_hits,
-        start_event_cluster_index=start_event_cluster_index,
-        stop_event_cluster_index=start_event_cluster_index + event_cluster_index)
     total_clusters = start_event_cluster_index + event_cluster_index
     return total_clusters
