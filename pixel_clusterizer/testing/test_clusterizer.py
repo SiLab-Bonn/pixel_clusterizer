@@ -36,7 +36,7 @@ class TestClusterizer(unittest.TestCase):
         # TEST 1: Check to add more hits than supported
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
 
-        clusterizer = HitClusterizer(pure_python=self.pure_python)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, x_cluster_distance=2, y_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
         clusterizer.set_max_cluster_hits(1)
         with self.assertRaises(OutOfRangeError):
             clusterizer.cluster_hits(hits)
@@ -72,7 +72,7 @@ class TestClusterizer(unittest.TestCase):
 
     def test_cluster_algorithm(self):  # Check with multiple jumps data
         # Inititalize Clusterizer
-        clusterizer = HitClusterizer(pure_python=self.pure_python)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, x_cluster_distance=2, y_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
 
         # TEST 1
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
@@ -101,7 +101,6 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue((clusters == expected_result).all())
 
         # TEST 2
-        clusterizer.create_cluster_hit_info_array(True)
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
 
         clusterizer.cluster_hits(hits)  # cluster hits
@@ -141,8 +140,7 @@ class TestClusterizer(unittest.TestCase):
         hits[1]['column'], hits[1]['row'], hits[1]['charge'], hits[1]['event_number'] = 18, 36, 6, 19
 
         # Create clusterizer object
-        clusterizer = HitClusterizer(pure_python=self.pure_python)
-        clusterizer.create_cluster_hit_info_array(True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, x_cluster_distance=2, y_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
 
         # Case 1: Test max hit charge cut, accept all hits
         clusterizer.set_max_hit_charge(30)  # only add hits with charge <= 30
@@ -315,7 +313,7 @@ class TestClusterizer(unittest.TestCase):
                                ('parameter2', 'f4')])
 
         # Initialize clusterizer
-        clusterizer = HitClusterizer(pure_python=self.pure_python)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, x_cluster_distance=2, y_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
 
         # Define expected output
         expected_cluster_result = np.zeros(shape=(4, ), dtype=np.dtype([('event_number', '<i8'),
@@ -379,7 +377,7 @@ class TestClusterizer(unittest.TestCase):
                                    ('mean_row', 'f4')])
 
         # Initialize clusterizer
-        clusterizer = HitClusterizer(pure_python=self.pure_python)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, x_cluster_distance=2, y_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
 
         # Create fake data with actual hit data structure
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
@@ -446,7 +444,7 @@ class TestClusterizer(unittest.TestCase):
                       }
 
         # Initialize clusterizer and cluster test hits with self defined data type names
-        clusterizer = HitClusterizer(hit_fields=hit_fields, hit_dtype=hit_dtype, pure_python=self.pure_python)
+        clusterizer = HitClusterizer(hit_fields=hit_fields, hit_dtype=hit_dtype, pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, x_cluster_distance=2, y_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2, hit_dtype=hit_dtype, hit_fields=hit_fields)
         hits_clustered, clusters = clusterizer.cluster_hits(hits)
 
@@ -500,7 +498,7 @@ class TestClusterizer(unittest.TestCase):
                           }
 
         # Initialize clusterizer and cluster test hits with self defined data type names
-        clusterizer = HitClusterizer(cluster_fields=cluster_fields, cluster_dtype=cluster_dtype, pure_python=self.pure_python)
+        clusterizer = HitClusterizer(cluster_fields=cluster_fields, cluster_dtype=cluster_dtype, pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, x_cluster_distance=2, y_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
         hits_clustered, clusters = clusterizer.cluster_hits(hits)
 
@@ -537,7 +535,7 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue((hits_clustered == expected_hit_result).all())
 
     def test_adding_cluster_field(self):
-        clusterizer = HitClusterizer(pure_python=self.pure_python)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, x_cluster_distance=2, y_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
 
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
 
@@ -587,7 +585,7 @@ class TestClusterizer(unittest.TestCase):
 
     def test_set_end_of_cluster_function(self):
         # Initialize clusterizer object
-        clusterizer = HitClusterizer(pure_python=self.pure_python)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, x_cluster_distance=2, y_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
 
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
 
@@ -610,7 +608,6 @@ class TestClusterizer(unittest.TestCase):
         expected_cluster_result['mean_row'] = [3.0, 9.0, 15.0, 19.0]
         expected_cluster_result['seed_charge'] = [1., 1., 1., 1.]
 
-        #
         expected_hit_result = np.zeros(shape=(10, ), dtype=np.dtype([('event_number', '<i8'),
                                                                      ('frame', '<u1'),
                                                                      ('column', '<u2'),
@@ -634,8 +631,8 @@ class TestClusterizer(unittest.TestCase):
         # The end of loop function has to define all of the following arguments, even when they are not used
         # It has to be compile able by numba in non python mode
         # This end_of_cluster_function sets the additional seed_charge field
-        def end_of_cluster_function(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, actual_cluster_index, actual_event_hit_index, actual_cluster_hit_indices, seed_index):
-            cluster[actual_cluster_index]['seed_charge'] = hits[seed_index]['charge']
+        def end_of_cluster_function(hits, cluster, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, seed_hit_index):
+            cluster[cluster_index]['seed_charge'] = hits[seed_hit_index]['charge']
 
         clusterizer.set_end_of_cluster_function(end_of_cluster_function)  # Set the new end_of_cluster_function
 
@@ -647,7 +644,7 @@ class TestClusterizer(unittest.TestCase):
 
     def test_set_end_of_event_function(self):
         # Initialize clusterizer object
-        clusterizer = HitClusterizer(pure_python=self.pure_python)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, x_cluster_distance=2, y_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
 
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
 
@@ -670,7 +667,6 @@ class TestClusterizer(unittest.TestCase):
         expected_cluster_result['mean_row'] = [3.0, 9.0, 15.0, 19.0]
         expected_cluster_result['n_cluster'] = [1, 1, 1, 1]
 
-        #
         expected_hit_result = np.zeros(shape=(10, ), dtype=np.dtype([('event_number', '<i8'),
                                                                      ('frame', '<u1'),
                                                                      ('column', '<u2'),
@@ -694,10 +690,10 @@ class TestClusterizer(unittest.TestCase):
         # The end of loop function has to define all of the following arguments, even when they are not used
         # It has to be compile able by numba in non python mode
         # This end_of_event_function sets the additional n_cluster field
-        def end_of_event_function(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, actual_event_hit_index, new_actual_event_hit_index, next_cluster_id, actual_event_cluster_index):
+        def end_of_event_function(hits, cluster, start_event_hit_index, stop_event_hit_index, start_event_cluster_index, stop_event_cluster_index):
             # Set the number of clusters info (n_cluster)for clusters of the event
-            for i in range(actual_event_cluster_index, actual_event_cluster_index + next_cluster_id):
-                cluster[i]['n_cluster'] = n_cluster[actual_event_hit_index]
+            for i in range(start_event_cluster_index, stop_event_cluster_index):
+                cluster[i]['n_cluster'] = hits["n_cluster"][start_event_hit_index]
 
         clusterizer.set_end_of_event_function(end_of_event_function)  # Set the new end_of_cluster_function
 
@@ -708,7 +704,7 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue((hits_clustered == expected_hit_result).all())
 
     def test_chunked_clustering(self):  # Big tables have to be chunked and analyzed with clusterizer.cluster_hits(hits_chunk) calls
-        clusterizer = HitClusterizer(pure_python=self.pure_python)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, x_cluster_distance=2, y_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
 
         hits = create_hits(n_hits=100, max_column=100, max_row=100, max_frame=1, max_charge=2)
 
