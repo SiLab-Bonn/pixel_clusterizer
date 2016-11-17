@@ -234,25 +234,25 @@ class HitClusterizer(object):
         self._ignore_same_hits = value
 
     def cluster_hits(self, hits, noisy_pixels=None, disabled_pixels=None):
-        self.n_hits = 0  # Effectively deletes the already clustered hits
+        self.n_hits = hits.shape[0]  # Effectively deletes the already clustered hits
         self._delete_cluster()  # Delete the already created cluster
         self.hits_clustered.dtype.names = self._unmap_hit_field_names(self.hits_clustered.dtype.names)  # Reset the data fields from previous renaming
         self._check_struct_compatibility(hits)
 
         # The hit info is extended by the cluster info; this is only possible by creating a new hit info array and copy data
         for internal_name, external_name in self._hit_fields_mapping.items():
-            self.hits_clustered[internal_name][self.n_hits:hits.shape[0]] = hits[external_name]
+            self.hits_clustered[internal_name][:self.n_hits] = hits[external_name]
 
         # Additional cluster info for the hit array
         assigned_hit_array = np.zeros_like(hits, dtype=np.bool)
 
-        cluster_hit_indices_array_size = self._max_cluster_hits if self._max_cluster_hits > 0 else hits.shape[0]
+        cluster_hit_indices_array_size = self._max_cluster_hits if self._max_cluster_hits > 0 else self.n_hits
         cluster_hit_indices_dtype = np_int_type_chooser(cluster_hit_indices_array_size)
         cluster_hit_indices = np.zeros(shape=cluster_hit_indices_array_size, dtype=cluster_hit_indices_dtype) - 1  # The hit indices of the actual cluster, -1 means not assigned
 
         self.n_cluster = \
             self.cluster_functions._cluster_hits(
-                hits=self.hits_clustered[self.n_hits:hits.shape[0]],
+                hits=self.hits_clustered[:self.n_hits],
                 cluster=self.cluster,
                 assigned_hit_array=assigned_hit_array,
                 cluster_hit_indices=cluster_hit_indices,
@@ -266,7 +266,6 @@ class HitClusterizer(object):
                 noisy_pixels=np.array([[], []], dtype=np.uint16) if noisy_pixels is None else np.array(noisy_pixels, dtype=np.uint16),
                 disabled_pixels=np.array([[], []], dtype=np.uint16) if disabled_pixels is None else np.array(disabled_pixels, dtype=np.uint16))
 
-        self.n_hits += hits.shape[0]
         self.hits_clustered.dtype.names = self._map_hit_field_names(self.hits_clustered.dtype.names)  # Rename the data fields for the result
         self.cluster.dtype.names = self._map_cluster_field_names(self.cluster.dtype.names)  # Rename the data fields for the result
 

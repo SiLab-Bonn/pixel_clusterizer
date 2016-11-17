@@ -39,6 +39,7 @@ def _finish_cluster(hits, cluster, cluster_size, cluster_hit_indices, cluster_in
         if hits[hit_index]['charge'] > max_cluster_charge:
             seed_hit_index = hit_index
             max_cluster_charge = hits[hit_index]['charge']
+        hits[hit_index]['is_seed'] = 0
         hits[hit_index]['cluster_size'] = cluster_size
         total_weighted_column += hits[hit_index]['column'] * (hits[hit_index]['charge'] + charge_correction)
         total_weighted_row += hits[hit_index]['row'] * (hits[hit_index]['charge'] + charge_correction)
@@ -67,6 +68,33 @@ def _finish_event(hits, cluster, start_event_hit_index, stop_event_hit_index, st
 
     for cluster_index in range(start_event_cluster_index, stop_event_cluster_index):
         cluster[cluster_index]['event_number'] = hits[start_event_hit_index]['event_number']
+
+
+@njit()
+def _hit_ok(hit, min_hit_charge, max_hit_charge, disabled_pixels):
+    ''' Check if given hit is withing the limits.
+    '''
+    # Omit hits with charge < min_hit_charge
+    if hit['charge'] < min_hit_charge:
+        return False
+
+    # Omit hits with charge > max_hit_charge
+    if max_hit_charge != 0 and hit['charge'] > max_hit_charge:
+        return False
+
+    if _value_in_array(hit['column'], disabled_pixels[0]) and _value_in_array(hit['row'], disabled_pixels[1]):
+        return False
+
+    return True
+
+
+@njit()
+def _set_hit_invalid(hit, cluster_id=-1):
+    ''' Set values for invalid hit.
+    '''
+    hit['cluster_ID'] = cluster_id
+    hit['is_seed'] = 0
+    hit['cluster_size'] = 0
 
 
 @njit()
@@ -121,29 +149,15 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
     # Temporary variables that are reset for each cluster or event
     start_event_hit_index = 0
     start_event_cluster_index = 0
-    actual_cluster_size = 0
-    actual_event_number = hits[0]['event_number']
+    cluster_size = 0
+    event_number = hits[0]['event_number']
     event_cluster_index = 0
 
     # Outer loop over all hits in the array (referred to as actual hit)
     for i in range(total_hits):
 
-        if assigned_hit_array[i] > 0:  # Hit was already assigned to a cluster in the inner loop, thus skip actual hit
-            continue
-
-        # Omit hits with charge < min_hit_charge
-        if hits[i]['charge'] < min_hit_charge:
-            continue
-
-        # Omit hits with charge > max_hit_charge
-        if max_hit_charge != 0 and hits[i]['charge'] > max_hit_charge:
-            continue
-
-        if _value_in_array(hits[i]['column'], disabled_pixels[0]) and _value_in_array(hits[i]['row'], disabled_pixels[1]):
-            continue
-
         # Check for new event and reset event variables
-        if _new_event(hits[i]['event_number'], actual_event_number):
+        if _new_event(hits[i]['event_number'], event_number):
             _finish_event(
                 hits=hits,
                 cluster=cluster,
@@ -163,16 +177,27 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
 
             start_event_hit_index = i
             start_event_cluster_index = start_event_cluster_index + event_cluster_index
-            actual_event_number = hits[i]['event_number']
+            event_number = hits[i]['event_number']
             event_cluster_index = 0
+
+        if assigned_hit_array[i] > 0:  # Hit was already assigned to a cluster in the inner loop, thus skip actual hit
+            continue
+
+        if not _hit_ok(
+                hit=hits[i],
+                min_hit_charge=min_hit_charge,
+                max_hit_charge=max_hit_charge,
+                disabled_pixels=disabled_pixels):
+            _set_hit_invalid(hit=hits[i], cluster_id=-1)
+            continue
 
         # Set/reset cluster variables for new cluster
         # Reset temp array with hit indices of actual cluster for the next cluster
-        _reset_array(cluster_hit_indices, -1, actual_cluster_size)
+        _reset_array(cluster_hit_indices, -1, cluster_size)
         cluster_hit_indices_index = 0
         cluster_hit_indices[0] = i
         assigned_hit_array[i] = 1
-        actual_cluster_size = 1  # actual cluster has one hit so far
+        cluster_size = 1  # actual cluster has one hit so far
 
         for j in cluster_hit_indices:  # Loop over all hits of the actual cluster; cluster_hit_indices is updated within the loop if new hit are found
             if j < 0:  # There are no more cluster hits found
@@ -180,7 +205,7 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
 
             for k in range(cluster_hit_indices[0] + 1, total_hits):
                 # Stop event hits loop if new event is reached
-                if _new_event(hits[k]['event_number'], actual_event_number):
+                if _new_event(hits[k]['event_number'], event_number):
                     break
 
                 # Omit if event hit is actual hit (clustering with itself)
@@ -191,34 +216,32 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
                 if assigned_hit_array[k] > 0:  # Hit was already assigned to a cluster in the inner loop, thus skip actual hit
                     continue
 
-                if hits[k]['charge'] < min_hit_charge:
-                    continue
-
-                if max_hit_charge != 0 and hits[k]['charge'] > max_hit_charge:
-                    continue
-
-                if _value_in_array(hits[k]['column'], disabled_pixels[0]) and _value_in_array(hits[k]['row'], disabled_pixels[1]):
+                if not _hit_ok(
+                        hit=hits[k],
+                        min_hit_charge=min_hit_charge,
+                        max_hit_charge=max_hit_charge,
+                        disabled_pixels=disabled_pixels):
                     continue
 
                 # Check if event hit belongs to actual hit and thus to the actual cluster
                 if _is_in_max_difference(hits[j]['column'], hits[k]['column'], x_cluster_distance) and _is_in_max_difference(hits[j]['row'], hits[k]['row'], y_cluster_distance) and _is_in_max_difference(hits[j]['frame'], hits[k]['frame'], frame_cluster_distance):
                     if not ignore_same_hits or hits[j]['column'] != hits[k]['column'] or hits[j]['row'] != hits[k]['row']:
-                        actual_cluster_size += 1
+                        cluster_size += 1
                         cluster_hit_indices_index += 1
-                        if max_n_cluster_hits > 0 and actual_cluster_size > max_n_cluster_hits:
+                        if max_n_cluster_hits > 0 and cluster_size > max_n_cluster_hits:
                             raise OutOfRangeError('There are more clusters than specified. Increase max_cluster_hits parameter!')
                         cluster_hit_indices[cluster_hit_indices_index] = k
                         assigned_hit_array[k] = 1
 
                     else:
-                        # TODO: change cluster ID to -2
+                        _set_hit_invalid(hit=hits[k], cluster_id=-2)
                         assigned_hit_array[k] = 1
 
         # check for valid cluster and add it to the array
         if _finish_cluster(
                 hits=hits,
                 cluster=cluster,
-                cluster_size=actual_cluster_size,
+                cluster_size=cluster_size,
                 cluster_hit_indices=cluster_hit_indices,
                 cluster_index=start_event_cluster_index + event_cluster_index,
                 cluster_id=event_cluster_index,
@@ -228,7 +251,7 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
             _end_of_cluster_function(
                 hits=hits,
                 cluster=cluster,
-                cluster_size=actual_cluster_size,
+                cluster_size=cluster_size,
                 cluster_hit_indices=cluster_hit_indices,
                 cluster_index=start_event_cluster_index + event_cluster_index,
                 cluster_id=event_cluster_index,
