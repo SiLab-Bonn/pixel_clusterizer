@@ -166,9 +166,6 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
             actual_event_number = hits[i]['event_number']
             event_cluster_index = 0
 
-        else:
-            pass
-#             event_n_cluster += 1
         # Set/reset cluster variables for new cluster
         # Reset temp array with hit indices of actual cluster for the next cluster
         _reset_array(cluster_hit_indices, -1, actual_cluster_size)
