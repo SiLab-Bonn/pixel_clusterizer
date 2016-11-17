@@ -119,7 +119,7 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
         charge_correction = 0
 
     # Temporary variables that are reset for each cluster or event
-    actual_event_hit_index = 0
+    start_event_hit_index = 0
     start_event_cluster_index = 0
     actual_cluster_size = 0
     actual_event_number = hits[0]['event_number']
@@ -147,7 +147,7 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
             _finish_event(
                 hits=hits,
                 cluster=cluster,
-                start_event_hit_index=actual_event_hit_index,
+                start_event_hit_index=start_event_hit_index,
                 stop_event_hit_index=i,
                 start_event_cluster_index=start_event_cluster_index,
                 stop_event_cluster_index=start_event_cluster_index + event_cluster_index)
@@ -156,12 +156,12 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
             _end_of_event_function(
                 hits=hits,
                 cluster=cluster,
-                start_event_hit_index=actual_event_hit_index,
+                start_event_hit_index=start_event_hit_index,
                 stop_event_hit_index=i,
                 start_event_cluster_index=start_event_cluster_index,
                 stop_event_cluster_index=start_event_cluster_index + event_cluster_index)
 
-            actual_event_hit_index = i
+            start_event_hit_index = i
             start_event_cluster_index = start_event_cluster_index + event_cluster_index
             actual_event_number = hits[i]['event_number']
             event_cluster_index = 0
@@ -177,8 +177,6 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
         for j in cluster_hit_indices:  # Loop over all hits of the actual cluster; cluster_hit_indices is updated within the loop if new hit are found
             if j < 0:  # There are no more cluster hits found
                 break
-
-            actual_inner_loop_hit_index = j + actual_event_hit_index
 
             for k in range(cluster_hit_indices[0] + 1, total_hits):
                 # Stop event hits loop if new event is reached
@@ -203,8 +201,8 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
                     continue
 
                 # Check if event hit belongs to actual hit and thus to the actual cluster
-                if _is_in_max_difference(hits[actual_inner_loop_hit_index]['column'], hits[k]['column'], x_cluster_distance) and _is_in_max_difference(hits[actual_inner_loop_hit_index]['row'], hits[k]['row'], y_cluster_distance) and _is_in_max_difference(hits[actual_inner_loop_hit_index]['frame'], hits[k]['frame'], frame_cluster_distance):
-                    if not ignore_same_hits or hits[actual_inner_loop_hit_index]['column'] != hits[k]['column'] or hits[actual_inner_loop_hit_index]['row'] != hits[k]['row']:
+                if _is_in_max_difference(hits[j]['column'], hits[k]['column'], x_cluster_distance) and _is_in_max_difference(hits[j]['row'], hits[k]['row'], y_cluster_distance) and _is_in_max_difference(hits[j]['frame'], hits[k]['frame'], frame_cluster_distance):
+                    if not ignore_same_hits or hits[j]['column'] != hits[k]['column'] or hits[j]['row'] != hits[k]['row']:
                         actual_cluster_size += 1
                         cluster_hit_indices_index += 1
                         if max_n_cluster_hits > 0 and actual_cluster_size > max_n_cluster_hits:
@@ -242,7 +240,7 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
     _finish_event(
         hits=hits,
         cluster=cluster,
-        start_event_hit_index=actual_event_hit_index,
+        start_event_hit_index=start_event_hit_index,
         stop_event_hit_index=total_hits,
         start_event_cluster_index=start_event_cluster_index,
         stop_event_cluster_index=start_event_cluster_index + event_cluster_index)
@@ -251,7 +249,7 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
     _end_of_event_function(
         hits=hits,
         cluster=cluster,
-        start_event_hit_index=actual_event_hit_index,
+        start_event_hit_index=start_event_hit_index,
         stop_event_hit_index=total_hits,
         start_event_cluster_index=start_event_cluster_index,
         stop_event_cluster_index=start_event_cluster_index + event_cluster_index)
