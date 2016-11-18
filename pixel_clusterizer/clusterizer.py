@@ -249,6 +249,16 @@ class HitClusterizer(object):
         cluster_hit_indices_array_size = self._max_cluster_hits if self._max_cluster_hits > 0 else self.n_hits
         cluster_hit_indices_dtype = np_int_type_chooser(cluster_hit_indices_array_size)
         cluster_hit_indices = np.zeros(shape=cluster_hit_indices_array_size, dtype=cluster_hit_indices_dtype) - 1  # The hit indices of the actual cluster, -1 means not assigned
+        col_dtype = self.hits_clustered.dtype.fields["column"][0]
+        row_dtype = self.hits_clustered.dtype.fields["row"][0]
+        mask_dtype = {"names": ["column", "row"],
+                      "formats": [col_dtype, row_dtype]}
+        noisy_pixels_array = np.array([]) if noisy_pixels is None else np.array(noisy_pixels)
+        disabled_pixels_array = np.array([]) if disabled_pixels is None else np.array(disabled_pixels)
+        noisy_pixels = np.recarray(noisy_pixels_array.shape[0], dtype=mask_dtype)
+        noisy_pixels[:] = [(item[0], item[1]) for item in noisy_pixels_array]
+        disabled_pixels = np.recarray(disabled_pixels_array.shape[0], dtype=mask_dtype)
+        disabled_pixels[:] = [(item[0], item[1]) for item in disabled_pixels_array]
 
         self.n_cluster = \
             self.cluster_functions._cluster_hits(
@@ -263,8 +273,8 @@ class HitClusterizer(object):
                 min_hit_charge=self._min_hit_charge,
                 max_hit_charge=self._max_hit_charge,
                 ignore_same_hits=self._ignore_same_hits,
-                noisy_pixels=np.array([[], []], dtype=np.uint16) if noisy_pixels is None else np.array(noisy_pixels, dtype=np.uint16),
-                disabled_pixels=np.array([[], []], dtype=np.uint16) if disabled_pixels is None else np.array(disabled_pixels, dtype=np.uint16))
+                noisy_pixels=noisy_pixels,
+                disabled_pixels=disabled_pixels)
 
         self.hits_clustered.dtype.names = self._map_hit_field_names(self.hits_clustered.dtype.names)  # Rename the data fields for the result
         self.cluster.dtype.names = self._map_cluster_field_names(self.cluster.dtype.names)  # Rename the data fields for the result

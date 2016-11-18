@@ -14,10 +14,23 @@ def _value_in_array(value, array):
     ''' Check if array contains value.
     Equivalent to np.all(np.in1d(number, array)).
     '''
-    for value_array in array:
-        if value == value_array:
+    for array_value in array:
+        if value == array_value:
             return True
     return False
+
+
+@njit()
+def _get_index(value, array, default=-1):
+    ''' Return index of occuring value.
+    Equivalent to numpy.where(array==item).
+    '''
+    index = 0
+    for array_value in array:
+        if value == array_value:
+            return index
+        index += 1
+    return default
 
 
 @njit()
@@ -33,8 +46,8 @@ def _finish_cluster(hits, cluster, cluster_size, cluster_hit_indices, cluster_in
 #             break
     for i in range(cluster_size):
         hit_index = cluster_hit_indices[i]
-        # check for single noisy pixel
-        if cluster_size == 1 and _value_in_array(hits[hit_index]['column'], noisy_pixels[0]) and _value_in_array(hits[hit_index]['row'], noisy_pixels[1]):
+        if cluster_size == 1 and _get_index(hits[hit_index]['column'], noisy_pixels["column"], default=-1) == _get_index(hits[hit_index]['row'], noisy_pixels["row"], default=-2):
+            _set_hit_invalid(hit=hits[hit_index], cluster_id=-1)
             return False
         if hits[hit_index]['charge'] > max_cluster_charge:
             seed_hit_index = hit_index
@@ -103,7 +116,7 @@ def _hit_ok(hit, min_hit_charge, max_hit_charge, disabled_pixels):
     if max_hit_charge != 0 and hit['charge'] > max_hit_charge:
         return False
 
-    if _value_in_array(hit['column'], disabled_pixels[0]) and _value_in_array(hit['row'], disabled_pixels[1]):
+    if _get_index(hit['column'], disabled_pixels["column"], default=-1) == _get_index(hit['row'], disabled_pixels["row"], default=-2):
         return False
 
     return True
@@ -259,7 +272,6 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
                 cluster_id=event_cluster_index,
                 charge_correction=charge_correction,
                 noisy_pixels=noisy_pixels):
-
             event_cluster_index += 1
 
     # Last event is assumed to be finished at the end of the hit array, thus add info
