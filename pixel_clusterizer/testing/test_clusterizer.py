@@ -129,6 +129,134 @@ class TestClusterizer(unittest.TestCase):
         self.assertEqual(cluster_hits.shape[0], 10)  # hit clustering activated, thus this array have 10 entries
         self.assertTrue(np.array_equal(cluster_hits, expected_result))
 
+    def test_disabled_pixels(self):
+        # Create some fake data
+        hits = np.ones(shape=(7, ), dtype=np.dtype([('event_number', '<i8'),
+                                                    ('frame', '<u1'),
+                                                    ('column', '<u2'),
+                                                    ('row', '<u2'),
+                                                    ('charge', '<u2')]))
+        hits[0]['column'], hits[0]['row'], hits[0]['charge'], hits[0]['event_number'], hits[0]['frame'] = 1, 2, 4, 0, 0
+        hits[1]['column'], hits[1]['row'], hits[1]['charge'], hits[1]['event_number'], hits[1]['frame'] = 2, 2, 4, 0, 0
+        hits[2]['column'], hits[2]['row'], hits[2]['charge'], hits[2]['event_number'], hits[2]['frame'] = 2, 2, 5, 1, 10
+        hits[3]['column'], hits[3]['row'], hits[3]['charge'], hits[3]['event_number'], hits[3]['frame'] = 2, 2, 6, 2, 0
+        hits[4]['column'], hits[4]['row'], hits[4]['charge'], hits[4]['event_number'], hits[4]['frame'] = 2, 3, 6, 2, 0
+        hits[5]['column'], hits[5]['row'], hits[5]['charge'], hits[5]['event_number'], hits[5]['frame'] = 3, 3, 6, 2, 0
+        hits[6]['column'], hits[6]['row'], hits[6]['charge'], hits[6]['event_number'], hits[6]['frame'] = 3, 3, 7, 3, 11
+
+        # Create clusterizer object
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, x_cluster_distance=2, y_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
+
+        # Case 1: Test max hit charge cut, accept all hits
+        clusterizer.cluster_hits(hits, disabled_pixels=[[2, 2], [3, 3]])  # cluster hits
+
+        # Check cluster
+        cluster = clusterizer.get_cluster()
+        expected_result = np.zeros(shape=(2, ), dtype=np.dtype([('event_number', '<i8'),
+                                                                ('ID', '<u2'),
+                                                                ('n_hits', '<u2'),
+                                                                ('charge', 'f4'),
+                                                                ('seed_column', '<u2'),
+                                                                ('seed_row', '<u2'),
+                                                                ('mean_column', 'f4'),
+                                                                ('mean_row', 'f4')]))
+        expected_result['event_number'] = [0, 2]
+        expected_result['ID'] = [0, 0]
+        expected_result['n_hits'] = [1, 1]
+        expected_result['charge'] = [4, 6]
+        expected_result['seed_column'] = [1, 2]
+        expected_result['seed_row'] = [2, 3]
+        expected_result['mean_column'] = [1.0, 2.0]
+        expected_result['mean_row'] = [2.0, 3.0]
+
+        self.assertTrue(np.array_equal(cluster, expected_result))
+
+        cluster_hits = clusterizer.get_hit_cluster()
+        expected_hit_result = np.zeros(shape=(7, ), dtype=np.dtype([('event_number', '<i8'),
+                                                                    ('frame', '<u1'),
+                                                                    ('column', '<u2'),
+                                                                    ('row', '<u2'),
+                                                                    ('charge', '<u2'),
+                                                                    ('cluster_ID', '<i2'),
+                                                                    ('is_seed', '<u1'),
+                                                                    ('cluster_size', '<u2'),
+                                                                    ('n_cluster', '<u2')]))
+        expected_hit_result['event_number'] = hits['event_number']
+        expected_hit_result['frame'] = hits['frame']
+        expected_hit_result['column'] = hits['column']
+        expected_hit_result['row'] = hits['row']
+        expected_hit_result['charge'] = hits['charge']
+        expected_hit_result['cluster_ID'] = [0, -1, -1, -1, 0, -1, -1]
+        expected_hit_result['is_seed'] = [1, 0, 0, 0, 1, 0, 0]
+        expected_hit_result['cluster_size'] = [1, 0, 0, 0, 1, 0, 0]
+        expected_hit_result['n_cluster'] = [1, 1, 0, 1, 1, 1, 0]
+
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
+
+    def test_noisy_pixels(self):
+        # Create some fake data
+        hits = np.ones(shape=(7, ), dtype=np.dtype([('event_number', '<i8'),
+                                                    ('frame', '<u1'),
+                                                    ('column', '<u2'),
+                                                    ('row', '<u2'),
+                                                    ('charge', '<u2')]))
+        hits[0]['column'], hits[0]['row'], hits[0]['charge'], hits[0]['event_number'], hits[0]['frame'] = 1, 2, 8, 0, 0
+        hits[1]['column'], hits[1]['row'], hits[1]['charge'], hits[1]['event_number'], hits[1]['frame'] = 2, 2, 4, 0, 0
+        hits[2]['column'], hits[2]['row'], hits[2]['charge'], hits[2]['event_number'], hits[2]['frame'] = 2, 2, 5, 1, 10
+        hits[3]['column'], hits[3]['row'], hits[3]['charge'], hits[3]['event_number'], hits[3]['frame'] = 2, 2, 12, 2, 0
+        hits[4]['column'], hits[4]['row'], hits[4]['charge'], hits[4]['event_number'], hits[4]['frame'] = 2, 3, 6, 2, 0
+        hits[5]['column'], hits[5]['row'], hits[5]['charge'], hits[5]['event_number'], hits[5]['frame'] = 3, 3, 3, 2, 0
+        hits[6]['column'], hits[6]['row'], hits[6]['charge'], hits[6]['event_number'], hits[6]['frame'] = 3, 3, 7, 3, 11
+
+        # Create clusterizer object
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, x_cluster_distance=2, y_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
+
+        # Case 1: Test max hit charge cut, accept all hits
+        clusterizer.cluster_hits(hits, noisy_pixels=[[2, 2], [3, 3]])  # cluster hits
+
+        # Check cluster
+        cluster = clusterizer.get_cluster()
+        expected_result = np.zeros(shape=(2, ), dtype=np.dtype([('event_number', '<i8'),
+                                                                ('ID', '<u2'),
+                                                                ('n_hits', '<u2'),
+                                                                ('charge', 'f4'),
+                                                                ('seed_column', '<u2'),
+                                                                ('seed_row', '<u2'),
+                                                                ('mean_column', 'f4'),
+                                                                ('mean_row', 'f4')]))
+        expected_result['event_number'] = [0, 2]
+        expected_result['ID'] = [0, 0]
+        expected_result['n_hits'] = [2, 3]
+        expected_result['charge'] = [8 + 4, 12 + 6 + 3]
+        expected_result['seed_column'] = [1, 2]
+        expected_result['seed_row'] = [2, 2]
+        expected_result['mean_column'] = [(9 * 1 + 5 * 2) / float(9 + 5), (13 * 2 + 7 * 2 + 4 * 3) / float(13 + 7 + 4)]
+        expected_result['mean_row'] = [(9 * 2 + 5 * 2) / float(9 + 5), (13 * 2 + 7 * 3 + 4 * 3) / float(13 + 7 + 4)]
+
+        self.assertTrue(np.array_equal(cluster, expected_result))
+
+        cluster_hits = clusterizer.get_hit_cluster()
+        expected_hit_result = np.zeros(shape=(7, ), dtype=np.dtype([('event_number', '<i8'),
+                                                                    ('frame', '<u1'),
+                                                                    ('column', '<u2'),
+                                                                    ('row', '<u2'),
+                                                                    ('charge', '<u2'),
+                                                                    ('cluster_ID', '<i2'),
+                                                                    ('is_seed', '<u1'),
+                                                                    ('cluster_size', '<u2'),
+                                                                    ('n_cluster', '<u2')]))
+        expected_hit_result['event_number'] = hits['event_number']
+        expected_hit_result['frame'] = hits['frame']
+        expected_hit_result['column'] = hits['column']
+        expected_hit_result['row'] = hits['row']
+        expected_hit_result['charge'] = hits['charge']
+        expected_hit_result['cluster_ID'] = [0, 0, -1, 0, 0, 0, -1]
+        expected_hit_result['is_seed'] = [1, 0, 0, 1, 0, 0, 0]
+        expected_hit_result['cluster_size'] = [2, 2, 0, 3, 3, 3, 0]
+        expected_hit_result['n_cluster'] = [1, 1, 0, 1, 1, 1, 0]
+
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
+
     def test_cluster_cuts(self):
         # Create some fake data
         hits = np.ones(shape=(2, ), dtype=np.dtype([('event_number', '<i8'),
