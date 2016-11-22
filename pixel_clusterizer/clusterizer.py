@@ -246,9 +246,7 @@ class HitClusterizer(object):
         # Additional cluster info for the hit array
         assigned_hit_array = np.zeros_like(hits, dtype=np.bool)
 
-        cluster_hit_indices_array_size = self._max_cluster_hits if self._max_cluster_hits > 0 else self.n_hits
-        cluster_hit_indices_dtype = np_int_type_chooser(cluster_hit_indices_array_size)
-        cluster_hit_indices = np.zeros(shape=cluster_hit_indices_array_size, dtype=cluster_hit_indices_dtype) - 1  # The hit indices of the actual cluster, -1 means not assigned
+        cluster_hit_indices = np.zeros(shape=self.n_hits, dtype=np_int_type_chooser(self.n_hits)) - 1  # The hit indices of the actual cluster, -1 means not assigned
         col_dtype = self.hits_clustered.dtype.fields["column"][0]
         row_dtype = self.hits_clustered.dtype.fields["row"][0]
         mask_dtype = {"names": ["column", "row"],
