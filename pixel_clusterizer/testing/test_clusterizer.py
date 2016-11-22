@@ -994,7 +994,7 @@ class TestClusterizer(unittest.TestCase):
         # The end of loop function has to define all of the following arguments, even when they are not used
         # It has to be compile able by numba in non python mode
         # This end_of_cluster_function sets the additional seed_charge field
-        def end_of_cluster_function(hits, cluster, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, seed_hit_index):
+        def end_of_cluster_function(hits, cluster, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, disabled_pixels, seed_hit_index):
             cluster[cluster_index]['seed_charge'] = hits[seed_hit_index]['charge']
 
         clusterizer.set_end_of_cluster_function(end_of_cluster_function)  # Set the new end_of_cluster_function

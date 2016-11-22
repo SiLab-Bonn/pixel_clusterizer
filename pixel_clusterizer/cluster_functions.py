@@ -34,21 +34,30 @@ def _get_index(value, array, default=-1):
 
 
 @njit()
-def _finish_cluster(hits, cluster, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels):
+def _pixel_masked(hit, array):
+    ''' Return index of occuring value.
+    Equivalent to numpy.where(array==item).
+    '''
+    for array_value in array:
+        if hit["column"] == array_value["column"] and hit["row"] == array_value["row"]:
+            return True
+    return False
+
+
+@njit()
+def _finish_cluster(hits, cluster, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, disabled_pixels):
     ''' Set hit and cluster information of the cluster (e.g. number of hits in the cluster (cluster_size), total cluster charge (charge), ...).
     '''
     cluster_charge = 0
     max_cluster_charge = -1
     total_weighted_column = 0
     total_weighted_row = 0
+
 #     for hit_index in cluster_hit_indices:
 #         if hit_index == -1:
 #             break
     for i in range(cluster_size):
         hit_index = cluster_hit_indices[i]
-        if cluster_size == 1 and _get_index(hits[hit_index]['column'], noisy_pixels["column"], default=-1) == _get_index(hits[hit_index]['row'], noisy_pixels["row"], default=-2):
-            _set_hit_invalid(hit=hits[hit_index], cluster_id=-1)
-            return False
         if hits[hit_index]['charge'] > max_cluster_charge:
             seed_hit_index = hit_index
             max_cluster_charge = hits[hit_index]['charge']
@@ -79,9 +88,8 @@ def _finish_cluster(hits, cluster, cluster_size, cluster_hit_indices, cluster_in
         cluster_id=cluster_id,
         charge_correction=charge_correction,
         noisy_pixels=noisy_pixels,
+        disabled_pixels=disabled_pixels,
         seed_hit_index=seed_hit_index)
-
-    return True
 
 
 @njit()
@@ -105,7 +113,7 @@ def _finish_event(hits, cluster, start_event_hit_index, stop_event_hit_index, st
 
 
 @njit()
-def _hit_ok(hit, min_hit_charge, max_hit_charge, disabled_pixels):
+def _hit_ok(hit, min_hit_charge, max_hit_charge):
     ''' Check if given hit is withing the limits.
     '''
     # Omit hits with charge < min_hit_charge
@@ -114,9 +122,6 @@ def _hit_ok(hit, min_hit_charge, max_hit_charge, disabled_pixels):
 
     # Omit hits with charge > max_hit_charge
     if max_hit_charge != 0 and hit['charge'] > max_hit_charge:
-        return False
-
-    if _get_index(hit['column'], disabled_pixels["column"], default=-1) == _get_index(hit['row'], disabled_pixels["row"], default=-2):
         return False
 
     return True
@@ -154,7 +159,7 @@ def _is_in_max_difference(value_1, value_2, max_difference):
 
 
 @njit()
-def _end_of_cluster_function(hits, cluster, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, seed_hit_index):
+def _end_of_cluster_function(hits, cluster, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, disabled_pixels, seed_hit_index):
     ''' Empty function that can be overwritten with a new function that is called at the end of each cluster
     '''
     return
@@ -211,9 +216,9 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
         if not _hit_ok(
                 hit=hits[i],
                 min_hit_charge=min_hit_charge,
-                max_hit_charge=max_hit_charge,
-                disabled_pixels=disabled_pixels):
+                max_hit_charge=max_hit_charge) or (disabled_pixels.shape[0] != 0 and _pixel_masked(hits[i], disabled_pixels)):
             _set_hit_invalid(hit=hits[i], cluster_id=-1)
+            assigned_hit_array[i] = 1
             continue
 
         # Set/reset cluster variables for new cluster
@@ -244,8 +249,9 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
                 if not _hit_ok(
                         hit=hits[k],
                         min_hit_charge=min_hit_charge,
-                        max_hit_charge=max_hit_charge,
-                        disabled_pixels=disabled_pixels):
+                        max_hit_charge=max_hit_charge) or (disabled_pixels.shape[0] != 0 and _pixel_masked(hits[k], disabled_pixels)):
+                    _set_hit_invalid(hit=hits[k], cluster_id=-1)
+                    assigned_hit_array[k] = 1
                     continue
 
                 # Check if event hit belongs to actual hit and thus to the actual cluster
@@ -263,7 +269,10 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
                         assigned_hit_array[k] = 1
 
         # check for valid cluster and add it to the array
-        if _finish_cluster(
+        if cluster_size == 1 and noisy_pixels.shape[0] != 0 and _pixel_masked(hits[cluster_hit_indices[0]], noisy_pixels):
+            _set_hit_invalid(hit=hits[cluster_hit_indices[0]], cluster_id=-1)
+        else:
+            _finish_cluster(
                 hits=hits,
                 cluster=cluster,
                 cluster_size=cluster_size,
@@ -271,7 +280,8 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
                 cluster_index=start_event_cluster_index + event_cluster_index,
                 cluster_id=event_cluster_index,
                 charge_correction=charge_correction,
-                noisy_pixels=noisy_pixels):
+                noisy_pixels=noisy_pixels,
+                disabled_pixels=disabled_pixels)
             event_cluster_index += 1
 
     # Last event is assumed to be finished at the end of the hit array, thus add info
