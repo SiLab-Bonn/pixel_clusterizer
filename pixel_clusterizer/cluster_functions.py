@@ -137,8 +137,8 @@ def _set_hit_invalid(hit, cluster_id=-1):
 
 
 @njit()
-def _reset_array(array, value, size=0):
-    ''' Sets the cluster hit indices to the std. valie -1. To be able to use this array in the new event
+def _set_1d_array(array, value, size=-1):
+    ''' Set array elemets to value for given number of elements (if size is negative number set all elements to value).
     '''
     if size >= 0:
         for i in range(size):
@@ -224,7 +224,7 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
 
         # Set/reset cluster variables for new cluster
         # Reset temp array with hit indices of actual cluster for the next cluster
-        _reset_array(cluster_hit_indices, -1, cluster_size)
+        _set_1d_array(cluster_hit_indices, -1, cluster_size)
         cluster_hit_indices[0] = i
         assigned_hit_array[i] = 1
         cluster_size = 1  # actual cluster has one hit so far
