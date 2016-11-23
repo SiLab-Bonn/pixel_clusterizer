@@ -27,7 +27,7 @@ class HitClusterizer(object):
 
     ''' Clusterizer class providing an interface for the jitted functions and stores settings.'''
 
-    def __init__(self, hit_fields=None, hit_dtype=None, cluster_fields=None, cluster_dtype=None, pure_python=False, max_hits=1000, max_cluster_hits=0, min_hit_charge=0, max_hit_charge=None, x_cluster_distance=1, y_cluster_distance=1, frame_cluster_distance=0, ignore_same_hits=True):
+    def __init__(self, hit_fields=None, hit_dtype=None, cluster_fields=None, cluster_dtype=None, pure_python=False, max_hits=1000, max_cluster_hits=None, min_hit_charge=0, max_hit_charge=None, x_cluster_distance=1, y_cluster_distance=1, frame_cluster_distance=0, ignore_same_hits=True):
         # Activate pute python mode by setting the evnironment variable NUMBA_DISABLE_JIT
         self.pure_python = pure_python
         if self.pure_python:
@@ -228,6 +228,8 @@ class HitClusterizer(object):
         self._frame_cluster_distance = value
 
     def set_max_cluster_hits(self, value):
+        if value is None:
+            value = 0
         self._max_cluster_hits = value
 
     def ignore_same_hits(self, value):  # Ignore same hit in an event for clustering
@@ -246,7 +248,8 @@ class HitClusterizer(object):
         # Additional cluster info for the hit array
         assigned_hit_array = np.zeros_like(hits, dtype=np.bool)
 
-        cluster_hit_indices = np.zeros(shape=self.n_hits, dtype=np_int_type_chooser(self.n_hits)) - 1  # The hit indices of the actual cluster, -1 means not assigned
+        max_cluster_hits = self.n_hits if self._max_cluster_hits <= 0 else self._max_cluster_hits
+        cluster_hit_indices = np.zeros(shape=(max_cluster_hits,), dtype=np_int_type_chooser(self.n_hits)) - 1  # The hit indices of the actual cluster, -1 means not assigned
         col_dtype = self.hits_clustered.dtype.fields["column"][0]
         row_dtype = self.hits_clustered.dtype.fields["row"][0]
         mask_dtype = {"names": ["column", "row"],
@@ -267,7 +270,6 @@ class HitClusterizer(object):
                 x_cluster_distance=self._x_cluster_distance,
                 y_cluster_distance=self._y_cluster_distance,
                 frame_cluster_distance=self._frame_cluster_distance,
-                max_n_cluster_hits=self._max_cluster_hits,
                 min_hit_charge=self._min_hit_charge,
                 max_hit_charge=self._max_hit_charge,
                 ignore_same_hits=self._ignore_same_hits,

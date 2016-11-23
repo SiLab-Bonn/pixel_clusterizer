@@ -173,10 +173,11 @@ def _end_of_event_function(hits, cluster, start_event_hit_index, stop_event_hit_
 
 
 @njit()
-def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_cluster_distance, y_cluster_distance, frame_cluster_distance, max_n_cluster_hits, min_hit_charge, max_hit_charge, ignore_same_hits, noisy_pixels, disabled_pixels):
+def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_cluster_distance, y_cluster_distance, frame_cluster_distance, min_hit_charge, max_hit_charge, ignore_same_hits, noisy_pixels, disabled_pixels):
     ''' Main precompiled function that loopes over the hits and clusters them
     '''
     total_hits = hits.shape[0]
+    max_cluster_hits = cluster_hit_indices.shape[0]
 
     # Correction for charge weighting
     # Some chips have non-zero charge for a charge value of zero, charge needs to be corrected to calculate cluster center correctly
@@ -224,7 +225,6 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
         # Set/reset cluster variables for new cluster
         # Reset temp array with hit indices of actual cluster for the next cluster
         _reset_array(cluster_hit_indices, -1, cluster_size)
-        cluster_hit_indices_index = 0
         cluster_hit_indices[0] = i
         assigned_hit_array[i] = 1
         cluster_size = 1  # actual cluster has one hit so far
@@ -258,10 +258,9 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
                 if _is_in_max_difference(hits[j]['column'], hits[k]['column'], x_cluster_distance) and _is_in_max_difference(hits[j]['row'], hits[k]['row'], y_cluster_distance) and _is_in_max_difference(hits[j]['frame'], hits[k]['frame'], frame_cluster_distance):
                     if not ignore_same_hits or hits[j]['column'] != hits[k]['column'] or hits[j]['row'] != hits[k]['row']:
                         cluster_size += 1
-                        cluster_hit_indices_index += 1
-                        if max_n_cluster_hits > 0 and cluster_size > max_n_cluster_hits:
-                            raise OutOfRangeError('There are more clusters than specified. Increase max_cluster_hits parameter!')
-                        cluster_hit_indices[cluster_hit_indices_index] = k
+                        if cluster_size > max_cluster_hits:
+                            raise OutOfRangeError('There are more cluster hits than specified. Increase max_cluster_hits parameter!')
+                        cluster_hit_indices[cluster_size - 1] = k
                         assigned_hit_array[k] = 1
 
                     else:
