@@ -53,9 +53,6 @@ def _finish_cluster(hits, cluster, cluster_size, cluster_hit_indices, cluster_in
     total_weighted_column = 0
     total_weighted_row = 0
 
-#     for hit_index in cluster_hit_indices:
-#         if hit_index == -1:
-#             break
     for i in range(cluster_size):
         hit_index = cluster_hit_indices[i]
         if hits[hit_index]['charge'] > max_cluster_charge:
