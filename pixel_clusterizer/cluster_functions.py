@@ -35,8 +35,7 @@ def _get_index(value, array, default=-1):
 
 @njit()
 def _pixel_masked(hit, array):
-    ''' Return index of occuring value.
-    Equivalent to numpy.where(array==item).
+    ''' Check whether hit (column/row) appears in array or not.
     '''
     for array_value in array:
         if hit["column"] == array_value["column"] and hit["row"] == array_value["row"]:
