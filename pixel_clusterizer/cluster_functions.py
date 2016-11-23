@@ -241,8 +241,8 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
                 if k == j:
                     continue
 
-                # Omit if event hit is already belonging to a cluster
-                if assigned_hit_array[k] > 0:  # Hit was already assigned to a cluster in the inner loop, thus skip actual hit
+                # Hit was already assigned to a cluster in the inner loop, thus skip actual hit
+                if assigned_hit_array[k] > 0:
                     continue
 
                 if not _hit_ok(
