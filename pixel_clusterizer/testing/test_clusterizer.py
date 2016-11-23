@@ -834,14 +834,15 @@ class TestClusterizer(unittest.TestCase):
     def test_chunked_clustering(self):  # Big tables have to be chunked and analyzed with clusterizer.cluster_hits(hits_chunk) calls
         clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, x_cluster_distance=2, y_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
 
-        hits = create_hits(n_hits=100, max_column=100, max_row=100, max_frame=1, max_charge=2)
+        n_hits = 100
+        hits = create_hits(n_hits=n_hits, max_column=100, max_row=100, max_frame=1, max_charge=2)
 
         hits_clustered, cluster = clusterizer.cluster_hits(hits)  # Cluster all at once
         hits_clustered, cluster = hits_clustered.copy(), cluster.copy()  # Be aware that the returned array are references to be stored! An additional call of clusterizer.cluster_hits will overwrite the data
 
         hits_clustered_chunked, cluster_chunked = None, None
         chunk_size = 6  # Chunk size has to be chosen to not split events between chunks!
-        for i in range(int(100 / chunk_size + 1)):  # Cluster in chunks
+        for i in range(int(n_hits / chunk_size + 1)):  # Cluster in chunks
             hits_chunk = hits[i * chunk_size:i * chunk_size + chunk_size]
             hits_clustered_chunk, cluster_chunk = clusterizer.cluster_hits(hits_chunk)
             if hits_clustered_chunked is None:
