@@ -49,6 +49,7 @@ def _finish_cluster(hits, cluster, cluster_size, cluster_hit_indices, cluster_in
     '''
     cluster_charge = 0
     max_cluster_charge = -1
+    # necessary for charge weighted hit position
     total_weighted_column = 0
     total_weighted_row = 0
 
@@ -62,6 +63,7 @@ def _finish_cluster(hits, cluster, cluster_size, cluster_hit_indices, cluster_in
             max_cluster_charge = hits[hit_index]['charge']
         hits[hit_index]['is_seed'] = 0
         hits[hit_index]['cluster_size'] = cluster_size
+        # include charge correction in sum
         total_weighted_column += hits[hit_index]['column'] * (hits[hit_index]['charge'] + charge_correction)
         total_weighted_row += hits[hit_index]['row'] * (hits[hit_index]['charge'] + charge_correction)
         cluster_charge += hits[hit_index]['charge']
@@ -74,6 +76,7 @@ def _finish_cluster(hits, cluster, cluster_size, cluster_hit_indices, cluster_in
     cluster[cluster_index]["charge"] = cluster_charge
     cluster[cluster_index]['seed_column'] = hits[seed_hit_index]['column']
     cluster[cluster_index]['seed_row'] = hits[seed_hit_index]['row']
+    # correct total charge value and calculate mean column and row
     cluster[cluster_index]['mean_column'] = float(total_weighted_column) / (cluster_charge + cluster_size * charge_correction)
     cluster[cluster_index]['mean_row'] = float(total_weighted_row) / (cluster_charge + cluster_size * charge_correction)
 
