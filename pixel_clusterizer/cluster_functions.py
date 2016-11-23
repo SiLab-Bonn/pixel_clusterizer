@@ -23,7 +23,7 @@ def _value_in_array(value, array):
 @njit()
 def _get_index(value, array, default=-1):
     ''' Return index of occuring value.
-    Equivalent to numpy.where(array==item).
+    Equivalent to numpy.where(array==item)[0][0].
     '''
     index = 0
     for array_value in array:
