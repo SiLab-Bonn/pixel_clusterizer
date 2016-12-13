@@ -201,6 +201,8 @@ class HitClusterizer(object):
             self.cluster_functions._end_of_event_function = function
 
     def set_max_hits(self, value):
+        ''' Setting up max. hits. This will affect the allocated memory by the clusterizer.
+        '''
         self._max_hits = value
         self._init_arrays()
 
@@ -219,20 +221,30 @@ class HitClusterizer(object):
         self._max_hit_charge = value
 
     def set_x_cluster_distance(self, value):
+        ''' Setting up max. column (x) cluster distance.
+        '''
         self._x_cluster_distance = value
 
     def set_y_cluster_distance(self, value):
+        ''' Setting up max. row (y) cluster distance.
+        '''
         self._y_cluster_distance = value
 
     def set_frame_cluster_distance(self, value):
+        ''' Setting up max. frame cluster distance.
+        '''
         self._frame_cluster_distance = value
 
     def set_max_cluster_hits(self, value):
+        ''' Setting up max. cluster hits. This will affect the temporary allocated memory during clustering.
+        '''
         if value is None:
             value = 0
         self._max_cluster_hits = value
 
-    def ignore_same_hits(self, value):  # Ignore same hit in an event for clustering
+    def ignore_same_hits(self, value):
+        ''' Whether a duplicate hit in the event with the same column and row is ignored or not.
+        '''
         self._ignore_same_hits = value
 
     def cluster_hits(self, hits, noisy_pixels=None, disabled_pixels=None):
@@ -280,11 +292,15 @@ class HitClusterizer(object):
         return self._hits_clustered[:self.n_hits], self._cluster[:self.n_cluster]
 
     def get_hit_cluster(self):
+        ''' Get a copy of the cluster hit array. The number of cluster hists is set to 0 afterwards.
+        '''
         hits_clustered = self._hits_clustered[:self.n_hits]
         self.n_hits = 0
         return hits_clustered
 
     def get_cluster(self):
+        ''' Get a copy of the cluster array. The number of clusters is set to 0 afterwards.
+        '''
         cluster = self._cluster[:self.n_cluster]
         self.n_cluster = 0
         return cluster
