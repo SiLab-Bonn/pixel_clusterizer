@@ -10,30 +10,6 @@ def _new_event(event_number_1, event_number_2):
 
 
 @njit()
-def _value_in_array(value, array):
-    ''' Check if array contains value.
-    Equivalent to np.all(np.in1d(number, array)).
-    '''
-    for array_value in array:
-        if value == array_value:
-            return True
-    return False
-
-
-@njit()
-def _get_index(value, array, default=-1):
-    ''' Return index of occuring value.
-    Equivalent to numpy.where(array==item)[0][0].
-    '''
-    index = 0
-    for array_value in array:
-        if value == array_value:
-            return index
-        index += 1
-    return default
-
-
-@njit()
 def _pixel_masked(hit, array):
     ''' Check whether hit (column/row) appears in array or not.
     '''
