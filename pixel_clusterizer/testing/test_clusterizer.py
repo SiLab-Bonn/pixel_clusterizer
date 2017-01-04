@@ -33,14 +33,7 @@ class TestClusterizer(unittest.TestCase):
         cls.pure_python = os.getenv('PURE_PYTHON', False)
 
     def test_exceptions(self):
-        # TEST 1: Check to add more hits than supported
-        hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
-
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
-        clusterizer.set_max_cluster_hits(1)
-        with self.assertRaises(OutOfRangeError):
-            clusterizer.cluster_hits(hits)
-        # TEST 2: Set Custom mapping that is correct and should not throw an exception
+        # TEST 1: Set Custom mapping that is correct and should not throw an exception
         hit_mapping = {'event_number': 'event_number',
                        'column': 'column',
                        'row': 'row',
@@ -53,7 +46,7 @@ class TestClusterizer(unittest.TestCase):
                               ('row', '<u2'),
                               ('charge', '<u2')])
         clusterizer = HitClusterizer(hit_fields=hit_mapping, hit_dtype=hit_dtype, pure_python=self.pure_python)
-        # TEST 3: Set custom clustered hit struct that is incorrect and should throw an exception
+        # TEST 2: Set custom clustered hit struct that is incorrect and should throw an exception
         hit_dtype_new = np.dtype([('not_defined', '<i8'),
                                   ('frame', '<u1'),
                                   ('column', '<u2'),
@@ -61,7 +54,7 @@ class TestClusterizer(unittest.TestCase):
                                   ('charge', '<u2')])
         with self.assertRaises(ValueError):
             clusterizer = HitClusterizer(hit_fields=hit_mapping, hit_dtype=hit_dtype_new, pure_python=self.pure_python)
-        # TEST 4 Set custom and correct hit mapping, no eception expected
+        # TEST 3 Set custom and correct hit mapping, no eception expected
         hit_mapping = {'not_defined': 'event_number',
                        'column': 'column',
                        'row': 'row',
@@ -77,8 +70,7 @@ class TestClusterizer(unittest.TestCase):
         # TEST 1
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
 
-        clusterizer.cluster_hits(hits)  # cluster hits
-        _, clusters = clusterizer.get_hit_cluster(), clusterizer.get_cluster()
+        cluster_hits, clusters = clusterizer.cluster_hits(hits)  # cluster hits
 
         # Define expected output
         expected_result = np.zeros(shape=(4, ), dtype=np.dtype([('event_number', '<i8'),
@@ -103,8 +95,7 @@ class TestClusterizer(unittest.TestCase):
         # TEST 2
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
 
-        clusterizer.cluster_hits(hits)  # cluster hits
-        cluster_hits, clusters = clusterizer.get_hit_cluster(), clusterizer.get_cluster()
+        cluster_hits, clusters = clusterizer.cluster_hits(hits)  # cluster hits
 
         # Define expected output
         expected_result = np.zeros(shape=(10, ), dtype=np.dtype([('event_number', '<i8'),
@@ -148,10 +139,9 @@ class TestClusterizer(unittest.TestCase):
         clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
 
         # Case 1: Test max hit charge cut, accept all hits
-        clusterizer.cluster_hits(hits, disabled_pixels=[[2, 2], [3, 3]])  # cluster hits
+        cluster_hits, clusters = clusterizer.cluster_hits(hits, disabled_pixels=[[2, 2], [3, 3]])  # cluster hits
 
         # Check cluster
-        cluster = clusterizer.get_cluster()
         expected_result = np.zeros(shape=(2, ), dtype=np.dtype([('event_number', '<i8'),
                                                                 ('ID', '<u2'),
                                                                 ('n_hits', '<u2'),
@@ -169,9 +159,8 @@ class TestClusterizer(unittest.TestCase):
         expected_result['mean_column'] = [1.0, 2.0]
         expected_result['mean_row'] = [2.0, 3.0]
 
-        self.assertTrue(np.array_equal(cluster, expected_result))
+        self.assertTrue(np.array_equal(clusters, expected_result))
 
-        cluster_hits = clusterizer.get_hit_cluster()
         expected_hit_result = np.zeros(shape=(7, ), dtype=np.dtype([('event_number', '<i8'),
                                                                     ('frame', '<u1'),
                                                                     ('column', '<u2'),
@@ -212,10 +201,9 @@ class TestClusterizer(unittest.TestCase):
         clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
 
         # Case 1: Test max hit charge cut, accept all hits
-        clusterizer.cluster_hits(hits, noisy_pixels=[[2, 2], [3, 3]])  # cluster hits
+        cluster_hits, clusters = clusterizer.cluster_hits(hits, noisy_pixels=[[2, 2], [3, 3]])  # cluster hits
 
         # Check cluster
-        cluster = clusterizer.get_cluster()
         expected_result = np.zeros(shape=(2, ), dtype=np.dtype([('event_number', '<i8'),
                                                                 ('ID', '<u2'),
                                                                 ('n_hits', '<u2'),
@@ -233,9 +221,8 @@ class TestClusterizer(unittest.TestCase):
         expected_result['mean_column'] = [(9 * 1 + 5 * 2) / float(9 + 5), (13 * 2 + 7 * 2 + 4 * 3) / float(13 + 7 + 4)]
         expected_result['mean_row'] = [(9 * 2 + 5 * 2) / float(9 + 5), (13 * 2 + 7 * 3 + 4 * 3) / float(13 + 7 + 4)]
 
-        self.assertTrue(np.array_equal(cluster, expected_result))
+        self.assertTrue(np.array_equal(clusters, expected_result))
 
-        cluster_hits = clusterizer.get_hit_cluster()
         expected_hit_result = np.zeros(shape=(7, ), dtype=np.dtype([('event_number', '<i8'),
                                                                     ('frame', '<u1'),
                                                                     ('column', '<u2'),
@@ -272,10 +259,9 @@ class TestClusterizer(unittest.TestCase):
 
         # Case 1: Test max hit charge cut, accept all hits
         clusterizer.set_max_hit_charge(30)  # only add hits with charge <= 30
-        clusterizer.cluster_hits(hits)  # cluster hits
+        cluster_hits, clusters = clusterizer.cluster_hits(hits)  # cluster hits
 
         # Check cluster
-        cluster = clusterizer.get_cluster()
         expected_result = np.zeros(shape=(1, ), dtype=np.dtype([('event_number', '<i8'),
                                                                 ('ID', '<u2'),
                                                                 ('n_hits', '<u2'),
@@ -292,10 +278,9 @@ class TestClusterizer(unittest.TestCase):
         expected_result['mean_column'] = [17.18420982]
         expected_result['mean_row'] = [36.0]
 
-        self.assertTrue(np.array_equal(cluster, expected_result))
+        self.assertTrue(np.array_equal(clusters, expected_result))
 
         # Check cluster hit info
-        cluster_hits = clusterizer.get_hit_cluster()
         expected_result = np.zeros(shape=(2, ), dtype=np.dtype([('event_number', '<i8'),
                                                                 ('frame', '<u1'),
                                                                 ('column', '<u2'),
@@ -319,9 +304,8 @@ class TestClusterizer(unittest.TestCase):
         # Case 2: Test max hit charge cut, omit charge > 29 hits
         hits['event_number'] = 20
         clusterizer.set_max_hit_charge(29)  # only add hits with charge <= 30
-        clusterizer.cluster_hits(hits)  # cluster hits
+        cluster_hits, clusters = clusterizer.cluster_hits(hits)  # cluster hits
         # Check cluster
-        cluster = clusterizer.get_cluster()
         expected_result = np.zeros(shape=(1, ), dtype=np.dtype([('event_number', '<i8'),
                                                                 ('ID', '<u2'),
                                                                 ('n_hits', '<u2'),
@@ -337,10 +321,9 @@ class TestClusterizer(unittest.TestCase):
         expected_result['seed_row'] = [36]
         expected_result['mean_column'] = [18.0]
         expected_result['mean_row'] = [36.0]
-        self.assertTrue(np.array_equal(cluster, expected_result))
+        self.assertTrue(np.array_equal(clusters, expected_result))
 
         # Check cluster hit info
-        cluster_hits = clusterizer.get_hit_cluster()
         expected_result = np.zeros(shape=(2, ), dtype=np.dtype([('event_number', '<i8'),
                                                                 ('frame', '<u1'),
                                                                 ('column', '<u2'),
@@ -408,13 +391,13 @@ class TestClusterizer(unittest.TestCase):
         expected_cluster_result['mean_row'] = [37.0]
 
         clusterizer.ignore_same_hits(True)  # If a hit occured 2 times in an event it is ignored and gets the cluster index -2
-        cluster_hits, cluster = clusterizer.cluster_hits(hits)  # Cluster hits
+        cluster_hits, clusters = clusterizer.cluster_hits(hits)  # Cluster hits
 
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
-        self.assertTrue(np.array_equal(cluster, expected_cluster_result))
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
 
         clusterizer.ignore_same_hits(False)  # If a hit occured 2 times in an event it is used as a normal hit
-        cluster_hits, cluster = clusterizer.cluster_hits(hits)  # Cluster hits
+        cluster_hits, clusters = clusterizer.cluster_hits(hits)  # Cluster hits
 
         expected_hit_result['cluster_ID'] = [0, 0, 0]
         expected_hit_result['is_seed'] = [1, 0, 0]
@@ -628,7 +611,7 @@ class TestClusterizer(unittest.TestCase):
         # Initialize clusterizer and cluster test hits with self defined data type names
         clusterizer = HitClusterizer(cluster_fields=cluster_fields, cluster_dtype=cluster_dtype, pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
-        hits_clustered, clusters = clusterizer.cluster_hits(hits)
+        cluster_hits, clusters = clusterizer.cluster_hits(hits)
 
         # Define expected output
         expected_cluster_result = np.zeros(shape=(4, ), dtype=cluster_dtype)
@@ -660,7 +643,7 @@ class TestClusterizer(unittest.TestCase):
         expected_hit_result['n_cluster'] = 1
 
         self.assertTrue((clusters == expected_cluster_result).all())
-        self.assertTrue((hits_clustered == expected_hit_result).all())
+        self.assertTrue((cluster_hits == expected_hit_result).all())
 
     def test_adding_cluster_field(self):
         clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
@@ -706,10 +689,10 @@ class TestClusterizer(unittest.TestCase):
         expected_hit_result['n_cluster'] = 1
 
         clusterizer.add_cluster_field(description=('extra_field', 'f4'))
-        hits_clustered, clusters = clusterizer.cluster_hits(hits)
+        cluster_hits, clusters = clusterizer.cluster_hits(hits)
 
         self.assertTrue((clusters == expected_cluster_result).all())
-        self.assertTrue((hits_clustered == expected_hit_result).all())
+        self.assertTrue((cluster_hits == expected_hit_result).all())
 
     def test_set_end_of_cluster_function(self):
         # Initialize clusterizer object
@@ -765,10 +748,10 @@ class TestClusterizer(unittest.TestCase):
         clusterizer.set_end_of_cluster_function(end_of_cluster_function)  # Set the new end_of_cluster_function
 
         # Main function
-        hits_clustered, cluster = clusterizer.cluster_hits(hits)  # cluster hits
+        cluster_hits, cluster = clusterizer.cluster_hits(hits)  # cluster hits
 
         self.assertTrue((cluster == expected_cluster_result).all())
-        self.assertTrue((hits_clustered == expected_hit_result).all())
+        self.assertTrue((cluster_hits == expected_hit_result).all())
 
     def test_set_end_of_event_function(self):
         # Initialize clusterizer object
@@ -826,10 +809,10 @@ class TestClusterizer(unittest.TestCase):
         clusterizer.set_end_of_event_function(end_of_event_function)  # Set the new end_of_cluster_function
 
         # Main function
-        hits_clustered, cluster = clusterizer.cluster_hits(hits)  # cluster hits
+        cluster_hits, clusters = clusterizer.cluster_hits(hits)  # cluster hits
 
-        self.assertTrue((cluster == expected_cluster_result).all())
-        self.assertTrue((hits_clustered == expected_hit_result).all())
+        self.assertTrue((clusters == expected_cluster_result).all())
+        self.assertTrue((cluster_hits == expected_hit_result).all())
 
     def test_chunked_clustering(self):  # Big tables have to be chunked and analyzed with clusterizer.cluster_hits(hits_chunk) calls
         clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
@@ -837,25 +820,25 @@ class TestClusterizer(unittest.TestCase):
         n_hits = 100
         hits = create_hits(n_hits=n_hits, max_column=100, max_row=100, max_frame=1, max_charge=2)
 
-        hits_clustered, cluster = clusterizer.cluster_hits(hits)  # Cluster all at once
-        hits_clustered, cluster = hits_clustered.copy(), cluster.copy()  # Be aware that the returned array are references to be stored! An additional call of clusterizer.cluster_hits will overwrite the data
+        cluster_hits, clusters = clusterizer.cluster_hits(hits)  # Cluster all at once
+        cluster_hits, clusters = cluster_hits.copy(), clusters.copy()  # Be aware that the returned array are references to be stored! An additional call of clusterizer.cluster_hits will overwrite the data
 
-        hits_clustered_chunked, cluster_chunked = None, None
+        cluster_hits_chunked, clusters_chunked = None, None
         chunk_size = 6  # Chunk size has to be chosen to not split events between chunks!
         for i in range(int(n_hits / chunk_size + 1)):  # Cluster in chunks
             hits_chunk = hits[i * chunk_size:i * chunk_size + chunk_size]
-            hits_clustered_chunk, cluster_chunk = clusterizer.cluster_hits(hits_chunk)
-            if hits_clustered_chunked is None:
-                hits_clustered_chunked = hits_clustered_chunk.copy()
+            cluster_hits_chunk, clusters_chunk = clusterizer.cluster_hits(hits_chunk)
+            if cluster_hits_chunked is None:
+                cluster_hits_chunked = cluster_hits_chunk.copy()
             else:
-                hits_clustered_chunked = np.append(hits_clustered_chunked, hits_clustered_chunk)
-            if cluster_chunked is None:
-                cluster_chunked = cluster_chunk.copy()
+                cluster_hits_chunked = np.append(cluster_hits_chunked, cluster_hits_chunk)
+            if clusters_chunked is None:
+                clusters_chunked = clusters_chunk.copy()
             else:
-                cluster_chunked = np.append(cluster_chunked, cluster_chunk)
+                clusters_chunked = np.append(clusters_chunked, clusters_chunk)
 
-        self.assertTrue((hits_clustered == hits_clustered_chunked).all())
-        self.assertTrue((cluster == cluster_chunked).all())
+        self.assertTrue((cluster_hits == cluster_hits_chunked).all())
+        self.assertTrue((clusters == clusters_chunked).all())
 
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestClusterizer)
