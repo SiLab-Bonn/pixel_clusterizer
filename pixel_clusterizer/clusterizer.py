@@ -27,7 +27,7 @@ class HitClusterizer(object):
 
     ''' Clusterizer class providing an interface for the jitted functions and stores settings.'''
 
-    def __init__(self, hit_fields=None, hit_dtype=None, cluster_fields=None, cluster_dtype=None, pure_python=False, max_hits=1000, max_cluster_hits=None, min_hit_charge=0, max_hit_charge=None, x_cluster_distance=1, y_cluster_distance=1, frame_cluster_distance=0, ignore_same_hits=True):
+    def __init__(self, hit_fields=None, hit_dtype=None, cluster_fields=None, cluster_dtype=None, pure_python=False, max_hits=1000, max_cluster_hits=None, min_hit_charge=0, max_hit_charge=None, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=0, ignore_same_hits=True):
         # Activate pute python mode by setting the evnironment variable NUMBA_DISABLE_JIT
         self.pure_python = pure_python
         if self.pure_python:
@@ -99,8 +99,8 @@ class HitClusterizer(object):
         self.set_max_cluster_hits(max_cluster_hits)
         self.set_min_hit_charge(min_hit_charge)
         self.set_max_hit_charge(max_hit_charge)
-        self.set_x_cluster_distance(x_cluster_distance)
-        self.set_y_cluster_distance(y_cluster_distance)
+        self.set_column_cluster_distance(column_cluster_distance)
+        self.set_row_cluster_distance(row_cluster_distance)
         self.set_frame_cluster_distance(frame_cluster_distance)
         self.ignore_same_hits(ignore_same_hits)
 
@@ -220,15 +220,15 @@ class HitClusterizer(object):
             value = 0
         self._max_hit_charge = value
 
-    def set_x_cluster_distance(self, value):
-        ''' Setting up max. column (x) cluster distance.
+    def set_column_cluster_distance(self, value):
+        ''' Setting up max. column cluster distance.
         '''
-        self._x_cluster_distance = value
+        self._column_cluster_distance = value
 
-    def set_y_cluster_distance(self, value):
-        ''' Setting up max. row (y) cluster distance.
+    def set_row_cluster_distance(self, value):
+        ''' Setting up max. row cluster distance.
         '''
-        self._y_cluster_distance = value
+        self._row_cluster_distance = value
 
     def set_frame_cluster_distance(self, value):
         ''' Setting up max. frame cluster distance.
@@ -277,8 +277,8 @@ class HitClusterizer(object):
             cluster=self._cluster,
             assigned_hit_array=assigned_hit_array,
             cluster_hit_indices=cluster_hit_indices,
-            x_cluster_distance=self._x_cluster_distance,
-            y_cluster_distance=self._y_cluster_distance,
+            column_cluster_distance=self._column_cluster_distance,
+            row_cluster_distance=self._row_cluster_distance,
             frame_cluster_distance=self._frame_cluster_distance,
             min_hit_charge=self._min_hit_charge,
             max_hit_charge=self._max_hit_charge,
