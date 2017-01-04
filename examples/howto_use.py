@@ -46,8 +46,6 @@ if __name__ == "__main__":
     clusterizer.set_frame_cluster_distance(4)   # cluster distance in time frames
     clusterizer.set_max_hit_charge(13)  # only add hits with charge <= 29
     clusterizer.ignore_same_hits(True)  # Ignore same hits in an event for clustering
-    clusterizer.set_max_cluster_hits(300)  # Expected max hits per cluster; limited by available RAM, has to be large enough
-    clusterizer.set_max_hits(10000)  # Expected hits per cluster_hits call; limited by available RAM
     clusterizer.set_hit_dtype(hit_dtype)  # Set the data type of the hits (parameter data types and names)
     clusterizer.set_hit_fields({'event_number': 'event_number',  # Set the mapping of the hit names to the internal names (here there is no mapping done, this is the std. setting)
                                 'column': 'column',
