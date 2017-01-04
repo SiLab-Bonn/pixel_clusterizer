@@ -148,7 +148,7 @@ def _end_of_event_function(hits, cluster, start_event_hit_index, stop_event_hit_
 
 
 @njit()
-def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_cluster_distance, y_cluster_distance, frame_cluster_distance, min_hit_charge, max_hit_charge, ignore_same_hits, noisy_pixels, disabled_pixels):
+def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, column_cluster_distance, row_cluster_distance, frame_cluster_distance, min_hit_charge, max_hit_charge, ignore_same_hits, noisy_pixels, disabled_pixels):
     ''' Main precompiled function that loopes over the hits and clusters them
     '''
     total_hits = hits.shape[0]
@@ -226,7 +226,7 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, x_clus
                     continue
 
                 # Check if event hit belongs to actual hit and thus to the actual cluster
-                if _is_in_max_difference(hits[j]['column'], hits[k]['column'], x_cluster_distance) and _is_in_max_difference(hits[j]['row'], hits[k]['row'], y_cluster_distance) and _is_in_max_difference(hits[j]['frame'], hits[k]['frame'], frame_cluster_distance):
+                if _is_in_max_difference(hits[j]['column'], hits[k]['column'], column_cluster_distance) and _is_in_max_difference(hits[j]['row'], hits[k]['row'], row_cluster_distance) and _is_in_max_difference(hits[j]['frame'], hits[k]['frame'], frame_cluster_distance):
                     if not ignore_same_hits or hits[j]['column'] != hits[k]['column'] or hits[j]['row'] != hits[k]['row']:
                         cluster_size += 1
                         if cluster_size > max_cluster_hits:

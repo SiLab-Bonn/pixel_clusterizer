@@ -41,8 +41,8 @@ if __name__ == "__main__":
     clusterizer = clusterizer.HitClusterizer()
 
     # All cluster settings are listed here with their std. values
-    clusterizer.set_x_cluster_distance(2)  # cluster distance in columns
-    clusterizer.set_y_cluster_distance(2)  # cluster distance in rows
+    clusterizer.set_column_cluster_distance(2)  # cluster distance in columns
+    clusterizer.set_row_cluster_distance(2)  # cluster distance in rows
     clusterizer.set_frame_cluster_distance(4)   # cluster distance in time frames
     clusterizer.set_max_hit_charge(13)  # only add hits with charge <= 29
     clusterizer.ignore_same_hits(True)  # Ignore same hits in an event for clustering
