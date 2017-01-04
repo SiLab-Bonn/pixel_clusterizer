@@ -42,10 +42,10 @@ if __name__ == "__main__":
     # The end of loop function has to define all of the following arguments, even when they are not used
     # It has to be compile able by numba in non python mode
     # This end_of_cluster_function sets the additional seed_charge field
-    def end_of_event_function(hits, cluster, is_seed, n_cluster, cluster_size, cluster_id, actual_event_hit_index, new_actual_event_hit_index, next_cluster_id, actual_event_cluster_index):
+    def end_of_event_function(hits, cluster, start_event_hit_index, stop_event_hit_index, start_event_cluster_index, stop_event_cluster_index):
         # Set the number of clusters info (n_cluster)for clusters of the event
-        for i in range(actual_event_cluster_index, actual_event_cluster_index + next_cluster_id):
-            cluster[i].n_cluster = n_cluster[actual_event_hit_index]
+        for i in range(start_event_cluster_index, stop_event_cluster_index):
+            cluster[i].n_cluster = stop_event_cluster_index - start_event_cluster_index
 
     clusterizer.set_end_of_event_function(end_of_event_function)  # Set the new function to the clusterizer
 
