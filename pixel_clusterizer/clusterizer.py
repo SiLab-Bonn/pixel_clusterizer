@@ -234,6 +234,12 @@ class HitClusterizer(object):
         self._ignore_same_hits = value
 
     def cluster_hits(self, hits, noisy_pixels=None, disabled_pixels=None):
+        ''' Cluster given hit array.
+
+        The noisy_pixels and disabled_pixels parameters are iterables of column/row index pairs, e.g. [[column_1, row_1], [column_2, row_2], ...].
+        The noisy_pixels parameter allows for removing clusters that solely consists of noisy pixels.
+        The disabled_pixels parameter allows for ignoring pixels.
+        '''
         n_hits = hits.shape[0]  # Set n_hits to new size
 
         if (n_hits < int(0.5 * self._hits_clustered.size)) or (n_hits > self._hits_clustered.size):
