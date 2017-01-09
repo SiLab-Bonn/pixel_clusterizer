@@ -551,9 +551,9 @@ class TestClusterizer(unittest.TestCase):
 
         hit_fields = {'eventNumber': 'event_number',
                       'column': 'column',
-                                'row': 'row',
-                                'tot': 'charge',
-                                'relBCID': 'frame'
+                      'row': 'row',
+                      'tot': 'charge',
+                      'relBCID': 'frame'
                       }
 
         # Initialize clusterizer and cluster test hits with self defined data type names
