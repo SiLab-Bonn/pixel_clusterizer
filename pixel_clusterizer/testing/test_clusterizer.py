@@ -6,8 +6,6 @@ import os
 
 import numpy as np
 
-from docutils.utils.roman import OutOfRangeError  # For numba exception
-
 from pixel_clusterizer.clusterizer import HitClusterizer
 
 
@@ -134,24 +132,22 @@ class TestClusterizer(unittest.TestCase):
         cluster_hits, clusters = clusterizer.cluster_hits(hits, disabled_pixels=[[2, 2], [3, 3]])  # cluster hits
 
         # Check cluster
-        expected_result = np.zeros(shape=(2, ), dtype=np.dtype([('event_number', '<i8'),
-                                                                ('ID', '<u2'),
-                                                                ('n_hits', '<u2'),
-                                                                ('charge', 'f4'),
-                                                                ('seed_column', '<u2'),
-                                                                ('seed_row', '<u2'),
-                                                                ('mean_column', 'f4'),
-                                                                ('mean_row', 'f4')]))
-        expected_result['event_number'] = [0, 2]
-        expected_result['ID'] = [0, 0]
-        expected_result['n_hits'] = [1, 1]
-        expected_result['charge'] = [4, 6]
-        expected_result['seed_column'] = [1, 2]
-        expected_result['seed_row'] = [2, 3]
-        expected_result['mean_column'] = [1.0, 2.0]
-        expected_result['mean_row'] = [2.0, 3.0]
-
-        self.assertTrue(np.array_equal(clusters, expected_result))
+        expected_cluster_result = np.zeros(shape=(2, ), dtype=np.dtype([('event_number', '<i8'),
+                                                                        ('ID', '<u2'),
+                                                                        ('n_hits', '<u2'),
+                                                                        ('charge', 'f4'),
+                                                                        ('seed_column', '<u2'),
+                                                                        ('seed_row', '<u2'),
+                                                                        ('mean_column', 'f4'),
+                                                                        ('mean_row', 'f4')]))
+        expected_cluster_result['event_number'] = [0, 2]
+        expected_cluster_result['ID'] = [0, 0]
+        expected_cluster_result['n_hits'] = [1, 1]
+        expected_cluster_result['charge'] = [4, 6]
+        expected_cluster_result['seed_column'] = [1, 2]
+        expected_cluster_result['seed_row'] = [2, 3]
+        expected_cluster_result['mean_column'] = [1.0, 2.0]
+        expected_cluster_result['mean_row'] = [2.0, 3.0]
 
         expected_hit_result = np.zeros(shape=(7, ), dtype=np.dtype([('event_number', '<i8'),
                                                                     ('frame', '<u1'),
@@ -172,7 +168,9 @@ class TestClusterizer(unittest.TestCase):
         expected_hit_result['cluster_size'] = [1, 0, 0, 0, 1, 0, 0]
         expected_hit_result['n_cluster'] = [1, 1, 0, 1, 1, 1, 0]
 
-        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
+        # Test results
+        self.assertTrue(np.all([clusters == expected_cluster_result]))
+        self.assertTrue(np.all([cluster_hits == expected_hit_result]))
 
     def test_noisy_pixels(self):
         # Create some fake data
@@ -198,24 +196,22 @@ class TestClusterizer(unittest.TestCase):
         cluster_hits, clusters = clusterizer.cluster_hits(hits, noisy_pixels=[[2, 2], [3, 3], [3, 15]])  # cluster hits
 
         # Check cluster
-        expected_result = np.zeros(shape=(3, ), dtype=np.dtype([('event_number', '<i8'),
-                                                                ('ID', '<u2'),
-                                                                ('n_hits', '<u2'),
-                                                                ('charge', 'f4'),
-                                                                ('seed_column', '<u2'),
-                                                                ('seed_row', '<u2'),
-                                                                ('mean_column', 'f4'),
-                                                                ('mean_row', 'f4')]))
-        expected_result['event_number'] = [0, 2, 5]
-        expected_result['ID'] = [0, 0, 0]
-        expected_result['n_hits'] = [2, 3, 1]
-        expected_result['charge'] = [8 + 4, 12 + 6 + 3, 1]
-        expected_result['seed_column'] = [1, 2, 20]
-        expected_result['seed_row'] = [2, 2, 15]
-        expected_result['mean_column'] = [(9 * 1 + 5 * 2) / float(9 + 5), (13 * 2 + 7 * 2 + 4 * 3) / float(13 + 7 + 4), 20]
-        expected_result['mean_row'] = [(9 * 2 + 5 * 2) / float(9 + 5), (13 * 2 + 7 * 3 + 4 * 3) / float(13 + 7 + 4), 15]
-
-        self.assertTrue(np.array_equal(clusters, expected_result))
+        expected_cluster_result = np.zeros(shape=(3, ), dtype=np.dtype([('event_number', '<i8'),
+                                                                        ('ID', '<u2'),
+                                                                        ('n_hits', '<u2'),
+                                                                        ('charge', 'f4'),
+                                                                        ('seed_column', '<u2'),
+                                                                        ('seed_row', '<u2'),
+                                                                        ('mean_column', 'f4'),
+                                                                        ('mean_row', 'f4')]))
+        expected_cluster_result['event_number'] = [0, 2, 5]
+        expected_cluster_result['ID'] = [0, 0, 0]
+        expected_cluster_result['n_hits'] = [2, 3, 1]
+        expected_cluster_result['charge'] = [8 + 4, 12 + 6 + 3, 1]
+        expected_cluster_result['seed_column'] = [1, 2, 20]
+        expected_cluster_result['seed_row'] = [2, 2, 15]
+        expected_cluster_result['mean_column'] = [(9 * 1 + 5 * 2) / float(9 + 5), (13 * 2 + 7 * 2 + 4 * 3) / float(13 + 7 + 4), 20]
+        expected_cluster_result['mean_row'] = [(9 * 2 + 5 * 2) / float(9 + 5), (13 * 2 + 7 * 3 + 4 * 3) / float(13 + 7 + 4), 15]
 
         expected_hit_result = np.zeros(shape=(9, ), dtype=np.dtype([('event_number', '<i8'),
                                                                     ('frame', '<u1'),
@@ -236,7 +232,9 @@ class TestClusterizer(unittest.TestCase):
         expected_hit_result['cluster_size'] = [2, 2, 0, 3, 3, 3, 0, 0, 1]
         expected_hit_result['n_cluster'] = [1, 1, 0, 1, 1, 1, 0, 0, 1]
 
-        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
+        # Test results
+        self.assertTrue(np.all([clusters == expected_cluster_result]))
+        self.assertTrue(np.all([cluster_hits == expected_hit_result]))
 
     def test_cluster_cuts(self):
         # Create some fake data
