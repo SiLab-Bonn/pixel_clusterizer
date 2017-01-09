@@ -11,12 +11,22 @@ def _new_event(event_number_1, event_number_2):
 
 @njit()
 def _pixel_masked(hit, array):
-    ''' Check whether hit (column/row) appears in array or not.
+    ''' Checks whether a hit (column/row) is masked or not. Array is 2D array with boolean elements corresponding to pixles indicating whether a pixel is disabled or not.
     '''
-    for array_value in array:
-        if hit["column"] == array_value["column"] and hit["row"] == array_value["row"]:
-            return True
-    return False
+    if array.shape[0] > hit["column"] and array.shape[1] > hit["row"]:
+        return array[hit["column"], hit["row"]]
+    else:
+        return False
+
+
+# @njit()
+# def _pixel_masked(hit, array):
+#     ''' Checks whether a hit (column/row) is masked or not. Array is an iterable of column/row tuples of disabled pixels.
+#     '''
+#     for array_value in array:
+#         if hit["column"] == array_value["column"] and hit["row"] == array_value["row"]:
+#             return True
+#     return False
 
 
 @njit()
