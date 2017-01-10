@@ -248,6 +248,7 @@ class HitClusterizer(object):
             self._assigned_hit_array.fill(0)  # The hit indices of the actual cluster, 0 means not assigned
             self._cluster_hit_indices.fill(-1)  # The hit indices of the actual cluster, -1 means not assigned
 
+        self._clusters.dtype.names = self._unmap_cluster_field_names(self._clusters.dtype.names)  # Reset the data fields from previous renaming
         self._hits_clustered.dtype.names = self._unmap_hit_field_names(self._hits_clustered.dtype.names)  # Reset the data fields from previous renaming
         self._check_struct_compatibility(hits)
 
@@ -306,7 +307,7 @@ class HitClusterizer(object):
                 unpatched_field_names[index] = self._hit_fields_mapping[unpatched_field_name]
         return tuple(unpatched_field_names)
 
-    def _unmap_hit_field_names(self, dtype_names):  # Maps the hit field names from the external convention to the internal defined one
+    def _unmap_hit_field_names(self, dtype_names):  # Unmaps the hit field names from the external convention to the internal defined one
         unpatched_field_names = list(dtype_names)
         for index, unpatched_field_name in enumerate(unpatched_field_names):
             if unpatched_field_name in self._hit_fields_mapping_inverse.keys():
@@ -318,6 +319,13 @@ class HitClusterizer(object):
         for index, unpatched_field_name in enumerate(unpatched_field_names):
             if unpatched_field_name in self._cluster_fields_mapping.keys():
                 unpatched_field_names[index] = self._cluster_fields_mapping[unpatched_field_name]
+        return tuple(unpatched_field_names)
+
+    def _unmap_cluster_field_names(self, dtype_names):  # Unmaps the cluster field names from the external convention to the internal defined one
+        unpatched_field_names = list(dtype_names)
+        for index, unpatched_field_name in enumerate(unpatched_field_names):
+            if unpatched_field_name in self._cluster_fields_mapping_inverse.keys():
+                unpatched_field_names[index] = self._cluster_fields_mapping_inverse[unpatched_field_name]
         return tuple(unpatched_field_names)
 
     def _check_struct_compatibility(self, hits):
