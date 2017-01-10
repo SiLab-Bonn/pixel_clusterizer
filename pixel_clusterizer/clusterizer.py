@@ -106,7 +106,7 @@ class HitClusterizer(object):
 
     def _init_arrays(self, size=0):
         self._hits_clustered = np.zeros(shape=(size, ), dtype=np.dtype(self._hit_clustered_descr))
-        self._cluster = np.zeros(shape=(size, ), dtype=np.dtype(self._cluster_descr))
+        self._clusters = np.zeros(shape=(size, ), dtype=np.dtype(self._cluster_descr))
         self._assigned_hit_array = np.zeros(shape=(size, ), dtype=np.bool)
         self._cluster_hit_indices = np.empty(shape=(size,), dtype=np_int_type_chooser(size))
         self._cluster_hit_indices.fill(-1)
@@ -280,9 +280,9 @@ class HitClusterizer(object):
 #         disabled_pixels = np.recarray(disabled_pixels_array.shape[0], dtype=mask_dtype)
 #         disabled_pixels[:] = [(item[0], item[1]) for item in disabled_pixels_array]
 
-        n_cluster = self.cluster_functions._cluster_hits(  # Set n_cluster to new size
+        n_clusters = self.cluster_functions._cluster_hits(  # Set n_clusters to new size
             hits=self._hits_clustered[:n_hits],
-            cluster=self._cluster[:n_hits],
+            cluster=self._clusters[:n_hits],
             assigned_hit_array=self._assigned_hit_array[:n_hits],
             cluster_hit_indices=self._cluster_hit_indices[:n_hits],
             column_cluster_distance=self._column_cluster_distance,
@@ -295,9 +295,9 @@ class HitClusterizer(object):
             disabled_pixels=disabled_pixels)
 
         self._hits_clustered.dtype.names = self._map_hit_field_names(self._hits_clustered.dtype.names)  # Rename the data fields for the result
-        self._cluster.dtype.names = self._map_cluster_field_names(self._cluster.dtype.names)  # Rename the data fields for the result
+        self._clusters.dtype.names = self._map_cluster_field_names(self._clusters.dtype.names)  # Rename the data fields for the result
 
-        return self._hits_clustered[:n_hits], self._cluster[:n_cluster]
+        return self._hits_clustered[:n_hits], self._clusters[:n_clusters]
 
     def _map_hit_field_names(self, dtype_names):  # Maps the hit field names from the internal convention to the external defined one
         unpatched_field_names = list(dtype_names)
