@@ -451,17 +451,17 @@ class TestClusterizer(unittest.TestCase):
         hits_clustered, clusters = clusterizer.cluster_hits(hits)
 
         # Define expected output
-        expected_cluster_result = np.zeros(shape=(4, ), dtype=np.dtype([('eventNumber', '<i8'),
+        expected_cluster_result = np.zeros(shape=(4, ), dtype=np.dtype([('event_number', '<i8'),
                                                                         ('ID', '<u2'),
                                                                         ('n_hits', '<u2'),
-                                                                        ('tot', 'f4'),
+                                                                        ('charge', 'f4'),
                                                                         ('seed_column', '<u2'),
                                                                         ('seed_row', '<u2'),
                                                                         ('mean_column', 'f4'),
                                                                         ('mean_row', 'f4')]))
-        expected_cluster_result['eventNumber'] = [0, 1, 2, 3]
+        expected_cluster_result['event_number'] = [0, 1, 2, 3]
         expected_cluster_result['n_hits'] = [3, 3, 3, 1]
-        expected_cluster_result['tot'] = [1, 2, 1, 1]
+        expected_cluster_result['charge'] = [1, 2, 1, 1]
         expected_cluster_result['seed_column'] = [2, 4, 8, 10]
         expected_cluster_result['seed_row'] = [3, 7, 15, 19]
         expected_cluster_result['mean_column'] = [2.0, 5.0, 8.0, 10.0]
@@ -477,6 +477,13 @@ class TestClusterizer(unittest.TestCase):
         expected_hit_result['is_seed'] = [0, 1, 0, 1, 0, 0, 0, 1, 0, 1]
         expected_hit_result['cluster_size'] = [3, 3, 3, 3, 3, 3, 3, 3, 3, 1]
         expected_hit_result['n_cluster'] = 1
+
+        self.assertTrue((clusters == expected_cluster_result).all())
+        self.assertTrue((hits_clustered == expected_hit_result).all())
+        hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2, hit_dtype=hit_dtype, hit_fields=hit_fields)
+        hits_clustered, clusters = clusterizer.cluster_hits(hits)
+        self.assertTrue((clusters == expected_cluster_result).all())
+        self.assertTrue((hits_clustered == expected_hit_result).all())
 
     def test_custom_cluster_fields(self):
         # Define a different cluster data structure with different names but standard data types.
@@ -533,6 +540,10 @@ class TestClusterizer(unittest.TestCase):
         expected_hit_result['cluster_size'] = [3, 3, 3, 3, 3, 3, 3, 3, 3, 1]
         expected_hit_result['n_cluster'] = 1
 
+        self.assertTrue((clusters == expected_cluster_result).all())
+        self.assertTrue((hits_clustered == expected_hit_result).all())
+        hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
+        hits_clustered, clusters = clusterizer.cluster_hits(hits)
         self.assertTrue((clusters == expected_cluster_result).all())
         self.assertTrue((hits_clustered == expected_hit_result).all())
 
