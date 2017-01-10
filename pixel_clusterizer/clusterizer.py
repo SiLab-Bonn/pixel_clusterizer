@@ -108,7 +108,7 @@ class HitClusterizer(object):
         self._hits_clustered = np.zeros(shape=(size, ), dtype=np.dtype(self._hit_clustered_descr))
         self._clusters = np.zeros(shape=(size, ), dtype=np.dtype(self._cluster_descr))
         self._assigned_hit_array = np.zeros(shape=(size, ), dtype=np.bool)
-        self._cluster_hit_indices = np.empty(shape=(size,), dtype=np_int_type_chooser(size))
+        self._cluster_hit_indices = np.empty(shape=(size, ), dtype=np_int_type_chooser(size))
         self._cluster_hit_indices.fill(-1)
 
     def reset(self):  # Resets the overwritten function hooks, otherwise they are stored as a module global and not reset on clusterizer initialization
@@ -257,8 +257,7 @@ class HitClusterizer(object):
 
         col_dtype = self._hits_clustered.dtype.fields["column"][0]
         row_dtype = self._hits_clustered.dtype.fields["row"][0]
-        mask_dtype = {"names": ["column", "row"],
-                      "formats": [col_dtype, row_dtype]}
+
         noisy_pixels_array = np.array([]) if noisy_pixels is None else np.array(noisy_pixels)
         if noisy_pixels_array.shape[0] != 0:
             noisy_pixels_max_range = np.array([max(0, np.max(noisy_pixels_array[:, 0])), max(0, np.max(noisy_pixels_array[:, 1]))])
@@ -275,6 +274,8 @@ class HitClusterizer(object):
         else:
             disabled_pixels = np.zeros((0, 0), dtype=np.bool)
 
+#         mask_dtype = {"names": ["column", "row"],
+#                       "formats": [col_dtype, row_dtype]}
 #         noisy_pixels = np.recarray(noisy_pixels_array.shape[0], dtype=mask_dtype)
 #         noisy_pixels[:] = [(item[0], item[1]) for item in noisy_pixels_array]
 #         disabled_pixels = np.recarray(disabled_pixels_array.shape[0], dtype=mask_dtype)
