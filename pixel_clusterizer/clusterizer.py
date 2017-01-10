@@ -255,9 +255,6 @@ class HitClusterizer(object):
         for internal_name, external_name in self._hit_fields_mapping.items():
             self._hits_clustered[internal_name][:n_hits] = hits[external_name]
 
-        col_dtype = self._hits_clustered.dtype.fields["column"][0]
-        row_dtype = self._hits_clustered.dtype.fields["row"][0]
-
         noisy_pixels_array = np.array([]) if noisy_pixels is None else np.array(noisy_pixels)
         if noisy_pixels_array.shape[0] != 0:
             noisy_pixels_max_range = np.array([max(0, np.max(noisy_pixels_array[:, 0])), max(0, np.max(noisy_pixels_array[:, 1]))])
@@ -274,6 +271,8 @@ class HitClusterizer(object):
         else:
             disabled_pixels = np.zeros((0, 0), dtype=np.bool)
 
+#         col_dtype = self._hits_clustered.dtype.fields["column"][0]
+#         row_dtype = self._hits_clustered.dtype.fields["row"][0]
 #         mask_dtype = {"names": ["column", "row"],
 #                       "formats": [col_dtype, row_dtype]}
 #         noisy_pixels = np.recarray(noisy_pixels_array.shape[0], dtype=mask_dtype)
