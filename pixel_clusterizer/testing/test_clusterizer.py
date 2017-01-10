@@ -607,10 +607,10 @@ class TestClusterizer(unittest.TestCase):
                           'ID': 'ID',
                           'size': 'n_hits',
                           'tot': 'charge',
-                                'seed_column': 'seed_column',
-                                'seed_row': 'seed_row',
-                                'mean_column': 'mean_column',
-                                'mean_row': 'mean_row'
+                          'seed_column': 'seed_column',
+                          'seed_row': 'seed_row',
+                          'mean_column': 'mean_column',
+                          'mean_row': 'mean_row'
                           }
 
         # Initialize clusterizer and cluster test hits with self defined data type names
