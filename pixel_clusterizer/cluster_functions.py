@@ -164,6 +164,12 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, column
     total_hits = hits.shape[0]
     max_cluster_hits = cluster_hit_indices.shape[0]
 
+    if total_hits != cluster.shape[0]:
+        raise ValueError("hits and cluster must be the same size")
+
+    if total_hits != assigned_hit_array.shape[0]:
+        raise ValueError("hits and assigned_hit_array must be the same size")
+
     # Correction for charge weighting
     # Some chips have non-zero charge for a charge value of zero, charge needs to be corrected to calculate cluster center correctly
     if min_hit_charge == 0:
