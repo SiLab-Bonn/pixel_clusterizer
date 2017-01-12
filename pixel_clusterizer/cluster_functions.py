@@ -147,14 +147,14 @@ def _is_in_max_difference(value_1, value_2, max_difference):
 def _end_of_cluster_function(hits, cluster, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, disabled_pixels, seed_hit_index):
     ''' Empty function that can be overwritten with a new function that is called at the end of each cluster
     '''
-    return
+    pass
 
 
 @njit()
 def _end_of_event_function(hits, cluster, start_event_hit_index, stop_event_hit_index, start_event_cluster_index, stop_event_cluster_index):
     ''' Empty function that can be overwritten with a new function that is called at the end of event
     '''
-    return
+    pass
 
 
 @njit()
