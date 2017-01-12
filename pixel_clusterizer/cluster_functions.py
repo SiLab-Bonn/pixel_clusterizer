@@ -1,6 +1,6 @@
 ''' Fast clustering functions that are compiled in time via numba '''
+
 from numba import njit
-from docutils.utils.roman import OutOfRangeError
 
 
 @njit()
@@ -240,7 +240,7 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, column
                     if not ignore_same_hits or hits[j]['column'] != hits[k]['column'] or hits[j]['row'] != hits[k]['row']:
                         cluster_size += 1
                         if cluster_size > max_cluster_hits:
-                            raise OutOfRangeError('There are more cluster hits than specified. Increase max_cluster_hits parameter!')
+                            raise IndexError('cluster_hit_indices is too small to contain all cluster hits')
                         cluster_hit_indices[cluster_size - 1] = k
                         assigned_hit_array[k] = 1
 
