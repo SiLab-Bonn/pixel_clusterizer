@@ -114,10 +114,10 @@ class HitClusterizer(object):
     def reset(self):  # Resets the overwritten function hooks, otherwise they are stored as a module global and not reset on clusterizer initialization
         self._init_arrays(size=0)
 
-        def end_of_cluster_function(hits, cluster, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, disabled_pixels, seed_hit_index):
+        def end_of_cluster_function(hits, clusters, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, disabled_pixels, seed_hit_index):
             return
 
-        def end_of_event_function(hits, cluster, start_event_hit_index, stop_event_hit_index, start_event_cluster_index, stop_event_cluster_index):
+        def end_of_event_function(hits, clusters, start_event_hit_index, stop_event_hit_index, start_event_cluster_index, stop_event_cluster_index):
             return
 
         self.set_end_of_cluster_function(end_of_cluster_function)
@@ -283,7 +283,7 @@ class HitClusterizer(object):
 
         n_clusters = self.cluster_functions._cluster_hits(  # Set n_clusters to new size
             hits=self._cluster_hits[:n_hits],
-            cluster=self._clusters[:n_hits],
+            clusters=self._clusters[:n_hits],
             assigned_hit_array=self._assigned_hit_array[:n_hits],
             cluster_hit_indices=self._cluster_hit_indices[:n_hits],
             column_cluster_distance=self._column_cluster_distance,

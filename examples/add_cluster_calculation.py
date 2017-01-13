@@ -42,13 +42,13 @@ if __name__ == "__main__":
     # The end of loop function has to define all of the following arguments, even when they are not used
     # It has to be compile able by numba in non python mode
     # This end_of_cluster_function sets the additional seed_charge field
-    def end_of_cluster_function(hits, cluster, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, disabled_pixels, seed_hit_index):
-        cluster[cluster_index].seed_charge = hits[seed_hit_index].charge
+    def end_of_cluster_function(hits, clusters, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, disabled_pixels, seed_hit_index):
+        clusters[cluster_index].seed_charge = hits[seed_hit_index].charge
 
     clusterizer.set_end_of_cluster_function(end_of_cluster_function)  # Set the new function to the clusterizer
 
     # Main function
-    cluster_hits, cluster = clusterizer.cluster_hits(hits)  # cluster hits
+    cluster_hits, clusters = clusterizer.cluster_hits(hits)  # cluster hits
 
     # Print input / output histograms
     print('INPUT:')
@@ -57,4 +57,4 @@ if __name__ == "__main__":
     print('Hits with cluster info:')
     pprint_array(cluster_hits)
     print('Cluster info:')
-    pprint_array(cluster)
+    pprint_array(clusters)

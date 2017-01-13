@@ -30,7 +30,7 @@ def _pixel_masked(hit, array):
 
 
 @njit()
-def _finish_cluster(hits, cluster, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, disabled_pixels):
+def _finish_cluster(hits, clusters, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, disabled_pixels):
     ''' Set hit and cluster information of the cluster (e.g. number of hits in the cluster (cluster_size), total cluster charge (charge), ...).
     '''
     cluster_charge = 0
@@ -54,19 +54,19 @@ def _finish_cluster(hits, cluster, cluster_size, cluster_hit_indices, cluster_in
 
     hits[seed_hit_index]['is_seed'] = 1
 
-    cluster[cluster_index]["ID"] = cluster_id
-    cluster[cluster_index]["n_hits"] = cluster_size
-    cluster[cluster_index]["charge"] = cluster_charge
-    cluster[cluster_index]['seed_column'] = hits[seed_hit_index]['column']
-    cluster[cluster_index]['seed_row'] = hits[seed_hit_index]['row']
+    clusters[cluster_index]["ID"] = cluster_id
+    clusters[cluster_index]["n_hits"] = cluster_size
+    clusters[cluster_index]["charge"] = cluster_charge
+    clusters[cluster_index]['seed_column'] = hits[seed_hit_index]['column']
+    clusters[cluster_index]['seed_row'] = hits[seed_hit_index]['row']
     # correct total charge value and calculate mean column and row
-    cluster[cluster_index]['mean_column'] = float(total_weighted_column) / (cluster_charge + cluster_size * charge_correction)
-    cluster[cluster_index]['mean_row'] = float(total_weighted_row) / (cluster_charge + cluster_size * charge_correction)
+    clusters[cluster_index]['mean_column'] = float(total_weighted_column) / (cluster_charge + cluster_size * charge_correction)
+    clusters[cluster_index]['mean_row'] = float(total_weighted_row) / (cluster_charge + cluster_size * charge_correction)
 
     # Call end of cluster function hook
     _end_of_cluster_function(
         hits=hits,
-        cluster=cluster,
+        clusters=clusters,
         cluster_size=cluster_size,
         cluster_hit_indices=cluster_hit_indices,
         cluster_index=cluster_index,
@@ -78,19 +78,19 @@ def _finish_cluster(hits, cluster, cluster_size, cluster_hit_indices, cluster_in
 
 
 @njit()
-def _finish_event(hits, cluster, start_event_hit_index, stop_event_hit_index, start_event_cluster_index, stop_event_cluster_index):
+def _finish_event(hits, clusters, start_event_hit_index, stop_event_hit_index, start_event_cluster_index, stop_event_cluster_index):
     ''' Set hit and cluster information of the event (e.g. number of cluster in the event (n_cluster), ...).
     '''
     for hit_index in range(start_event_hit_index, stop_event_hit_index):
         hits[hit_index]['n_cluster'] = stop_event_cluster_index - start_event_cluster_index
 
     for cluster_index in range(start_event_cluster_index, stop_event_cluster_index):
-        cluster[cluster_index]['event_number'] = hits[start_event_hit_index]['event_number']
+        clusters[cluster_index]['event_number'] = hits[start_event_hit_index]['event_number']
 
     # Call end of event function hook
     _end_of_event_function(
         hits=hits,
-        cluster=cluster,
+        clusters=clusters,
         start_event_hit_index=start_event_hit_index,
         stop_event_hit_index=stop_event_hit_index,
         start_event_cluster_index=start_event_cluster_index,
@@ -144,28 +144,28 @@ def _is_in_max_difference(value_1, value_2, max_difference):
 
 
 @njit()
-def _end_of_cluster_function(hits, cluster, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, disabled_pixels, seed_hit_index):
+def _end_of_cluster_function(hits, clusters, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, disabled_pixels, seed_hit_index):
     ''' Empty function that can be overwritten with a new function that is called at the end of each cluster
     '''
     pass
 
 
 @njit()
-def _end_of_event_function(hits, cluster, start_event_hit_index, stop_event_hit_index, start_event_cluster_index, stop_event_cluster_index):
+def _end_of_event_function(hits, clusters, start_event_hit_index, stop_event_hit_index, start_event_cluster_index, stop_event_cluster_index):
     ''' Empty function that can be overwritten with a new function that is called at the end of event
     '''
     pass
 
 
 @njit()
-def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, column_cluster_distance, row_cluster_distance, frame_cluster_distance, min_hit_charge, max_hit_charge, ignore_same_hits, noisy_pixels, disabled_pixels):
+def _cluster_hits(hits, clusters, assigned_hit_array, cluster_hit_indices, column_cluster_distance, row_cluster_distance, frame_cluster_distance, min_hit_charge, max_hit_charge, ignore_same_hits, noisy_pixels, disabled_pixels):
     ''' Main precompiled function that loopes over the hits and clusters them
     '''
     total_hits = hits.shape[0]
     max_cluster_hits = cluster_hit_indices.shape[0]
 
-    if total_hits != cluster.shape[0]:
-        raise ValueError("hits and cluster must be the same size")
+    if total_hits != clusters.shape[0]:
+        raise ValueError("hits and clusters must be the same size")
 
     if total_hits != assigned_hit_array.shape[0]:
         raise ValueError("hits and assigned_hit_array must be the same size")
@@ -191,7 +191,7 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, column
         if _new_event(hits[i]['event_number'], event_number):
             _finish_event(
                 hits=hits,
-                cluster=cluster,
+                clusters=clusters,
                 start_event_hit_index=start_event_hit_index,
                 stop_event_hit_index=i,
                 start_event_cluster_index=start_event_cluster_index,
@@ -260,7 +260,7 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, column
         else:
             _finish_cluster(
                 hits=hits,
-                cluster=cluster,
+                clusters=clusters,
                 cluster_size=cluster_size,
                 cluster_hit_indices=cluster_hit_indices,
                 cluster_index=start_event_cluster_index + event_cluster_index,
@@ -273,7 +273,7 @@ def _cluster_hits(hits, cluster, assigned_hit_array, cluster_hit_indices, column
     # Last event is assumed to be finished at the end of the hit array, thus add info
     _finish_event(
         hits=hits,
-        cluster=cluster,
+        clusters=clusters,
         start_event_hit_index=start_event_hit_index,
         stop_event_hit_index=total_hits,
         start_event_cluster_index=start_event_cluster_index,

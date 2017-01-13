@@ -1003,8 +1003,8 @@ class TestClusterizer(unittest.TestCase):
         # The end of loop function has to define all of the following arguments, even when they are not used
         # It has to be compile able by numba in non python mode
         # This end_of_cluster_function sets the additional seed_charge field
-        def end_of_cluster_function(hits, cluster, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, disabled_pixels, seed_hit_index):
-            cluster[cluster_index]['seed_charge'] = hits[seed_hit_index]['charge']
+        def end_of_cluster_function(hits, clusters, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, disabled_pixels, seed_hit_index):
+            clusters[cluster_index]['seed_charge'] = hits[seed_hit_index]['charge']
 
         clusterizer.set_end_of_cluster_function(end_of_cluster_function)  # Set the new end_of_cluster_function
 
@@ -1063,10 +1063,10 @@ class TestClusterizer(unittest.TestCase):
         # The end of loop function has to define all of the following arguments, even when they are not used
         # It has to be compile able by numba in non python mode
         # This end_of_event_function sets the additional n_cluster field
-        def end_of_event_function(hits, cluster, start_event_hit_index, stop_event_hit_index, start_event_cluster_index, stop_event_cluster_index):
+        def end_of_event_function(hits, clusters, start_event_hit_index, stop_event_hit_index, start_event_cluster_index, stop_event_cluster_index):
             # Set the number of clusters info (n_cluster)for clusters of the event
             for i in range(start_event_cluster_index, stop_event_cluster_index):
-                cluster[i]['n_cluster'] = hits["n_cluster"][start_event_hit_index]
+                clusters[i]['n_cluster'] = hits["n_cluster"][start_event_hit_index]
 
         clusterizer.set_end_of_event_function(end_of_event_function)  # Set the new end_of_cluster_function
 
