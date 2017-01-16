@@ -74,7 +74,7 @@ if __name__ == "__main__":
                                  cluster_dtype=cluster_dtype)
 
     # Main function
-    cluster_hits, cluster = clusterizer.cluster_hits(hits)  # cluster hits
+    cluster_hits, clusters = clusterizer.cluster_hits(hits)  # cluster hits
 
     # Print input / output histograms
     print('INPUT:')
@@ -83,4 +83,4 @@ if __name__ == "__main__":
     print('Hits with cluster info:')
     pprint_array(cluster_hits)
     print('Cluster info:')
-    pprint_array(cluster)
+    pprint_array(clusters)
