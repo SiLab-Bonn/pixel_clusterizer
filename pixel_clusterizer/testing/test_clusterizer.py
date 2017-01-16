@@ -107,8 +107,8 @@ class TestClusterizer(unittest.TestCase):
         expected_hit_result['n_cluster'] = 1
 
         # Test results
-        self.assertTrue(np.all([clusters == expected_cluster_result]))
-        self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
     def test_disabled_pixels(self):
         # Create some fake data
@@ -169,8 +169,8 @@ class TestClusterizer(unittest.TestCase):
         expected_hit_result['n_cluster'] = [1, 1, 0, 1, 1, 1, 0]
 
         # Test results
-        self.assertTrue(np.all([clusters == expected_cluster_result]))
-        self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
     def test_noisy_pixels(self):
         # Create some fake data
@@ -290,8 +290,8 @@ class TestClusterizer(unittest.TestCase):
         expected_hit_result['n_cluster'] = 1
 
         # Test results
-        self.assertTrue(np.all([clusters == expected_cluster_result]))
-        self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Case 2: Test max hit charge cut, omit charge > 29 hits
         hits['event_number'] = 20
@@ -335,8 +335,8 @@ class TestClusterizer(unittest.TestCase):
         expected_hit_result['n_cluster'] = [1, 1]
 
         # Test results
-        self.assertTrue(np.all([clusters == expected_cluster_result]))
-        self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Case 3: Add the same hit within an event
         # Create some fake data
@@ -387,8 +387,8 @@ class TestClusterizer(unittest.TestCase):
         cluster_hits, clusters = clusterizer.cluster_hits(hits)  # Cluster hits
 
         # Test results
-        self.assertTrue(np.all([clusters == expected_cluster_result]))
-        self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         clusterizer.ignore_same_hits(False)  # If a hit occured 2 times in an event it is used as a normal hit
         cluster_hits, clusters = clusterizer.cluster_hits(hits)  # Cluster hits
@@ -402,8 +402,8 @@ class TestClusterizer(unittest.TestCase):
         expected_cluster_result['mean_row'] = [(2 * 36 + 38) / 3.0]
 
         # Test results
-        self.assertTrue(np.all([clusters == expected_cluster_result]))
-        self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
     def test_different_hit_data_types(self):
         # Define a different hit data structure with standard names but different data types and number of fields. Numba automatically recompiles and the result should not change
@@ -465,8 +465,8 @@ class TestClusterizer(unittest.TestCase):
             expected_hit_result['n_cluster'] = 1
 
             # Test results
-            self.assertTrue(np.all([clusters == expected_cluster_result]))
-            self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+            self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+            self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
             # Test same size array
             hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2, hit_dtype=np.dtype(hit_data_type))
@@ -475,8 +475,8 @@ class TestClusterizer(unittest.TestCase):
 
             # Test results
             self.assertTrue(array_size_before == array_size_after)
-            self.assertTrue(np.all([clusters == expected_cluster_result]))
-            self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+            self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+            self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
             # Test increasing size array
             hits = create_hits(n_hits=20, max_column=100, max_row=100, max_frame=1, max_charge=2, hit_dtype=np.dtype(hit_data_type))
@@ -513,8 +513,8 @@ class TestClusterizer(unittest.TestCase):
 
             # Test results
             self.assertTrue(array_size_before < array_size_after)
-            self.assertTrue(np.all([clusters == expected_cluster_result]))
-            self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+            self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+            self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
     def test_different_cluster_data_types(self):
         # Define a different hit data structure with standard names but different data types and number of fields. Numba automatically recompiles and the result should not change
@@ -575,8 +575,8 @@ class TestClusterizer(unittest.TestCase):
             expected_hit_result['n_cluster'] = 1
 
             # Test results
-            self.assertTrue(np.all([clusters == expected_cluster_result]))
-            self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+            self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+            self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
             # Test same size array
             hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
@@ -585,8 +585,8 @@ class TestClusterizer(unittest.TestCase):
 
             # Test results
             self.assertTrue(array_size_before == array_size_after)
-            self.assertTrue(np.all([clusters == expected_cluster_result]))
-            self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+            self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+            self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
             # Test increasing size array
             hits = create_hits(n_hits=20, max_column=100, max_row=100, max_frame=1, max_charge=2)
@@ -624,8 +624,8 @@ class TestClusterizer(unittest.TestCase):
 
             # Test results
             self.assertTrue(array_size_before < array_size_after)
-            self.assertTrue(np.all([clusters == expected_cluster_result]))
-            self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+            self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+            self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
     def test_custom_hit_fields(self):
         # Define a different hit data structure with different names but standard data types.
@@ -687,8 +687,8 @@ class TestClusterizer(unittest.TestCase):
         expected_hit_result['n_cluster'] = 1
 
         # Test results
-        self.assertTrue(np.all([clusters == expected_cluster_result]))
-        self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Test same size array
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2, hit_dtype=hit_dtype, hit_fields=hit_fields)
@@ -697,8 +697,8 @@ class TestClusterizer(unittest.TestCase):
 
         # Test results
         self.assertTrue(array_size_before == array_size_after)
-        self.assertTrue(np.all([clusters == expected_cluster_result]))
-        self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Test increasing size array
         hits = create_hits(n_hits=20, max_column=100, max_row=100, max_frame=1, max_charge=2, hit_dtype=hit_dtype, hit_fields=hit_fields)
@@ -735,8 +735,8 @@ class TestClusterizer(unittest.TestCase):
 
         # Test results
         self.assertTrue(array_size_before < array_size_after)
-        self.assertTrue(np.all([clusters == expected_cluster_result]))
-        self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
     def test_custom_cluster_fields(self):
         # Define a different cluster data structure with different names but standard data types.
@@ -795,8 +795,8 @@ class TestClusterizer(unittest.TestCase):
         expected_hit_result['n_cluster'] = 1
 
         # Test results
-        self.assertTrue(np.all([clusters == expected_cluster_result]))
-        self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Test same size array
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
@@ -805,8 +805,8 @@ class TestClusterizer(unittest.TestCase):
 
         # Test results
         self.assertTrue(array_size_before == array_size_after)
-        self.assertTrue(np.all([clusters == expected_cluster_result]))
-        self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Test increasing size array
         hits = create_hits(n_hits=20, max_column=100, max_row=100, max_frame=1, max_charge=2)
@@ -844,8 +844,8 @@ class TestClusterizer(unittest.TestCase):
 
         # Test results
         self.assertTrue(array_size_before < array_size_after)
-        self.assertTrue(np.all([clusters == expected_cluster_result]))
-        self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
     def test_adding_cluster_field(self):
         clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
@@ -894,8 +894,8 @@ class TestClusterizer(unittest.TestCase):
         expected_hit_result['n_cluster'] = 1
 
         # Test results
-        self.assertTrue(np.all([clusters == expected_cluster_result]))
-        self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Test same size array
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
@@ -904,8 +904,8 @@ class TestClusterizer(unittest.TestCase):
 
         # Test results
         self.assertTrue(array_size_before == array_size_after)
-        self.assertTrue(np.all([clusters == expected_cluster_result]))
-        self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Test increasing size array
         hits = create_hits(n_hits=20, max_column=100, max_row=100, max_frame=1, max_charge=2)
@@ -952,8 +952,8 @@ class TestClusterizer(unittest.TestCase):
 
         # Test results
         self.assertTrue(array_size_before < array_size_after)
-        self.assertTrue(np.all([clusters == expected_cluster_result]))
-        self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
     def test_set_end_of_cluster_function(self):
         # Initialize clusterizer object
@@ -1012,8 +1012,8 @@ class TestClusterizer(unittest.TestCase):
         cluster_hits, clusters = clusterizer.cluster_hits(hits)  # cluster hits
 
         # Test results
-        self.assertTrue(np.all([clusters == expected_cluster_result]))
-        self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
     def test_set_end_of_event_function(self):
         # Initialize clusterizer object
@@ -1074,8 +1074,8 @@ class TestClusterizer(unittest.TestCase):
         cluster_hits, clusters = clusterizer.cluster_hits(hits)  # cluster hits
 
         # Test results
-        self.assertTrue(np.all([clusters == expected_cluster_result]))
-        self.assertTrue(np.all([cluster_hits == expected_hit_result]))
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
     def test_chunked_clustering(self):  # Big tables have to be chunked and analyzed with clusterizer.cluster_hits(hits_chunk) calls
         clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
@@ -1101,8 +1101,8 @@ class TestClusterizer(unittest.TestCase):
                 clusters_chunked = np.append(clusters_chunked, clusters_chunk)
 
         # Test results
-        self.assertTrue(np.all([clusters == clusters_chunked]))
-        self.assertTrue(np.all([cluster_hits == cluster_hits_chunked]))
+        self.assertTrue(np.array_equal(clusters, clusters_chunked))
+        self.assertTrue(np.array_equal(cluster_hits, cluster_hits_chunked))
 
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestClusterizer)
