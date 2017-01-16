@@ -237,7 +237,7 @@ class HitClusterizer(object):
         ''' Cluster given hit array.
 
         The noisy_pixels and disabled_pixels parameters are iterables of column/row index pairs, e.g. [[column_1, row_1], [column_2, row_2], ...].
-        The noisy_pixels parameter allows for removing clusters that solely consists of noisy pixels.
+        The noisy_pixels parameter allows for removing clusters that consist of a single noisy pixels. Clusters with 2 or more noisy pixels are not removed.
         The disabled_pixels parameter allows for ignoring pixels.
         '''
         n_hits = hits.shape[0]  # Set n_hits to new size
