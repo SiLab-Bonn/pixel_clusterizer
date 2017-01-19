@@ -115,10 +115,10 @@ class HitClusterizer(object):
         self._init_arrays(size=0)
 
         def end_of_cluster_function(hits, clusters, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, disabled_pixels, seed_hit_index):
-            return
+            pass
 
         def end_of_event_function(hits, clusters, start_event_hit_index, stop_event_hit_index, start_event_cluster_index, stop_event_cluster_index):
-            return
+            pass
 
         self.set_end_of_cluster_function(end_of_cluster_function)
         self.set_end_of_event_function(end_of_event_function)
