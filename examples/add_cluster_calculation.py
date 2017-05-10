@@ -38,12 +38,33 @@ if __name__ == "__main__":
     # Initialize clusterizer object
     clusterizer = HitClusterizer()
     clusterizer.add_cluster_field(description=('seed_charge', '<u1'))  # Add an additional field to hold the charge of the seed hit
+    clusterizer.add_cluster_field(description=('cluster_size_col', '<u1'))  # Add an additional field to hold the cluster size in x
+    clusterizer.add_cluster_field(description=('cluster_size_row', '<u1'))  # Add an additional field to hold the cluster size in y
 
     # The end of loop function has to define all of the following arguments, even when they are not used
     # It has to be compile able by numba in non python mode
-    # This end_of_cluster_function sets the additional seed_charge field
+    # This end_of_cluster_function sets the additional seed_charge field and the cluster size in x and y
     def end_of_cluster_function(hits, clusters, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, disabled_pixels, seed_hit_index):
+        min_col = hits[cluster_hit_indices[0]].column
+        max_col = hits[cluster_hit_indices[0]].column
+        min_row = hits[cluster_hit_indices[0]].row
+        max_row = hits[cluster_hit_indices[0]].row
+
+        for i in cluster_hit_indices[1:]:
+            if i < 0:  # Not used indeces = -1
+                break
+            if hits[i].column < min_col:
+                min_col = hits[i].column
+            if hits[i].column > max_col:
+                max_col = hits[i].column
+            if hits[i].row < min_row:
+                min_row = hits[i].row
+            if hits[i].row > max_row:
+                max_row = hits[i].row
+
         clusters[cluster_index].seed_charge = hits[seed_hit_index].charge
+        clusters[cluster_index].cluster_size_col = max_col - min_col + 1
+        clusters[cluster_index].cluster_size_row = max_row - min_row + 1
 
     clusterizer.set_end_of_cluster_function(end_of_cluster_function)  # Set the new function to the clusterizer
 
