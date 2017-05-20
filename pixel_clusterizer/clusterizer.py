@@ -43,32 +43,38 @@ class HitClusterizer(object):
         self.njit = __import__('numba').njit
 
         # Set the translation dictionary for the important hit value names
+        self._default_hit_fields_mapping = {'event_number': 'event_number',
+                                    'frame': 'frame',
+                                    'column': 'column',
+                                    'row': 'row',
+                                    'charge': 'charge',
+                                    'cluster_ID': 'cluster_ID',
+                                    'is_seed': 'is_seed',
+                                    'cluster_size': 'cluster_size',
+                                    'n_cluster': 'n_cluster'
+                                    }
         if hit_fields:
             self.set_hit_fields(hit_fields)
         else:
-            self.set_hit_fields({'event_number': 'event_number',
-                                 'column': 'column',
-                                 'row': 'row',
-                                 'charge': 'charge',
-                                 'frame': 'frame'
-                                 })
+            self.set_hit_fields(None)
 
         # Set the translation dictionary for the important hit value names
+        self._default_cluster_fields_mapping = {'event_number': 'event_number',
+                                        'ID': 'ID',
+                                        'n_hits': 'n_hits',
+                                        'charge': 'charge',
+                                        'seed_column': 'seed_column',
+                                        'seed_row': 'seed_row',
+                                        'mean_column': 'mean_column',
+                                        'mean_row': 'mean_row'
+                                        }
         if cluster_fields:
             self.set_cluster_fields(cluster_fields)
         else:
-            self.set_cluster_fields({'event_number': 'event_number',
-                                     'ID': 'ID',
-                                     'n_hits': 'n_hits',
-                                     'charge': 'charge',
-                                     'seed_column': 'seed_column',
-                                     'seed_row': 'seed_row',
-                                     'mean_column': 'mean_column',
-                                     'mean_row': 'mean_row'
-                                     })
+            self.set_cluster_fields(None)
 
-        # Set default data structure
-        self._hit_clustered_descr = [('event_number', '<i8'),
+        # Set hit data structure for clustered hits
+        self._default_cluster_hits_descr = [('event_number', '<i8'),
                                      ('frame', '<u1'),
                                      ('column', '<u2'),
                                      ('row', '<u2'),
@@ -77,7 +83,13 @@ class HitClusterizer(object):
                                      ('is_seed', '<u1'),
                                      ('cluster_size', '<u2'),
                                      ('n_cluster', '<u2')]
-        self._cluster_descr = [('event_number', '<i8'),
+        if hit_dtype:
+            self.set_hit_dtype(hit_dtype)
+        else:
+            self.set_hit_dtype(None)
+
+        # Set cluster data struct for clustered hits
+        self._default_cluster_descr = [('event_number', '<i8'),
                                ('ID', '<u2'),
                                ('n_hits', '<u2'),
                                ('charge', '<f4'),
@@ -85,14 +97,12 @@ class HitClusterizer(object):
                                ('seed_row', '<u2'),
                                ('mean_column', '<f4'),
                                ('mean_row', '<f4')]
-
-        # Set hit data structure for clustered hits
-        if hit_dtype:
-            self.set_hit_dtype(hit_dtype)
-
-        # Set cluster data struct for clustered hits
         if cluster_dtype:
             self.set_cluster_dtype(cluster_dtype)
+        else:
+            self.set_cluster_dtype(None)
+
+        self._initialized = True
 
         # Std. settings
         self.set_min_hit_charge(min_hit_charge)
@@ -104,12 +114,17 @@ class HitClusterizer(object):
 
         self.reset()
 
+    @property
+    def initialized(self):
+        return hasattr(self, "_initialized") and self._initialized
+
     def _init_arrays(self, size=0):
-        self._cluster_hits = np.zeros(shape=(size, ), dtype=np.dtype(self._hit_clustered_descr))
-        self._clusters = np.zeros(shape=(size, ), dtype=np.dtype(self._cluster_descr))
-        self._assigned_hit_array = np.zeros(shape=(size, ), dtype=np.bool)
-        self._cluster_hit_indices = np.empty(shape=(size, ), dtype=np_int_type_chooser(size))
-        self._cluster_hit_indices.fill(-1)
+        if self.initialized:
+            self._cluster_hits = np.zeros(shape=(size, ), dtype=np.dtype(self._cluster_hits_descr))
+            self._clusters = np.zeros(shape=(size, ), dtype=np.dtype(self._cluster_descr))
+            self._assigned_hit_array = np.zeros(shape=(size, ), dtype=np.bool)
+            self._cluster_hit_indices = np.empty(shape=(size, ), dtype=np_int_type_chooser(size))
+            self._cluster_hit_indices.fill(-1)
 
     def reset(self):  # Resets the overwritten function hooks, otherwise they are stored as a module global and not reset on clusterizer initialization
         self._init_arrays(size=0)
@@ -124,66 +139,85 @@ class HitClusterizer(object):
         self.set_end_of_event_function(end_of_event_function)
 
     def set_hit_fields(self, hit_fields):
-        ''' Tell the clusterizer the meaning of the field names (e.g.: the field name x means column). Field that are not mentioned here are NOT copied into the result array.'''
-        hit_fields_mapping = dict((v, k) for k, v in hit_fields.items())  # Create also the inverse dictionary for faster lookup
-        try:
-            hit_fields_mapping['event_number'], hit_fields_mapping['column'], hit_fields_mapping['row'], hit_fields_mapping['charge'], hit_fields_mapping['frame']
-        except KeyError:
-            raise ValueError('The hit fields event_number, column, row, charge and frame have to be defined!')
+        ''' Tell the clusterizer the meaning of the field names (e.g.: the field name x means column). Field that are not mentioned here are NOT copied into the result array.
+
+        The hit_fields parameter is a dict, e.g. {"new filed name", "standard field name"}.
+        '''
+        if not hit_fields:
+            hit_fields_mapping_inverse = {}
+            hit_fields_mapping = {}
+        else:
+            hit_fields_mapping_inverse = dict((k, v) for k, v in hit_fields.items())
+            hit_fields_mapping = dict((v, k) for k, v in hit_fields.items())  # Create also the inverse dictionary for faster lookup
+
+        for old_name, new_name in self._default_hit_fields_mapping.items():
+            if old_name not in hit_fields_mapping:
+                hit_fields_mapping[old_name] = new_name
+                hit_fields_mapping_inverse[new_name] = old_name
+
         self._hit_fields_mapping = hit_fields_mapping
-        self._hit_fields_mapping_inverse = hit_fields
+        self._hit_fields_mapping_inverse = hit_fields_mapping_inverse
 
     def set_cluster_fields(self, cluster_fields):
-        ''' Tell the clusterizer the meaning of the field names (e.g.: the field name seed_x means seed_column). '''
-        cluster_fields_mapping = dict((v, k) for k, v in cluster_fields.items())  # Create also the inverse dictionary for faster lookup
-        try:
-            cluster_fields_mapping['event_number'], cluster_fields_mapping['ID'], cluster_fields_mapping['n_hits'], cluster_fields_mapping['charge'], cluster_fields_mapping['seed_column'], cluster_fields_mapping['seed_row'], cluster_fields_mapping['mean_column'], cluster_fields_mapping['mean_row']
-        except KeyError:
-            raise ValueError('The cluster fields event_number, ID, n_hits, charge, seed_column, seed_row, mean_column and mean_row have to be defined!')
+        ''' Tell the clusterizer the meaning of the field names (e.g.: the field name seed_x means seed_column).
+
+        The cluster_fields parameter is a dict, e.g. {"new filed name": "standard field name"}.
+        '''
+        if not cluster_fields:
+            cluster_fields_mapping_inverse = {}
+            cluster_fields_mapping = {}
+        else:
+            cluster_fields_mapping_inverse = dict((k, v) for k, v in cluster_fields.items())
+            cluster_fields_mapping = dict((v, k) for k, v in cluster_fields.items())  # Create also the inverse dictionary for faster lookup
+
+        for old_name, new_name in self._default_cluster_fields_mapping.items():
+            if old_name not in cluster_fields_mapping:
+                cluster_fields_mapping[old_name] = new_name
+                cluster_fields_mapping_inverse[new_name] = old_name
+
         self._cluster_fields_mapping = cluster_fields_mapping
-        self._cluster_fields_mapping_inverse = cluster_fields
+        self._cluster_fields_mapping_inverse = cluster_fields_mapping_inverse
 
     def set_hit_dtype(self, hit_dtype):
         ''' Set the data type of the hits. Clusterizer has to know the data type to produce the clustered hit result with the same data types.'''
-        hit_clustered_descr = []
-        for dtype_name, dtype in hit_dtype.descr:
-            try:
-                hit_clustered_descr.append((self._hit_fields_mapping_inverse[dtype_name], dtype))
-            except KeyError:  # The hit has an unknown field, thus also add it to the hit_clustered
-                hit_clustered_descr.append((dtype_name, dtype))
-        hit_clustered_descr.extend([('cluster_ID', '<i2'), ('is_seed', '<u1'), ('cluster_size', '<u2'), ('n_cluster', '<u2')])
-        hit_clustered_dtype = np.dtype(hit_clustered_descr)  # Convert to numpy dtype for following sanity check
-        # Check if required fields are existing
-        try:
-            hit_clustered_dtype['event_number'], hit_clustered_dtype['column'], hit_clustered_dtype['row'], hit_clustered_dtype['charge'], hit_clustered_dtype['frame']
-        except KeyError:
-            raise ValueError('The clustered hit struct has to have a valid mapping to the fields: event_number, column, row, charge. Consider to set the mapping with set_hit_fields method first!')
-        self._hit_clustered_descr = hit_clustered_descr
+        if not hit_dtype:
+            hit_dtype = np.dtype([])
+        else:
+            hit_dtype = np.dtype(hit_dtype)
+        cluster_hits_descr = hit_dtype.descr
+
+        for dtype_name, dtype in self._default_cluster_hits_descr:
+            if self._hit_fields_mapping[dtype_name] not in hit_dtype.fields:
+                cluster_hits_descr.append((dtype_name, dtype))
+
+        self._cluster_hits_descr = cluster_hits_descr
         self._init_arrays(size=0)
 
     def set_cluster_dtype(self, cluster_dtype):
         ''' Set the data type of the cluster.'''
-        cluster_descr = []
-        for dtype_name, dtype in cluster_dtype.descr:
-            try:
-                cluster_descr.append((self._cluster_fields_mapping_inverse[dtype_name], dtype))
-            except KeyError:  # The hit has an unknown field, thus also add it to the cluster
+        if not cluster_dtype:
+            cluster_dtype = np.dtype([])
+        else:
+            cluster_dtype = np.dtype(cluster_dtype)
+        cluster_descr = cluster_dtype.descr
+
+        for dtype_name, dtype in self._default_cluster_descr:
+            if self._cluster_fields_mapping[dtype_name] not in cluster_dtype.fields:
                 cluster_descr.append((dtype_name, dtype))
-        cluster_dtype = np.dtype(cluster_descr)  # Convert to numpy dtype for following sanity check
-        # Check if required fields are existing
-        try:
-            cluster_dtype['event_number'], cluster_dtype['ID'], cluster_dtype['n_hits'], cluster_dtype['charge'], cluster_dtype['seed_column'], cluster_dtype['seed_row'], cluster_dtype['mean_column'], cluster_dtype['mean_row']
-        except KeyError:
-            raise ValueError('The cluster struct has to have a valid mapping to the fields: event_number, ID, n_hits, charge, seed_column, seed_row, mean_column and mean_row. Consider to set the mapping with set_hit_fields method first!')
+
         self._cluster_descr = cluster_descr
         self._init_arrays(size=0)
 
     def add_cluster_field(self, description):
         ''' Adds a field or a list of fields to the cluster result array. Has to be defined as a numpy dtype entry, e.g.: ('parameter', '<i4') '''
         if isinstance(description, list):
-            for one_parameter in description:
-                self._cluster_descr.append(one_parameter)
+            for named_type in description:
+                if len(description) != 2:
+                    raise TypeError("data type not understood")
+                self._cluster_descr.append(named_type)
         else:
+            if len(description) != 2:
+                raise TypeError("data type not understood")
             self._cluster_descr.append(description)
         self._init_arrays(size=0)
 
@@ -253,8 +287,13 @@ class HitClusterizer(object):
         self._check_struct_compatibility(hits)
 
         # The hit info is extended by the cluster info; this is only possible by creating a new hit info array and copy data
-        for internal_name, external_name in self._hit_fields_mapping.items():
-            self._cluster_hits[internal_name][:n_hits] = hits[external_name]
+        for field_name in hits.dtype.fields:
+            if field_name in self._hit_fields_mapping_inverse:
+                cluster_hits_field_name = self._hit_fields_mapping_inverse[field_name]
+            else:
+                cluster_hits_field_name = field_name
+            if cluster_hits_field_name in self._cluster_hits.dtype.fields:
+                self._cluster_hits[cluster_hits_field_name][:n_hits] = hits[field_name]
 
         noisy_pixels_array = np.array([]) if noisy_pixels is None else np.array(noisy_pixels)
         if noisy_pixels_array.shape[0] != 0:
@@ -334,4 +373,4 @@ class HitClusterizer(object):
             if self._cluster_hits['frame'].dtype != hits[self._hit_fields_mapping['frame']].dtype or self._cluster_hits['column'].dtype != hits[self._hit_fields_mapping['column']].dtype or self._cluster_hits['row'].dtype != hits[self._hit_fields_mapping['row']].dtype or self._cluster_hits['charge'].dtype != hits[self._hit_fields_mapping['charge']].dtype or self._cluster_hits['event_number'].dtype != hits[self._hit_fields_mapping['event_number']].dtype:
                 raise TypeError('The hit data type(s) do not match. Consider calling the method set_hit_dtype first! Got/Expected:', hits.dtype, self._cluster_hits.dtype)
         except ValueError:
-            raise TypeError('The hit field names are unexpected. Consider calling the method set_hit_fields! Got:', hits.dtype.names)
+            raise TypeError('Some named fields of hits cannot be assigned: %s' % ", ".join(set(hits.dtype.names) - set(self._hit_fields_mapping_inverse.keys())))

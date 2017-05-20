@@ -162,6 +162,8 @@ def _cluster_hits(hits, clusters, assigned_hit_array, cluster_hit_indices, colum
     ''' Main precompiled function that loopes over the hits and clusters them
     '''
     total_hits = hits.shape[0]
+    if total_hits == 0:
+        return 0  # total clusters
     max_cluster_hits = cluster_hit_indices.shape[0]
 
     if total_hits != clusters.shape[0]:
