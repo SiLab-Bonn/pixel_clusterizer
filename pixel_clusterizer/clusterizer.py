@@ -80,11 +80,11 @@ class HitClusterizer(object):
         self._cluster_descr = [('event_number', '<i8'),
                                ('ID', '<u2'),
                                ('n_hits', '<u2'),
-                               ('charge', 'f4'),
+                               ('charge', '<f4'),
                                ('seed_column', '<u2'),
                                ('seed_row', '<u2'),
-                               ('mean_column', 'f4'),
-                               ('mean_row', 'f4')]
+                               ('mean_column', '<f4'),
+                               ('mean_row', '<f4')]
 
         # Set hit data structure for clustered hits
         if hit_dtype:
