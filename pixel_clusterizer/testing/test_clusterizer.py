@@ -14,7 +14,7 @@ def create_hits(n_hits, max_column, max_row, max_frame, max_charge, hit_dtype=np
                                                                                         ('column', '<u2'),
                                                                                         ('row', '<u2'),
                                                                                         ('charge', '<u2')]), hit_fields=None):
-    hits = np.ones(shape=(n_hits, ), dtype=hit_dtype)
+    hits = np.zeros(shape=(n_hits, ), dtype=hit_dtype)
     if not hit_fields:
         for i in range(n_hits):
             hits[i]['event_number'], hits[i]['frame'], hits[i]['column'], hits[i]['row'], hits[i]['charge'] = i / 3, i % max_frame, i % max_column + 1, 2 * i % max_row + 1, i % max_charge
@@ -51,8 +51,10 @@ class TestClusterizer(unittest.TestCase):
                                   ('column', '<u2'),
                                   ('row', '<u2'),
                                   ('charge', '<u2')])
-        with self.assertRaises(ValueError):
-            _ = HitClusterizer(hit_fields=hit_mapping, hit_dtype=hit_dtype_new, pure_python=self.pure_python)
+        clusterizer = HitClusterizer(hit_fields=hit_mapping, hit_dtype=hit_dtype_new, pure_python=self.pure_python)
+        _, _ = clusterizer.cluster_hits(np.array([], dtype=hit_dtype))
+        with self.assertRaises(TypeError):
+            _, _ = clusterizer.cluster_hits(np.array([], dtype=hit_dtype_new))
         # TEST 3 Set custom and correct hit mapping, no eception expected
         hit_mapping = {'not_defined': 'event_number',
                        'column': 'column',
@@ -60,7 +62,8 @@ class TestClusterizer(unittest.TestCase):
                        'charge': 'charge',
                        'frame': 'frame'
                        }
-        _ = HitClusterizer(hit_fields=hit_mapping, hit_dtype=hit_dtype_new, pure_python=self.pure_python)
+        clusterizer = HitClusterizer(hit_fields=hit_mapping, hit_dtype=hit_dtype_new, pure_python=self.pure_python)
+        _, _ = clusterizer.cluster_hits(np.array([], dtype=hit_dtype_new))
 
     def test_cluster_algorithm(self):  # Check with multiple jumps data
         # Inititalize Clusterizer
@@ -1099,7 +1102,8 @@ class TestClusterizer(unittest.TestCase):
                                ('column', '<u2'),
                                ('row', '<i2'),
                                ('charge', '<u1'),
-                               ('parameter', '<i4'),
+                               ('parameter', '<u1'),
+                               ('parameter_1', '<i4'),
                                ('parameter_2', 'f4')])
 
         # Initialize clusterizer
