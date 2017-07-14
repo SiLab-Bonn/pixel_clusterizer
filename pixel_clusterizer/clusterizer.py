@@ -222,16 +222,10 @@ class HitClusterizer(object):
         self._init_arrays(size=0)
 
     def set_end_of_cluster_function(self, function):
-        if not self.pure_python:
-            self.cluster_functions._end_of_cluster_function = self.njit()(function)  # Overwrite end of cluster function by new provided function
-        else:
-            self.cluster_functions._end_of_cluster_function = function
+        self.cluster_functions._end_of_cluster_function = self._jitted(function)
 
     def set_end_of_event_function(self, function):
-        if not self.pure_python:
-            self.cluster_functions._end_of_event_function = self.njit()(function)  # Overwrite end of cluster function by new provided function
-        else:
-            self.cluster_functions._end_of_event_function = function
+        self.cluster_functions._end_of_event_function = self._jitted(function)
 
     def set_min_hit_charge(self, value):
         ''' Charge values below this value will effectively ignore the hit.
@@ -338,6 +332,18 @@ class HitClusterizer(object):
         self._clusters.dtype.names = self._map_cluster_field_names(self._clusters.dtype.names)  # Rename the data fields for the result
 
         return self._cluster_hits[:n_hits], self._clusters[:n_clusters]
+
+    def _jitted(self, function):
+        if not self.pure_python:
+            try:
+                function.py_func  # test whether the function is already jitted or not
+            except AttributeError:
+                return self.njit()(function)  # Overwrite end of cluster function by new provided function
+            else:
+                # already jitted
+                return function
+        else:
+            return function
 
     def _map_hit_field_names(self, dtype_names):  # Maps the hit field names from the internal convention to the external defined one
         unpatched_field_names = list(dtype_names)
