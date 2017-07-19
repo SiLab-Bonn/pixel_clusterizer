@@ -1699,6 +1699,16 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue(np.array_equal(clusters, expected_cluster_result))
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
+        end_of_cluster_function_jitted = clusterizer._jitted(end_of_cluster_function)
+        clusterizer.set_end_of_cluster_function(end_of_cluster_function_jitted)  # Set jitted end_of_cluster_function
+
+        # Main function
+        cluster_hits, clusters = clusterizer.cluster_hits(hits)  # cluster hits
+
+        # Test results
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
+
     def test_set_end_of_event_function(self):
         # Initialize clusterizer object
         clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
@@ -1761,6 +1771,16 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue(np.array_equal(clusters, expected_cluster_result))
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
+        end_of_event_function_jitted = clusterizer._jitted(end_of_event_function)
+        clusterizer.set_end_of_event_function(end_of_event_function_jitted)  # Set jitted end_of_cluster_function
+
+        # Main function
+        cluster_hits, clusters = clusterizer.cluster_hits(hits)  # cluster hits
+
+        # Test results
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
+
     def test_chunked_clustering(self):  # Big tables have to be chunked and analyzed with clusterizer.cluster_hits(hits_chunk) calls
         clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
 
@@ -1787,6 +1807,7 @@ class TestClusterizer(unittest.TestCase):
         # Test results
         self.assertTrue(np.array_equal(clusters, clusters_chunked))
         self.assertTrue(np.array_equal(cluster_hits, cluster_hits_chunked))
+
 
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestClusterizer)
