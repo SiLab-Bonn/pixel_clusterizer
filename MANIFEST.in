@@ -5,3 +5,5 @@ include requirements.*
 recursive-include examples *
 recursive-include tests *
 recursive-include pixel_clusterizer *
+exclude *__pycache__*
+exclude *.pyc
