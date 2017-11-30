@@ -141,7 +141,7 @@ class HitClusterizer(object):
     def set_hit_fields(self, hit_fields):
         ''' Tell the clusterizer the meaning of the field names (e.g.: the field name x means column). Field that are not mentioned here are NOT copied into the result array.
 
-        The hit_fields parameter is a dict, e.g. {"new filed name", "standard field name"}.
+        The hit_fields parameter is a dict, e.g., {"new filed name": "standard field name"}.
         '''
         if not hit_fields:
             hit_fields_mapping_inverse = {}
@@ -161,7 +161,7 @@ class HitClusterizer(object):
     def set_cluster_fields(self, cluster_fields):
         ''' Tell the clusterizer the meaning of the field names (e.g.: the field name seed_x means seed_column).
 
-        The cluster_fields parameter is a dict, e.g. {"new filed name": "standard field name"}.
+        The cluster_fields parameter is a dict, e.g., {"new filed name": "standard field name"}.
         '''
         if not cluster_fields:
             cluster_fields_mapping_inverse = {}
