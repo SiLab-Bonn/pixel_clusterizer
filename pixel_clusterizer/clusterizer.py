@@ -139,9 +139,19 @@ class HitClusterizer(object):
         self.set_end_of_event_function(end_of_event_function)
 
     def set_hit_fields(self, hit_fields):
-        ''' Tell the clusterizer the meaning of the field names (e.g.: the field name x means column). Field that are not mentioned here are NOT copied into the result array.
-
-        The hit_fields parameter is a dict, e.g., {"new filed name": "standard field name"}.
+        ''' Tell the clusterizer the meaning of the field names.
+        
+        Fields that are not mentioned here are NOT copied into the result clustered hits array.
+        The hit_fields parameter is a dict, e.g. {"new field name", "standard field name"}.
+        
+        If None default mapping is set.
+        
+        Example:
+        --------
+        
+        Internally the clusterizer uses column/row. If your hits have x/y you have to call:
+        set_hit_fields(hit_fields={'column': 'x',
+                                   'row': 'y'})
         '''
         if not hit_fields:
             hit_fields_mapping_inverse = {}
@@ -161,7 +171,7 @@ class HitClusterizer(object):
     def set_cluster_fields(self, cluster_fields):
         ''' Tell the clusterizer the meaning of the field names (e.g.: the field name seed_x means seed_column).
 
-        The cluster_fields parameter is a dict, e.g., {"new filed name": "standard field name"}.
+        The cluster_fields parameter is a dict, e.g. {"new filed name": "standard field name"}.
         '''
         if not cluster_fields:
             cluster_fields_mapping_inverse = {}
@@ -179,17 +189,32 @@ class HitClusterizer(object):
         self._cluster_fields_mapping_inverse = cluster_fields_mapping_inverse
 
     def set_hit_dtype(self, hit_dtype):
-        ''' Set the data type of the hits. Clusterizer has to know the data type to produce the clustered hit result with the same data types.'''
+        ''' Set the data type of the hits.
+        
+            Clusterizer has to know the hit data type to produce the clustered hit result with the same data types.
+        
+        Input:
+        ------
+            hit_dtype: numpy.dtype desctiprion for structured type.
+                        See: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.dtype.html
+        
+        Example:
+        --------
+            hit_dtype = [('x', np.uint16), ('y', np.uint16)]
+            'x', 'y' is the field name of the input hits.
+        '''
+
         if not hit_dtype:
-            hit_dtype = np.dtype([])
+            h_dtype = np.dtype([])
         else:
-            hit_dtype = np.dtype(hit_dtype)
-        cluster_hits_descr = hit_dtype.descr
+            h_dtype = np.dtype(hit_dtype)
+        cluster_hits_descr = h_dtype.descr
 
+        # Add default back to description
         for dtype_name, dtype in self._default_cluster_hits_descr:
-            if self._hit_fields_mapping[dtype_name] not in hit_dtype.fields:
+            if self._hit_fields_mapping[dtype_name] not in h_dtype.fields:
                 cluster_hits_descr.append((dtype_name, dtype))
-
+                        
         self._cluster_hits_descr = cluster_hits_descr
         self._init_arrays(size=0)
 
@@ -374,9 +399,20 @@ class HitClusterizer(object):
         return tuple(unpatched_field_names)
 
     def _check_struct_compatibility(self, hits):
-        ''' Takes the hit array and checks if the important data fields have the same data type than the hit clustered array and that the field names are correct'''
-        try:
-            if self._cluster_hits['frame'].dtype != hits[self._hit_fields_mapping['frame']].dtype or self._cluster_hits['column'].dtype != hits[self._hit_fields_mapping['column']].dtype or self._cluster_hits['row'].dtype != hits[self._hit_fields_mapping['row']].dtype or self._cluster_hits['charge'].dtype != hits[self._hit_fields_mapping['charge']].dtype or self._cluster_hits['event_number'].dtype != hits[self._hit_fields_mapping['event_number']].dtype:
-                raise TypeError('The hit data type(s) do not match. Consider calling the method set_hit_dtype first! Got/Expected:', hits.dtype, self._cluster_hits.dtype)
-        except ValueError:
-            raise TypeError('Some named fields of hits cannot be assigned: %s' % ", ".join(set(hits.dtype.names) - set(self._hit_fields_mapping_inverse.keys())))
+        ''' Takes the hit array and checks if the important data fields have the same data type than the hit clustered array and that the field names are correct'''        
+        for key, _ in self._default_cluster_hits_descr:
+            # Only check hit info that is not created by clusterizer 
+            if key not in ('cluster_ID', 'is_seed', 'cluster_size', 'n_cluster'):
+                try:
+                    hits[self._hit_fields_mapping[key]]
+                except ValueError:
+                    raise TypeError('Needed field %s in hits not found. Set an appropriate mapping with set_hit_fields', self._hit_fields_mapping[key])
+                try:
+                    if self._cluster_hits[key].dtype != hits[self._hit_fields_mapping[key]].dtype:
+                        raise TypeError('The hit data type for %s does not match. Consider calling the method set_hit_dtype first! Got/Expected:',
+                                        key, hits[self._hit_fields_mapping[key]].dtype, self._cluster_hits[key].dtype)       
+                except ValueError:
+                    raise TypeError('Needed field of hits cannot be assigned: %s. Consider calling the method set_hit_dtype first!', key)
+
+        if set(hits.dtype.names) - set(self._hit_fields_mapping_inverse.keys()):
+            logging.warning('Some named fields of hits are not assigned: %s. They will not occur in the clustered hits table.' % ", ".join(set(hits.dtype.names) - set(self._hit_fields_mapping_inverse.keys())))
