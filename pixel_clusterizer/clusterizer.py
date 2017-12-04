@@ -40,7 +40,6 @@ class HitClusterizer(object):
         # To allow pure_python mode this dirty hack is needed; issues occur when within the same python instance the mode is switched, since python does
         # NOT provide a proper method to reload modules.
         self.cluster_functions = __import__('pixel_clusterizer.cluster_functions').cluster_functions
-        self.njit = __import__('numba').njit
 
         # Set the translation dictionary for the important hit value names
         self._default_hit_fields_mapping = {'event_number': 'event_number',
@@ -222,9 +221,15 @@ class HitClusterizer(object):
         self._init_arrays(size=0)
 
     def set_end_of_cluster_function(self, function):
+        ''' Adding function to module.
+        This is maybe the only way to make the clusterizer to work with multiprocessing.
+        '''
         self.cluster_functions._end_of_cluster_function = self._jitted(function)
 
     def set_end_of_event_function(self, function):
+        ''' Adding function to module.
+        This is maybe the only way to make the clusterizer to work with multiprocessing.
+        '''
         self.cluster_functions._end_of_event_function = self._jitted(function)
 
     def set_min_hit_charge(self, value):
@@ -334,11 +339,14 @@ class HitClusterizer(object):
         return self._cluster_hits[:n_hits], self._clusters[:n_clusters]
 
     def _jitted(self, function):
+        from numba import njit
         if not self.pure_python:
             try:
-                function.py_func  # test whether the function is already jitted or not
+                # test whether the function is already jitted or not
+                function.py_func
             except AttributeError:
-                return self.njit()(function)  # Overwrite end of cluster function by new provided function
+                # Adding decorator to function
+                return njit()(function)
             else:
                 # already jitted
                 return function
