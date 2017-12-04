@@ -1,6 +1,8 @@
-import os
 import logging
+import os
+
 import numpy as np
+
 
 hit_data_type = np.dtype([('event_number', '<i8'),
                           ('frame', '<u1'),
@@ -43,15 +45,14 @@ class HitClusterizer(object):
 
         # Set the translation dictionary for the important hit value names
         self._default_hit_fields_mapping = {'event_number': 'event_number',
-                                    'frame': 'frame',
-                                    'column': 'column',
-                                    'row': 'row',
-                                    'charge': 'charge',
-                                    'cluster_ID': 'cluster_ID',
-                                    'is_seed': 'is_seed',
-                                    'cluster_size': 'cluster_size',
-                                    'n_cluster': 'n_cluster'
-                                    }
+                                            'frame': 'frame',
+                                            'column': 'column',
+                                            'row': 'row',
+                                            'charge': 'charge',
+                                            'cluster_ID': 'cluster_ID',
+                                            'is_seed': 'is_seed',
+                                            'cluster_size': 'cluster_size',
+                                            'n_cluster': 'n_cluster'}
         if hit_fields:
             self.set_hit_fields(hit_fields)
         else:
@@ -59,14 +60,13 @@ class HitClusterizer(object):
 
         # Set the translation dictionary for the important hit value names
         self._default_cluster_fields_mapping = {'event_number': 'event_number',
-                                        'ID': 'ID',
-                                        'n_hits': 'n_hits',
-                                        'charge': 'charge',
-                                        'seed_column': 'seed_column',
-                                        'seed_row': 'seed_row',
-                                        'mean_column': 'mean_column',
-                                        'mean_row': 'mean_row'
-                                        }
+                                                'ID': 'ID',
+                                                'n_hits': 'n_hits',
+                                                'charge': 'charge',
+                                                'seed_column': 'seed_column',
+                                                'seed_row': 'seed_row',
+                                                'mean_column': 'mean_column',
+                                                'mean_row': 'mean_row'}
         if cluster_fields:
             self.set_cluster_fields(cluster_fields)
         else:
@@ -74,14 +74,14 @@ class HitClusterizer(object):
 
         # Set hit data structure for clustered hits
         self._default_cluster_hits_descr = [('event_number', '<i8'),
-                                     ('frame', '<u1'),
-                                     ('column', '<u2'),
-                                     ('row', '<u2'),
-                                     ('charge', '<u2'),
-                                     ('cluster_ID', '<i2'),
-                                     ('is_seed', '<u1'),
-                                     ('cluster_size', '<u2'),
-                                     ('n_cluster', '<u2')]
+                                            ('frame', '<u1'),
+                                            ('column', '<u2'),
+                                            ('row', '<u2'),
+                                            ('charge', '<u2'),
+                                            ('cluster_ID', '<i2'),
+                                            ('is_seed', '<u1'),
+                                            ('cluster_size', '<u2'),
+                                            ('n_cluster', '<u2')]
         if hit_dtype:
             self.set_hit_dtype(hit_dtype)
         else:
@@ -89,13 +89,13 @@ class HitClusterizer(object):
 
         # Set cluster data struct for clustered hits
         self._default_cluster_descr = [('event_number', '<i8'),
-                               ('ID', '<u2'),
-                               ('n_hits', '<u2'),
-                               ('charge', '<f4'),
-                               ('seed_column', '<u2'),
-                               ('seed_row', '<u2'),
-                               ('mean_column', '<f4'),
-                               ('mean_row', '<f4')]
+                                       ('ID', '<u2'),
+                                       ('n_hits', '<u2'),
+                                       ('charge', '<f4'),
+                                       ('seed_column', '<u2'),
+                                       ('seed_row', '<u2'),
+                                       ('mean_column', '<f4'),
+                                       ('mean_row', '<f4')]
         if cluster_dtype:
             self.set_cluster_dtype(cluster_dtype)
         else:
@@ -139,15 +139,14 @@ class HitClusterizer(object):
 
     def set_hit_fields(self, hit_fields):
         ''' Tell the clusterizer the meaning of the field names.
-        
+
         Fields that are not mentioned here are NOT copied into the result clustered hits array.
-        The hit_fields parameter is a dict, e.g. {"new field name", "standard field name"}.
-        
+        The hit_fields parameter is a dict, e.g., {"new field name": "standard field name"}.
+
         If None default mapping is set.
-        
+
         Example:
         --------
-        
         Internally the clusterizer uses column/row. If your hits have x/y you have to call:
         set_hit_fields(hit_fields={'column': 'x',
                                    'row': 'y'})
@@ -170,7 +169,7 @@ class HitClusterizer(object):
     def set_cluster_fields(self, cluster_fields):
         ''' Tell the clusterizer the meaning of the field names (e.g.: the field name seed_x means seed_column).
 
-        The cluster_fields parameter is a dict, e.g. {"new filed name": "standard field name"}.
+        The cluster_fields parameter is a dict, e.g., {"new filed name": "standard field name"}.
         '''
         if not cluster_fields:
             cluster_fields_mapping_inverse = {}
@@ -189,14 +188,14 @@ class HitClusterizer(object):
 
     def set_hit_dtype(self, hit_dtype):
         ''' Set the data type of the hits.
-        
+
             Clusterizer has to know the hit data type to produce the clustered hit result with the same data types.
-        
+
         Input:
         ------
             hit_dtype: numpy.dtype desctiprion for structured type.
                         See: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.dtype.html
-        
+
         Example:
         --------
             hit_dtype = [('x', np.uint16), ('y', np.uint16)]
@@ -213,7 +212,7 @@ class HitClusterizer(object):
         for dtype_name, dtype in self._default_cluster_hits_descr:
             if self._hit_fields_mapping[dtype_name] not in h_dtype.fields:
                 cluster_hits_descr.append((dtype_name, dtype))
-                        
+
         self._cluster_hits_descr = cluster_hits_descr
         self._init_arrays(size=0)
 
@@ -407,9 +406,9 @@ class HitClusterizer(object):
         return tuple(unpatched_field_names)
 
     def _check_struct_compatibility(self, hits):
-        ''' Takes the hit array and checks if the important data fields have the same data type than the hit clustered array and that the field names are correct'''        
+        ''' Takes the hit array and checks if the important data fields have the same data type than the hit clustered array and that the field names are correct.'''
         for key, _ in self._default_cluster_hits_descr:
-            # Only check hit info that is not created by clusterizer 
+            # Only check hit info that is not created by clusterizer
             if key not in ('cluster_ID', 'is_seed', 'cluster_size', 'n_cluster'):
                 try:
                     hits[self._hit_fields_mapping[key]]
@@ -418,7 +417,7 @@ class HitClusterizer(object):
                 try:
                     if self._cluster_hits[key].dtype != hits[self._hit_fields_mapping[key]].dtype:
                         raise TypeError('The hit data type for %s does not match. Consider calling the method set_hit_dtype first! Got/Expected:',
-                                        key, hits[self._hit_fields_mapping[key]].dtype, self._cluster_hits[key].dtype)       
+                                        key, hits[self._hit_fields_mapping[key]].dtype, self._cluster_hits[key].dtype)
                 except ValueError:
                     raise TypeError('Needed field of hits cannot be assigned: %s. Consider calling the method set_hit_dtype first!', key)
 
