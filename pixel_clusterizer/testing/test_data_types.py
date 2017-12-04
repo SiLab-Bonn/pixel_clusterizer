@@ -488,7 +488,7 @@ class TestClusterizer(unittest.TestCase):
 
     def test_adding_cluster_field(self):
         clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
-        clusterizer.add_cluster_field(description=('extra_field', 'f4'))
+        clusterizer.add_cluster_field(description=[('extra_field', 'f4')])  # also test list of 2-tuples
 
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
         cluster_hits, clusters = clusterizer.cluster_hits(hits)
