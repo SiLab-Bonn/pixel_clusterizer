@@ -52,9 +52,10 @@ class TestClusterizer(unittest.TestCase):
                                   ('row', '<u2'),
                                   ('charge', '<u2')])
         clusterizer = HitClusterizer(hit_fields=hit_mapping, hit_dtype=hit_dtype_new, pure_python=self.pure_python)
-        _, _ = clusterizer.cluster_hits(np.array([], dtype=hit_dtype))
         with self.assertRaises(TypeError):
-            _, _ = clusterizer.cluster_hits(np.array([], dtype=hit_dtype_new))
+            _, _ = clusterizer.cluster_hits(np.array([], dtype=hit_dtype))  # missing "not_defined"
+        with self.assertRaises(TypeError):
+            _, _ = clusterizer.cluster_hits(np.array([], dtype=hit_dtype_new))  # missing "event_number"
         # TEST 3 Set custom and correct hit mapping, no eception expected
         hit_mapping = {'not_defined': 'event_number',
                        'column': 'column',

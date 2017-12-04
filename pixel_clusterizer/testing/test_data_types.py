@@ -93,7 +93,7 @@ class TestClusterizer(unittest.TestCase):
             expected_hit_result['is_seed'] = [0, 1, 0, 1, 0, 0, 0, 1, 0, 1]
             expected_hit_result['cluster_size'] = [3, 3, 3, 3, 3, 3, 3, 3, 3, 1]
             expected_hit_result['n_cluster'] = 1
-            expected_hit_result['parameter'] = 1  # was set to 1 before
+            expected_hit_result['parameter'] = 1  # was set to 1 before and copied to the cluster hits array
 
             # Test results
             self.assertTrue(np.array_equal(clusters, expected_cluster_result))
