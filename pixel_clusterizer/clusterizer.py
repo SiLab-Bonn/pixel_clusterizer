@@ -306,8 +306,8 @@ class HitClusterizer(object):
         '''
         # For multiprocessing make sure that the function are jitted after pickling.
         # In some cases, where the pixel_clusterizer module is installed into the
-        # the site-packages folder, overriding the of cluster funtions invokes the JIT compiler
-        # and converts the functions to a Numba ojects. Any attempt to pickle such modules fails.
+        # the site-packages folder, overriding the of cluster funtions immediately invokes
+        # the JIT compiler and converts the function objects to a Numba ojects.
         self.cluster_functions._end_of_cluster_function = self._jitted(self._end_of_cluster_function)
         self.cluster_functions._end_of_event_function = self._jitted(self._end_of_event_function)
 
@@ -378,7 +378,9 @@ class HitClusterizer(object):
 
     def _jitted(self, function):
         from numba import njit
-        if not self.pure_python:
+        if self.pure_python:
+            return function
+        else:
             try:
                 # test whether the function is already jitted or not
                 function.py_func
@@ -388,8 +390,6 @@ class HitClusterizer(object):
             else:
                 # already jitted
                 return function
-        else:
-            return function
 
     def _map_hit_field_names(self, dtype_names):  # Maps the hit field names from the internal convention to the external defined one
         unpatched_field_names = list(dtype_names)
