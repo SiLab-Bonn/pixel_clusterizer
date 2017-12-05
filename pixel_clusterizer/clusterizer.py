@@ -255,13 +255,13 @@ class HitClusterizer(object):
         ''' Adding function to module.
         This is maybe the only way to make the clusterizer to work with multiprocessing.
         '''
-        self.cluster_functions._end_of_cluster_function = self._jitted(function)
+        self._end_of_cluster_function = function
 
     def set_end_of_event_function(self, function):
         ''' Adding function to module.
         This is maybe the only way to make the clusterizer to work with multiprocessing.
         '''
-        self.cluster_functions._end_of_event_function = self._jitted(function)
+        self._end_of_event_function = function
 
     def set_min_hit_charge(self, value):
         ''' Charge values below this value will effectively ignore the hit.
@@ -304,6 +304,13 @@ class HitClusterizer(object):
         The noisy_pixels parameter allows for removing clusters that consist of a single noisy pixels. Clusters with 2 or more noisy pixels are not removed.
         The disabled_pixels parameter allows for ignoring pixels.
         '''
+        # For multiprocessing make sure that the function are jitted after pickling.
+        # In some cases, where the pixel_clusterizer module is installed into the
+        # the site-packages folder, overriding the of cluster funtions invokes the JIT compiler
+        # and converts the functions to a Numba ojects. Any attempt to pickle such modules fails.
+        self.cluster_functions._end_of_cluster_function = self._jitted(self._end_of_cluster_function)
+        self.cluster_functions._end_of_event_function = self._jitted(self._end_of_event_function)
+
         n_hits = hits.shape[0]  # Set n_hits to new size
 
         if (n_hits < int(0.5 * self._cluster_hits.size)) or (n_hits > self._cluster_hits.size):
