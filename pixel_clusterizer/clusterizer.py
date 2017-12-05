@@ -255,13 +255,13 @@ class HitClusterizer(object):
         ''' Adding function to module.
         This is maybe the only way to make the clusterizer to work with multiprocessing.
         '''
-        self.cluster_functions._end_of_cluster_function = self._jitted(function)
+        self._end_of_cluster_function = function
 
     def set_end_of_event_function(self, function):
         ''' Adding function to module.
         This is maybe the only way to make the clusterizer to work with multiprocessing.
         '''
-        self.cluster_functions._end_of_event_function = self._jitted(function)
+        self._end_of_event_function = function
 
     def set_min_hit_charge(self, value):
         ''' Charge values below this value will effectively ignore the hit.
@@ -304,6 +304,13 @@ class HitClusterizer(object):
         The noisy_pixels parameter allows for removing clusters that consist of a single noisy pixels. Clusters with 2 or more noisy pixels are not removed.
         The disabled_pixels parameter allows for ignoring pixels.
         '''
+        # For multiprocessing make sure that the function are jitted after pickling.
+        # In some cases, where the pixel_clusterizer module is installed into the
+        # the site-packages folder, overriding the of cluster funtions immediately invokes
+        # the JIT compiler and converts the function objects to a Numba ojects.
+        self.cluster_functions._end_of_cluster_function = self._jitted(self._end_of_cluster_function)
+        self.cluster_functions._end_of_event_function = self._jitted(self._end_of_event_function)
+
         n_hits = hits.shape[0]  # Set n_hits to new size
 
         if (n_hits < int(0.5 * self._cluster_hits.size)) or (n_hits > self._cluster_hits.size):
@@ -371,7 +378,9 @@ class HitClusterizer(object):
 
     def _jitted(self, function):
         from numba import njit
-        if not self.pure_python:
+        if self.pure_python:
+            return function
+        else:
             try:
                 # test whether the function is already jitted or not
                 function.py_func
@@ -381,8 +390,6 @@ class HitClusterizer(object):
             else:
                 # already jitted
                 return function
-        else:
-            return function
 
     def _map_hit_field_names(self, dtype_names):  # Maps the hit field names from the internal convention to the external defined one
         unpatched_field_names = list(dtype_names)
