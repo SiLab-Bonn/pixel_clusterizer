@@ -1,5 +1,5 @@
 ''' Fast clustering functions that are compiled in time via numba '''
-
+import numpy as np
 from numba import njit
 
 
@@ -139,8 +139,8 @@ def _is_in_max_difference(value_1, value_2, max_difference):
     Circumvents numba bug #1653
     '''
     if value_1 <= value_2:
-        return value_2 - value_1 <= max_difference
-    return value_1 - value_2 <= max_difference
+        return (np.nextafter(value_2, value_1) - np.nextafter(value_1, value_2)) <= max_difference
+    return (np.nextafter(value_1, value_2) - np.nextafter(value_2, value_1)) <= max_difference
 
 
 # @njit()
