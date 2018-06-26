@@ -13,8 +13,8 @@ def _new_event(event_number_1, event_number_2):
 def _pixel_masked(hit, array):
     ''' Checks whether a hit (column/row) is masked or not. Array is 2D array with boolean elements corresponding to pixles indicating whether a pixel is disabled or not.
     '''
-    if array.shape[0] > hit["column"] and array.shape[1] > hit["row"]:
-        return array[hit["column"], hit["row"]]
+    if hit["column"] >= 0 and hit["row"] >= 0 and array.shape[0] > int(hit["column"]) and array.shape[1] > int(hit["row"]):
+        return array[int(hit["column"]), int(hit["row"])]
     else:
         return False
 
