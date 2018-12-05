@@ -39,8 +39,7 @@ def _finish_cluster(hits, clusters, cluster_size, cluster_hit_indices, cluster_i
     total_weighted_column = 0
     total_weighted_row = 0
 
-    for i in range(cluster_size):
-        hit_index = cluster_hit_indices[i]
+    for hit_index in cluster_hit_indices:
         if hits[hit_index]['charge'] > max_cluster_charge:
             seed_hit_index = hit_index
             max_cluster_charge = hits[hit_index]['charge']
@@ -264,7 +263,7 @@ def _cluster_hits(hits, clusters, assigned_hit_array, cluster_hit_indices, colum
                 hits=hits,
                 clusters=clusters,
                 cluster_size=cluster_size,
-                cluster_hit_indices=cluster_hit_indices,
+                cluster_hit_indices=cluster_hit_indices[:cluster_size],
                 cluster_index=start_event_cluster_index + event_cluster_index,
                 cluster_id=event_cluster_index,
                 charge_correction=charge_correction,
