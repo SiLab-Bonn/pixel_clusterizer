@@ -126,6 +126,7 @@ class HitClusterizer(object):
 
     def reset(self):  # Resets the overwritten function hooks, otherwise they are stored as a module global and not reset on clusterizer initialization
         self._init_arrays(size=0)
+        self._last_event_number = None
 
         def end_of_cluster_function(hits, clusters, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, disabled_pixels, seed_hit_index):
             pass
@@ -355,6 +356,12 @@ class HitClusterizer(object):
 #         noisy_pixels[:] = [(item[0], item[1]) for item in noisy_pixels_array]
 #         disabled_pixels = np.recarray(disabled_pixels_array.shape[0], dtype=mask_dtype)
 #         disabled_pixels[:] = [(item[0], item[1]) for item in disabled_pixels_array]
+
+        # Check if event number is increasing. Otherwise give a warning message.
+        if self._last_event_number is not None and self._cluster_hits.shape[0] != 0 and self._cluster_hits[0]["event_number"] == self._last_event_number:
+            logging.warning('Event number not increasing.')
+        if self._cluster_hits.shape[0] != 0:
+            self._last_event_number = self._cluster_hits[-1]["event_number"]
 
         n_clusters = self.cluster_functions._cluster_hits(  # Set n_clusters to new size
             hits=self._cluster_hits[:n_hits],
