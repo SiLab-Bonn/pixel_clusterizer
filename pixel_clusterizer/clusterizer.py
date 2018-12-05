@@ -316,8 +316,8 @@ class HitClusterizer(object):
         if (n_hits < int(0.5 * self._cluster_hits.size)) or (n_hits > self._cluster_hits.size):
             self._init_arrays(size=int(1.1 * n_hits))  # oversize buffer slightly to reduce allocations
         else:
-            self._assigned_hit_array.fill(0)  # The hit indices of the actual cluster, 0 means not assigned
-            self._cluster_hit_indices.fill(-1)  # The hit indices of the actual cluster, -1 means not assigned
+            self._assigned_hit_array.fill(0)  # The array represents the assignment of hits to clusters, 0 means not assigned to any cluster
+            self._cluster_hit_indices.fill(-1)  # The hit indices of the actual cluster, -1 means not assigned to any hit
 
         self._clusters.dtype.names = self._unmap_cluster_field_names(self._clusters.dtype.names)  # Reset the data fields from previous renaming
         self._cluster_hits.dtype.names = self._unmap_hit_field_names(self._cluster_hits.dtype.names)  # Reset the data fields from previous renaming
