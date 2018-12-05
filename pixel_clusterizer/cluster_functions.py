@@ -221,7 +221,7 @@ def _cluster_hits(hits, clusters, assigned_hit_array, cluster_hit_indices, colum
         assigned_hit_array[i] = 1
         cluster_size = 1  # actual cluster has one hit so far
 
-        for j in cluster_hit_indices:  # Loop over all hits of the actual cluster; cluster_hit_indices is updated within the loop if new hit are found
+        for j in cluster_hit_indices:  # Loop over all hits of the actual cluster; cluster_hit_indices is updated within the loop if new hits are found
             if j < 0:  # There are no more cluster hits found
                 break
 

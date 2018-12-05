@@ -122,8 +122,7 @@ class HitClusterizer(object):
             self._cluster_hits = np.zeros(shape=(size, ), dtype=np.dtype(self._cluster_hits_descr))
             self._clusters = np.zeros(shape=(size, ), dtype=np.dtype(self._cluster_descr))
             self._assigned_hit_array = np.zeros(shape=(size, ), dtype=np.bool)
-            self._cluster_hit_indices = np.empty(shape=(size, ), dtype=np_int_type_chooser(size))
-            self._cluster_hit_indices.fill(-1)
+            self._cluster_hit_indices = np.full(shape=(size, ), fill_value=-1, dtype=np_int_type_chooser(size))
 
     def reset(self):  # Resets the overwritten function hooks, otherwise they are stored as a module global and not reset on clusterizer initialization
         self._init_arrays(size=0)
