@@ -302,9 +302,16 @@ class HitClusterizer(object):
     def cluster_hits(self, hits, noisy_pixels=None, disabled_pixels=None):
         ''' Cluster given hit array.
 
-        The noisy_pixels and disabled_pixels parameters are iterables of column/row index pairs, e.g. [[column_1, row_1], [column_2, row_2], ...].
-        The noisy_pixels parameter allows for removing clusters that consist of a single noisy pixels. Clusters with 2 or more noisy pixels are not removed.
-        The disabled_pixels parameter allows for ignoring pixels.
+        Parameters
+        ----------
+        hits : numpy.recarray
+            Hit data that will be clustered. The hit data contains all information that is required for clustering.
+            The hit data must contain only complete events.
+        noisy_pixels : list of 2-tuples
+            List of 2-tuples of column and row indices of noisy pixels. No cluster will be built when it consists of a single noisy pixel.
+            Clusters with two or more noisy pixels are built.
+        disabled_pixels : list of 2-tuples
+            List of 2-tuples of column and row indices of pixles that will be masked. Masked pixels will not be used during clustering.
         '''
         # Jitting a second time to workaround different bahavior of the installation methods on different platforms (pip install vs. python setup.py).
         # In some circumstances, the Numba compiler can't compile functions that were pickled previously.
