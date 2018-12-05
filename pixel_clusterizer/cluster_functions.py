@@ -163,7 +163,6 @@ def _cluster_hits(hits, clusters, assigned_hit_array, cluster_hit_indices, colum
     total_hits = hits.shape[0]
     if total_hits == 0:
         return 0  # total clusters
-    max_cluster_hits = cluster_hit_indices.shape[0]
 
     if total_hits != clusters.shape[0]:
         raise ValueError("hits and clusters must be the same size")
@@ -246,8 +245,6 @@ def _cluster_hits(hits, clusters, assigned_hit_array, cluster_hit_indices, colum
                 if _is_in_max_difference(hits[j]['column'], hits[k]['column'], column_cluster_distance) and _is_in_max_difference(hits[j]['row'], hits[k]['row'], row_cluster_distance) and _is_in_max_difference(hits[j]['frame'], hits[k]['frame'], frame_cluster_distance):
                     if not ignore_same_hits or hits[j]['column'] != hits[k]['column'] or hits[j]['row'] != hits[k]['row']:
                         cluster_size += 1
-                        if cluster_size > max_cluster_hits:
-                            raise IndexError('cluster_hit_indices is too small to contain all cluster hits')
                         cluster_hit_indices[cluster_size - 1] = k
                         assigned_hit_array[k] = 1
 
