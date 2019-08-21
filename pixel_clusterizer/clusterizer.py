@@ -29,7 +29,7 @@ class HitClusterizer(object):
 
     ''' Clusterizer class providing an interface for the jitted functions and stores settings.'''
 
-    def __init__(self, hit_fields=None, hit_dtype=None, cluster_fields=None, cluster_dtype=None, pure_python=False, min_hit_charge=0, max_hit_charge=None, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=0, ignore_same_hits=True):
+    def __init__(self, hit_fields=None, hit_dtype=None, cluster_fields=None, cluster_dtype=None, pure_python=False, min_hit_charge=None, max_hit_charge=None, charge_correction=None, charge_weighted_clustering=False, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=0, ignore_same_hits=True):
         # Activate pute python mode by setting the evnironment variable NUMBA_DISABLE_JIT
         self.pure_python = pure_python
         if self.pure_python:
@@ -106,11 +106,12 @@ class HitClusterizer(object):
         # Std. settings
         self.set_min_hit_charge(min_hit_charge)
         self.set_max_hit_charge(max_hit_charge)
+        self.set_charge_correction(charge_correction)
+        self.set_charge_weighted_clustering(charge_weighted_clustering)
         self.set_column_cluster_distance(column_cluster_distance)
         self.set_row_cluster_distance(row_cluster_distance)
         self.set_frame_cluster_distance(frame_cluster_distance)
         self.ignore_same_hits(ignore_same_hits)
-
         self.reset()
 
     @property
@@ -266,18 +267,41 @@ class HitClusterizer(object):
         self._end_of_event_function = function
 
     def set_min_hit_charge(self, value):
-        ''' Charge values below this value will effectively ignore the hit.
-        Value has influence on clustering charge weighting.
+        ''' Hits with charge values below this value will be ignored.
+        If None, all hits will be used.
         '''
         self._min_hit_charge = value
 
     def set_max_hit_charge(self, value):
-        ''' Charge values above this value will effectively ignore the hit.
-        Value of None or 0 will deactivate this feature.
+        ''' Hits with charge values above this value will be ignored.
+        If None, all hits will be used.
+        '''
+        self._max_hit_charge = value
+
+    def set_charge_correction(self, value):
+        ''' Adding the given value to the hit charge.
+        If 0 or None, no offset will be added to the hit charge.
+        Note:
+        1. The charge correction is olny used when charge_weighted_clustering
+           is True.
+        2. Charge digitizers of some front-end chips start with a value of 0.
+           If the privded data contains hits with chage of 0, charge_correction must
+           be set to 1 in this case. Otherwise hits with a charge value of 0
+           will not contribute to the charge weighted clustering.
         '''
         if value is None:
-            value = 0
-        self._max_hit_charge = value
+            self._charge_correction = 0
+        else:
+            self._charge_correction = value
+
+    def set_charge_weighted_clustering(self, value):
+        ''' If True, the charge value of the hits is used
+        to calculate center of gravity of a cluster.
+        For correct function, the parameter charge_correction must be set correctly.
+        If False, only the arithmetic mean of the hit positions is used
+        to calculate the center of a cluster.
+        '''
+        self._charge_weighted_clustering = bool(value)
 
     def set_column_cluster_distance(self, value):
         ''' Setting up max. column cluster distance.
@@ -375,11 +399,13 @@ class HitClusterizer(object):
             clusters=self._clusters[:n_hits],
             assigned_hit_array=self._assigned_hit_array[:n_hits],
             cluster_hit_indices=self._cluster_hit_indices[:n_hits],
+            min_hit_charge=self._min_hit_charge,
+            max_hit_charge=self._max_hit_charge,
+            charge_correction=self._charge_correction,
+            charge_weighted_clustering=self._charge_weighted_clustering,
             column_cluster_distance=self._column_cluster_distance,
             row_cluster_distance=self._row_cluster_distance,
             frame_cluster_distance=self._frame_cluster_distance,
-            min_hit_charge=self._min_hit_charge,
-            max_hit_charge=self._max_hit_charge,
             ignore_same_hits=self._ignore_same_hits,
             noisy_pixels=noisy_pixels,
             disabled_pixels=disabled_pixels)

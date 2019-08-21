@@ -30,24 +30,27 @@ def _pixel_masked(hit, array):
 
 
 @njit()
-def _finish_cluster(hits, clusters, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, disabled_pixels):
+def _finish_cluster(hits, clusters, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, charge_weighted_clustering, noisy_pixels, disabled_pixels):
     ''' Set hit and cluster information of the cluster (e.g. number of hits in the cluster (cluster_size), total cluster charge (charge), ...).
     '''
     cluster_charge = 0
-    max_cluster_charge = -1
-    # necessary for charge weighted hit position
-    total_weighted_column = 0
-    total_weighted_row = 0
+    seed_charge = -1
+    total_column = 0
+    total_row = 0
 
     for hit_index in cluster_hit_indices:
-        if hits[hit_index]['charge'] > max_cluster_charge:
+        if hits[hit_index]['charge'] > seed_charge:
             seed_hit_index = hit_index
-            max_cluster_charge = hits[hit_index]['charge']
+            seed_charge = hits[hit_index]['charge']
         hits[hit_index]['is_seed'] = 0
         hits[hit_index]['cluster_size'] = cluster_size
-        # include charge correction in sum
-        total_weighted_column += hits[hit_index]['column'] * (hits[hit_index]['charge'] + charge_correction)
-        total_weighted_row += hits[hit_index]['row'] * (hits[hit_index]['charge'] + charge_correction)
+        if charge_weighted_clustering:
+            # include charge correction in sum
+            total_column += hits[hit_index]['column'] * (hits[hit_index]['charge'] + charge_correction)
+            total_row += hits[hit_index]['row'] * (hits[hit_index]['charge'] + charge_correction)
+        else:
+            total_column += hits[hit_index]['column']
+            total_row += hits[hit_index]['row']
         cluster_charge += hits[hit_index]['charge']
         hits[hit_index]['cluster_ID'] = cluster_id
 
@@ -58,9 +61,13 @@ def _finish_cluster(hits, clusters, cluster_size, cluster_hit_indices, cluster_i
     clusters[cluster_index]["charge"] = cluster_charge
     clusters[cluster_index]['seed_column'] = hits[seed_hit_index]['column']
     clusters[cluster_index]['seed_row'] = hits[seed_hit_index]['row']
-    # correct total charge value and calculate mean column and row
-    clusters[cluster_index]['mean_column'] = float(total_weighted_column) / (cluster_charge + cluster_size * charge_correction)
-    clusters[cluster_index]['mean_row'] = float(total_weighted_row) / (cluster_charge + cluster_size * charge_correction)
+    if charge_weighted_clustering:
+        # correct total charge value and calculate mean column and row
+        clusters[cluster_index]['mean_column'] = float(total_column) / (cluster_charge + cluster_size * charge_correction)
+        clusters[cluster_index]['mean_row'] = float(total_row) / (cluster_charge + cluster_size * charge_correction)
+    else:
+        clusters[cluster_index]['mean_column'] = float(total_column) / cluster_size
+        clusters[cluster_index]['mean_row'] = float(total_row) / cluster_size
 
     # Call end of cluster function hook
     _end_of_cluster_function(
@@ -101,11 +108,11 @@ def _hit_ok(hit, min_hit_charge, max_hit_charge):
     ''' Check if given hit is withing the limits.
     '''
     # Omit hits with charge < min_hit_charge
-    if hit['charge'] < min_hit_charge:
+    if min_hit_charge is not None and hit['charge'] < min_hit_charge:
         return False
 
     # Omit hits with charge > max_hit_charge
-    if max_hit_charge != 0 and hit['charge'] > max_hit_charge:
+    if max_hit_charge is not None and hit['charge'] > max_hit_charge:
         return False
 
     return True
@@ -157,7 +164,7 @@ def _is_in_max_difference(value_1, value_2, max_difference):
 
 
 @njit()
-def _cluster_hits(hits, clusters, assigned_hit_array, cluster_hit_indices, column_cluster_distance, row_cluster_distance, frame_cluster_distance, min_hit_charge, max_hit_charge, ignore_same_hits, noisy_pixels, disabled_pixels):
+def _cluster_hits(hits, clusters, assigned_hit_array, cluster_hit_indices, min_hit_charge, max_hit_charge, charge_correction, charge_weighted_clustering, column_cluster_distance, row_cluster_distance, frame_cluster_distance, ignore_same_hits, noisy_pixels, disabled_pixels):
     ''' Main precompiled function that loopes over the hits and clusters them
     '''
     total_hits = hits.shape[0]
@@ -169,13 +176,6 @@ def _cluster_hits(hits, clusters, assigned_hit_array, cluster_hit_indices, colum
 
     if total_hits != assigned_hit_array.shape[0]:
         raise ValueError("hits and assigned_hit_array must be the same size")
-
-    # Correction for charge weighting
-    # Some chips have non-zero charge for a charge value of zero, charge needs to be corrected to calculate cluster center correctly
-    if min_hit_charge == 0:
-        charge_correction = 1
-    else:
-        charge_correction = 0
 
     # Temporary variables that are reset for each cluster or event
     start_event_hit_index = 0
@@ -264,6 +264,7 @@ def _cluster_hits(hits, clusters, assigned_hit_array, cluster_hit_indices, colum
                 cluster_index=start_event_cluster_index + event_cluster_index,
                 cluster_id=event_cluster_index,
                 charge_correction=charge_correction,
+                charge_weighted_clustering=charge_weighted_clustering,
                 noisy_pixels=noisy_pixels,
                 disabled_pixels=disabled_pixels)
             event_cluster_index += 1
