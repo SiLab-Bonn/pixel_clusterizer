@@ -52,7 +52,7 @@ class TestClusterizer(unittest.TestCase):
                                ('parameter_2', 'f4')])
 
         # Initialize clusterizer
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
 
         for hit_data_type in hit_data_types:
             clusterizer.set_hit_dtype(np.dtype(hit_data_type))
@@ -172,7 +172,10 @@ class TestClusterizer(unittest.TestCase):
 
         # Initialize clusterizer
         clusterizer = HitClusterizer(pure_python=self.pure_python,
-                                     min_hit_charge=0, max_hit_charge=13,
+                                     min_hit_charge=0,
+                                     max_hit_charge=13,
+                                     charge_correction=1,
+                                     charge_weighted_clustering=True,
                                      column_cluster_distance=2,
                                      row_cluster_distance=2,
                                      frame_cluster_distance=4,
@@ -292,7 +295,7 @@ class TestClusterizer(unittest.TestCase):
                       }
 
         # Initialize clusterizer and cluster test hits with self defined data type names
-        clusterizer = HitClusterizer(hit_fields=hit_fields, hit_dtype=hit_dtype, pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
+        clusterizer = HitClusterizer(hit_fields=hit_fields, hit_dtype=hit_dtype, pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2, hit_dtype=hit_dtype, hit_fields=hit_fields)
         cluster_hits, clusters = clusterizer.cluster_hits(hits)
         array_size_before = clusterizer._clusters.shape[0]
@@ -399,7 +402,7 @@ class TestClusterizer(unittest.TestCase):
                           }
 
         # Initialize clusterizer and cluster test hits with self defined data type names
-        clusterizer = HitClusterizer(cluster_fields=cluster_fields, cluster_dtype=cluster_dtype, pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
+        clusterizer = HitClusterizer(cluster_fields=cluster_fields, cluster_dtype=cluster_dtype, pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
         cluster_hits, clusters = clusterizer.cluster_hits(hits)
         array_size_before = clusterizer._clusters.shape[0]
@@ -487,7 +490,7 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
     def test_adding_cluster_field(self):
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
         with self.assertRaises(TypeError):
             clusterizer.add_cluster_field(description=['extra_field', 'f4'])  # also test list of 2 items
         clusterizer.add_cluster_field(description=[('extra_field', 'f4')])  # also test list of 2-tuples

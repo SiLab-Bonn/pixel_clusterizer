@@ -68,7 +68,7 @@ class TestClusterizer(unittest.TestCase):
 
     def test_cluster_algorithm(self):  # Check with multiple jumps data
         # Inititalize Clusterizer
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
 
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
 
@@ -125,7 +125,7 @@ class TestClusterizer(unittest.TestCase):
         hits[1]['column'], hits[1]['row'], hits[1]['charge'], hits[1]['event_number'] = 18, 36, 6, 19
 
         # Create clusterizer object
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
 
         # Case 1: Test max hit charge cut, accept all hits
         clusterizer.set_max_hit_charge(30)  # only add hits with charge <= 30
@@ -285,7 +285,7 @@ class TestClusterizer(unittest.TestCase):
 
     def test_set_end_of_cluster_function(self):
         # Initialize clusterizer object
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
 
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
 
@@ -355,7 +355,7 @@ class TestClusterizer(unittest.TestCase):
 
     def test_set_end_of_event_function(self):
         # Initialize clusterizer object
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
 
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
 

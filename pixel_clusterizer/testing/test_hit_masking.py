@@ -33,7 +33,6 @@ class TestClusterizer(unittest.TestCase):
     def setUpClass(cls):
         cls.pure_python = os.getenv('PURE_PYTHON', False)
 
-
     def test_disabled_pixels(self):
         # Create some fake data
         hits = np.ones(shape=(7, ), dtype=np.dtype([('event_number', '<i8'),
@@ -50,7 +49,7 @@ class TestClusterizer(unittest.TestCase):
         hits[6]['column'], hits[6]['row'], hits[6]['charge'], hits[6]['event_number'], hits[6]['frame'] = 3, 3, 7, 3, 11
 
         # Create clusterizer object
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
 
         # Case 1: Test max hit charge cut, accept all hits
         cluster_hits, clusters = clusterizer.cluster_hits(hits, disabled_pixels=[[2, 2], [3, 3]])  # cluster hits
@@ -114,7 +113,7 @@ class TestClusterizer(unittest.TestCase):
         hits[8]['column'], hits[8]['row'], hits[8]['charge'], hits[8]['event_number'], hits[8]['frame'] = 20, 15, 1, 5, 0
 
         # Create clusterizer object
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
 
         # Case 1: Test max hit charge cut, accept all hits
         cluster_hits, clusters = clusterizer.cluster_hits(hits, noisy_pixels=[[2, 2], [3, 3], [3, 15]])  # cluster hits
@@ -170,7 +169,7 @@ class TestClusterizer(unittest.TestCase):
         hits[0]['column'], hits[0]['row'] = 1, 1
 
         # Case 1: Test single noisy pixel
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
         cluster_hits, clusters = clusterizer.cluster_hits(hits, noisy_pixels=[[1, 1]])
 
         expected_cluster_result = np.zeros(shape=(0, ), dtype=np.dtype([('event_number', '<i8'),
@@ -206,7 +205,7 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Case 2: Test single disabled pixel
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
         cluster_hits, clusters = clusterizer.cluster_hits(hits, disabled_pixels=[[1, 1]])
 
         # Test results
@@ -223,7 +222,7 @@ class TestClusterizer(unittest.TestCase):
         hits[1]['column'], hits[1]['row'] = 1, 2
 
         # Case 3: Test double noisy pixel
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
         cluster_hits, clusters = clusterizer.cluster_hits(hits, noisy_pixels=[[1, 1], [1, 2]])
 
         expected_cluster_result = np.zeros(shape=(1, ), dtype=np.dtype([('event_number', '<i8'),
@@ -267,7 +266,7 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Case 4: Test double noisy pixel
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
         cluster_hits, clusters = clusterizer.cluster_hits(hits, disabled_pixels=[[1, 1], [1, 2]])
 
         expected_cluster_result = np.zeros(shape=(0, ), dtype=np.dtype([('event_number', '<i8'),
@@ -303,7 +302,7 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Case 5: Test noisy and disabled pixel
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
         cluster_hits, clusters = clusterizer.cluster_hits(hits, noisy_pixels=[[1, 1]], disabled_pixels=[[1, 2]])
 
         # Test results
@@ -321,7 +320,7 @@ class TestClusterizer(unittest.TestCase):
         hits[2]['column'], hits[2]['row'] = 1, 3
 
         # Case 6: Test triple pixel
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
         cluster_hits, clusters = clusterizer.cluster_hits(hits, disabled_pixels=[[1, 1]], noisy_pixels=[[1, 2], [1, 3]])
 
         expected_cluster_result = np.zeros(shape=(1, ), dtype=np.dtype([('event_number', '<i8'),
@@ -376,7 +375,7 @@ class TestClusterizer(unittest.TestCase):
         hits[3]['column'], hits[3]['row'] = 1, 4
 
         # Case 7: Test quadruple pixel with single disabled pixel
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
         cluster_hits, clusters = clusterizer.cluster_hits(hits, disabled_pixels=[[1, 3]])
 
         expected_cluster_result = np.zeros(shape=(2, ), dtype=np.dtype([('event_number', '<i8'),
@@ -420,7 +419,7 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Case 8: Test quadruple pixel with single noisy pixel
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
         cluster_hits, clusters = clusterizer.cluster_hits(hits, noisy_pixels=[[1, 3]])
 
         expected_cluster_result = np.zeros(shape=(1, ), dtype=np.dtype([('event_number', '<i8'),
@@ -476,7 +475,7 @@ class TestClusterizer(unittest.TestCase):
         hits[4]['column'], hits[4]['row'] = 1, 5
 
         # Case 9: Test quintuple pixel with 2 disabled pixels
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
         cluster_hits, clusters = clusterizer.cluster_hits(hits, disabled_pixels=[[1, 3], [1, 4]])
 
         expected_cluster_result = np.zeros(shape=(2, ), dtype=np.dtype([('event_number', '<i8'),
@@ -520,7 +519,7 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Case 10: Test quintuple pixel with 2 noisy pixel
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
         cluster_hits, clusters = clusterizer.cluster_hits(hits, noisy_pixels=[[1, 3]])
 
         expected_cluster_result = np.zeros(shape=(1, ), dtype=np.dtype([('event_number', '<i8'),
@@ -564,7 +563,7 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Case 11: Test quintuple pixel with single noisy and disabled pixels
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
         cluster_hits, clusters = clusterizer.cluster_hits(hits, noisy_pixels=[[1, 3]], disabled_pixels=[[1, 4]])
 
         expected_cluster_result = np.zeros(shape=(2, ), dtype=np.dtype([('event_number', '<i8'),
@@ -608,7 +607,7 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Case 12: Test quintuple pixel with single noisy and disabled pixels
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=1, row_cluster_distance=2, frame_cluster_distance=1, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=1, row_cluster_distance=2, frame_cluster_distance=1, ignore_same_hits=True)
         cluster_hits, clusters = clusterizer.cluster_hits(hits, noisy_pixels=[[1, 3]], disabled_pixels=[[1, 4]])
 
         expected_cluster_result = np.zeros(shape=(1, ), dtype=np.dtype([('event_number', '<i8'),
@@ -665,7 +664,7 @@ class TestClusterizer(unittest.TestCase):
         hits[5]['column'], hits[5]['row'] = 1, 6
 
         # Case 13: Test sextuple pixel with noisy and disabled pixels
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
         cluster_hits, clusters = clusterizer.cluster_hits(hits, noisy_pixels=[[1, 3], [1, 5]], disabled_pixels=[[1, 4]])
 
         expected_cluster_result = np.zeros(shape=(2, ), dtype=np.dtype([('event_number', '<i8'),
@@ -709,7 +708,7 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Case 14: Test sextuple pixel with noisy and disabled pixels
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=1, row_cluster_distance=2, frame_cluster_distance=1, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=1, row_cluster_distance=2, frame_cluster_distance=1, ignore_same_hits=True)
         cluster_hits, clusters = clusterizer.cluster_hits(hits, noisy_pixels=[[1, 3], [1, 5]], disabled_pixels=[[1, 4]])
 
         expected_cluster_result = np.zeros(shape=(1, ), dtype=np.dtype([('event_number', '<i8'),
@@ -753,7 +752,7 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Case 15: Test sextuple pixel with noisy and disabled pixels
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=1, ignore_same_hits=True)
         cluster_hits, clusters = clusterizer.cluster_hits(hits, disabled_pixels=[[1, 3], [1, 5]], noisy_pixels=[[1, 4]])
 
         expected_cluster_result = np.zeros(shape=(2, ), dtype=np.dtype([('event_number', '<i8'),
@@ -797,7 +796,7 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Case 16: Test sextuple pixel with noisy and disabled pixels
-        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, column_cluster_distance=1, row_cluster_distance=2, frame_cluster_distance=1, ignore_same_hits=True)
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=1, row_cluster_distance=2, frame_cluster_distance=1, ignore_same_hits=True)
         cluster_hits, clusters = clusterizer.cluster_hits(hits, disabled_pixels=[[1, 3], [1, 5]], noisy_pixels=[[1, 4]])
 
         expected_cluster_result = np.zeros(shape=(1, ), dtype=np.dtype([('event_number', '<i8'),
