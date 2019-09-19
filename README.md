@@ -1,7 +1,7 @@
-# Pixel Clusterizer [![Build Status](https://travis-ci.org/SiLab-Bonn/pixel_clusterizer.svg?branch=master)](https://travis-ci.org/SiLab-Bonn/pixel_clusterizer) [![Build Status](https://ci.appveyor.com/api/projects/status/github/SiLab-Bonn/pixel_clusterizer)](https://ci.appveyor.com/project/SiLab-Bonn/pixel_clusterizer) [![Coverage Status](https://coveralls.io/repos/github/SiLab-Bonn/pixel_clusterizer/badge.svg?branch=master)](https://coveralls.io/github/SiLab-Bonn/pixel_clusterizer?branch=master)
+# Pixel Clusterizer [![Build Status](https://travis-ci.org/SiLab-Bonn/pixel_clusterizer.svg?branch=master)](https://travis-ci.org/SiLab-Bonn/pixel_clusterizer) [![Build status](https://ci.appveyor.com/api/projects/status/c8jqu9ow696opevf?svg=true)](https://ci.appveyor.com/project/laborleben/pixel-clusterizer) [![Coverage Status](https://coveralls.io/repos/github/SiLab-Bonn/pixel_clusterizer/badge.svg?branch=master)](https://coveralls.io/github/SiLab-Bonn/pixel_clusterizer?branch=master)
 
-Pixel_clusterizer is an easy to use pixel hit-clusterizer for Python. It clusters hits on an event basis in space and time.
- 
+Pixel_clusterizer is an easy to use pixel hit clusterizer for Python. It clusters hits connected to unique event numbers in space and time.
+
 The hits have to be defined as a numpy recarray. The array has to have the following fields:
 - event_number
 - frame
