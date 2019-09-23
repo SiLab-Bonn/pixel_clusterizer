@@ -27,8 +27,6 @@ A new array with cluster information is also created created and has the followi
 - mean_column
 - mean_row
 
-
-
 # Installation
 
 The stable code is hosted on PyPI and can be installed by typing:

@@ -66,8 +66,195 @@ class TestClusterizer(unittest.TestCase):
         clusterizer = HitClusterizer(hit_fields=hit_mapping, hit_dtype=hit_dtype_new, pure_python=self.pure_python)
         _, _ = clusterizer.cluster_hits(np.array([], dtype=hit_dtype_new))
 
-    def test_cluster_algorithm(self):  # Check with multiple jumps data
-        # Inititalize Clusterizer
+    def test_cluster_algorithm(self):  # Basic functionality checks
+        # Initialize Clusterizer with default arguments
+        clusterizer = HitClusterizer(pure_python=self.pure_python)
+
+        hits = create_hits(n_hits=15, max_column=100, max_row=100, max_frame=1, max_charge=2)
+        # Dioganal
+        hits[1]["row"] = 2
+        hits[2]["column"] = 4
+        hits[2]["row"] = 4
+        # Same row
+        hits[4]["row"] = 7
+        hits[5]["column"] = 7
+        hits[5]["row"] = 7
+        # Same column
+        hits[7]["column"] = 7
+        hits[7]["row"] = 14
+        hits[8]["column"] = 7
+        hits[8]["row"] = 16
+        # Test frame
+        hits[10]["row"] = 20
+        hits[10]["frame"] = 1
+        # Same location
+        hits[14]["column"] = 13
+        hits[14]["row"] = 25
+
+        cluster_hits, clusters = clusterizer.cluster_hits(hits)  # cluster hits
+
+        # Define expected output
+        expected_cluster_result = np.zeros(shape=(11, ), dtype=np.dtype([
+            ('event_number', '<i8'),
+            ('ID', '<u2'),
+            ('n_hits', '<u2'),
+            ('charge', 'f4'),
+            ('seed_column', '<u2'),
+            ('seed_row', '<u2'),
+            ('mean_column', 'f4'),
+            ('mean_row', 'f4')]))
+        expected_cluster_result['event_number'] = [0, 0, 1, 1, 2, 2, 3, 3, 3, 4, 4]
+        expected_cluster_result['ID'] = [0, 1, 0, 1, 0, 1, 0, 1, 2, 0, 1]
+        expected_cluster_result['n_hits'] = [2, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1]
+        expected_cluster_result['charge'] = [1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
+        expected_cluster_result['seed_column'] = [2, 4, 4, 7, 7, 7, 10, 11, 12, 13, 14]
+        expected_cluster_result['seed_row'] = [2, 4, 7, 7, 14, 16, 19, 20, 23, 25, 27]
+        expected_cluster_result['mean_column'] = [1.5, 4.0, 4.5, 7.0, 7.0, 7.0, 10.0, 11.0, 12.0, 13.0, 14.0]
+        expected_cluster_result['mean_row'] = [1.5, 4.0, 7.0, 7.0, 13.5, 16.0, 19.0, 20.0, 23.0, 25.0, 27.0]
+
+        # Define expected output
+        expected_hit_result = np.zeros(shape=(15, ), dtype=np.dtype([
+            ('event_number', '<i8'),
+            ('frame', '<u1'),
+            ('column', '<u2'),
+            ('row', '<u2'),
+            ('charge', '<u2'),
+            ('cluster_ID', '<i2'),
+            ('is_seed', '<u1'),
+            ('cluster_size', '<u2'),
+            ('n_cluster', '<u2')]))
+        expected_hit_result['event_number'] = hits['event_number']
+        expected_hit_result['frame'] = hits['frame']
+        expected_hit_result['column'] = hits['column']
+        expected_hit_result['row'] = hits['row']
+        expected_hit_result['charge'] = hits['charge']
+        expected_hit_result['cluster_ID'] = [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 2, 0, 1, -2]
+        expected_hit_result['is_seed'] = [0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0]
+        expected_hit_result['cluster_size'] = [2, 2, 1, 2, 2, 1, 2, 2, 1, 1, 1, 1, 1, 1, 0]
+        expected_hit_result['n_cluster'] = [2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 2, 2, 2]
+
+        # Test results
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
+
+        # Initialize Clusterizer and test charge weighted clustering
+        clusterizer = HitClusterizer(pure_python=self.pure_python, charge_weighted_clustering=True)
+
+        # Create some fake data
+        hits = np.ones(shape=(4, ), dtype=np.dtype([
+            ('event_number', '<i8'),
+            ('frame', '<u1'),
+            ('column', '<u2'),
+            ('row', '<u2'),
+            ('charge', '<u2')]))
+        hits[0]['column'], hits[0]['row'], hits[0]['charge'], hits[0]['event_number'] = 17, 36, 0, 19
+        hits[1]['column'], hits[1]['row'], hits[1]['charge'], hits[1]['event_number'] = 18, 37, 10, 19
+        hits[2]['column'], hits[2]['row'], hits[2]['charge'], hits[2]['event_number'] = 17, 36, 1, 20
+        hits[3]['column'], hits[3]['row'], hits[3]['charge'], hits[3]['event_number'] = 18, 37, 10, 20
+
+        cluster_hits, clusters = clusterizer.cluster_hits(hits)  # cluster hits
+
+        # Define expected output
+        expected_cluster_result = np.zeros(shape=(2, ), dtype=np.dtype([
+            ('event_number', '<i8'),
+            ('ID', '<u2'),
+            ('n_hits', '<u2'),
+            ('charge', 'f4'),
+            ('seed_column', '<u2'),
+            ('seed_row', '<u2'),
+            ('mean_column', 'f4'),
+            ('mean_row', 'f4')]))
+        expected_cluster_result['event_number'] = [19, 20]
+        expected_cluster_result['n_hits'] = [2, 2]
+        expected_cluster_result['charge'] = [10.0, 11.0]
+        expected_cluster_result['seed_column'] = [18, 18]
+        expected_cluster_result['seed_row'] = [37, 37]
+        expected_cluster_result['mean_column'] = [18.0, (1.0 * 17 + 10.0 * 18) / 11.0]
+        expected_cluster_result['mean_row'] = [37.0, (1.0 * 36 + 10.0 * 37) / 11.0]
+
+        # Define expected output
+        expected_hit_result = np.zeros(shape=(4, ), dtype=np.dtype([
+            ('event_number', '<i8'),
+            ('frame', '<u1'),
+            ('column', '<u2'),
+            ('row', '<u2'),
+            ('charge', '<u2'),
+            ('cluster_ID', '<i2'),
+            ('is_seed', '<u1'),
+            ('cluster_size', '<u2'),
+            ('n_cluster', '<u2')]))
+        expected_hit_result['event_number'] = hits['event_number']
+        expected_hit_result['frame'] = hits['frame']
+        expected_hit_result['column'] = hits['column']
+        expected_hit_result['row'] = hits['row']
+        expected_hit_result['charge'] = hits['charge']
+        expected_hit_result['is_seed'] = [0, 1, 0, 1]
+        expected_hit_result['cluster_size'] = [2, 2, 2, 2]
+        expected_hit_result['n_cluster'] = [1, 1, 1, 1]
+
+        # Test results
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
+
+        # Initialize Clusterizer and test charge weighted clustering and charge correction
+        clusterizer = HitClusterizer(pure_python=self.pure_python, charge_correction=1, charge_weighted_clustering=True)
+
+        # Create some fake data
+        hits = np.ones(shape=(4, ), dtype=np.dtype([('event_number', '<i8'),
+                                                    ('frame', '<u1'),
+                                                    ('column', '<u2'),
+                                                    ('row', '<u2'),
+                                                    ('charge', '<u2')]))
+        hits[0]['column'], hits[0]['row'], hits[0]['charge'], hits[0]['event_number'] = 17, 36, 0, 19
+        hits[1]['column'], hits[1]['row'], hits[1]['charge'], hits[1]['event_number'] = 18, 37, 10, 19
+        hits[2]['column'], hits[2]['row'], hits[2]['charge'], hits[2]['event_number'] = 17, 36, 1, 20
+        hits[3]['column'], hits[3]['row'], hits[3]['charge'], hits[3]['event_number'] = 18, 37, 10, 20
+
+        cluster_hits, clusters = clusterizer.cluster_hits(hits)  # cluster hits
+
+        # Define expected output
+        expected_cluster_result = np.zeros(shape=(2, ), dtype=np.dtype([
+            ('event_number', '<i8'),
+            ('ID', '<u2'),
+            ('n_hits', '<u2'),
+            ('charge', 'f4'),
+            ('seed_column', '<u2'),
+            ('seed_row', '<u2'),
+            ('mean_column', 'f4'),
+            ('mean_row', 'f4')]))
+        expected_cluster_result['event_number'] = [19, 20]
+        expected_cluster_result['n_hits'] = [2, 2]
+        expected_cluster_result['charge'] = [10.0, 11.0]
+        expected_cluster_result['seed_column'] = [18, 18]
+        expected_cluster_result['seed_row'] = [37, 37]
+        expected_cluster_result['mean_column'] = [(1.0 * 17 + 11.0 * 18) / 12.0, (2.0 * 17 + 11.0 * 18) / 13.0]
+        expected_cluster_result['mean_row'] = [(1.0 * 36 + 11.0 * 37) / 12.0, (2.0 * 36 + 11.0 * 37) / 13.0]
+
+        # Define expected output
+        expected_hit_result = np.zeros(shape=(4, ), dtype=np.dtype([
+            ('event_number', '<i8'),
+            ('frame', '<u1'),
+            ('column', '<u2'),
+            ('row', '<u2'),
+            ('charge', '<u2'),
+            ('cluster_ID', '<i2'),
+            ('is_seed', '<u1'),
+            ('cluster_size', '<u2'),
+            ('n_cluster', '<u2')]))
+        expected_hit_result['event_number'] = hits['event_number']
+        expected_hit_result['frame'] = hits['frame']
+        expected_hit_result['column'] = hits['column']
+        expected_hit_result['row'] = hits['row']
+        expected_hit_result['charge'] = hits['charge']
+        expected_hit_result['is_seed'] = [0, 1, 0, 1]
+        expected_hit_result['cluster_size'] = [2, 2, 2, 2]
+        expected_hit_result['n_cluster'] = [1, 1, 1, 1]
+
+        # Test results
+        self.assertTrue(np.array_equal(clusters, expected_cluster_result))
+        self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
+
+        # Initialize Clusterizer
         clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
 
         hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2)
@@ -171,7 +358,7 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue(np.array_equal(clusters, expected_cluster_result))
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
-        # Case 2: Test max hit charge cut, omit charge > 29 hits
+        # Case 2: Test max hit charge cut, omit hits with charge > 29
         hits['event_number'] = 20
         clusterizer.set_max_hit_charge(29)  # only add hits with charge <= 30
         cluster_hits, clusters = clusterizer.cluster_hits(hits)  # cluster hits
@@ -261,14 +448,14 @@ class TestClusterizer(unittest.TestCase):
         expected_cluster_result['mean_column'] = [18.0]
         expected_cluster_result['mean_row'] = [37.0]
 
-        clusterizer.ignore_same_hits(True)  # If a hit occured 2 times in an event it is ignored and gets the cluster index -2
+        clusterizer.ignore_same_hits(True)  # If a hit occurred 2 times in an event it is ignored and gets the cluster index -2
         cluster_hits, clusters = clusterizer.cluster_hits(hits)  # Cluster hits
 
         # Test results
         self.assertTrue(np.array_equal(clusters, expected_cluster_result))
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
-        clusterizer.ignore_same_hits(False)  # If a hit occured 2 times in an event it is used as a normal hit
+        clusterizer.ignore_same_hits(False)  # If a hit occurred 2 times in an event it is used as a normal hit
         cluster_hits, clusters = clusterizer.cluster_hits(hits)  # Cluster hits
 
         expected_hit_result['cluster_ID'] = [0, 0, 0]
