@@ -8,23 +8,21 @@ environment:
     - PYTHON_VERSION: 2.7
       MINICONDA: C:\Miniconda-x64
       PYTHON_ARCH: "64"
-    - PYTHON_VERSION: 3.5
-      MINICONDA: C:\Miniconda35
+    - PYTHON_VERSION: 3.7
+      MINICONDA: C:\Miniconda37
       PYTHON_ARCH: "32"
-    - PYTHON_VERSION: 3.5
-      MINICONDA: C:\Miniconda35-x64
+    - PYTHON_VERSION: 3.7
+      MINICONDA: C:\Miniconda37-x64
       PYTHON_ARCH: "64"
-
-init:
-  - "ECHO %PYTHON_VERSION% %MINICONDA%"
 
 install:
   # Miniconda Python setup + external packages installation
-  - set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%  # Miniconda is already installed on appveyor: https://github.com/appveyor/ci/issues/359
-  - conda install --yes numpy numba future nose docutils
+  - set PATH=%MINICONDA%;%MINICONDA%\Scripts;%MINICONDA%\Library\bin;%PATH%
+  - conda update --yes conda
   - conda info -a
+  - conda install --yes numpy numba nose
+  - pip install -e .
   - conda list
-  - python setup.py develop  # Install pixel_clusterizer
 
 test_script:
   - nosetests

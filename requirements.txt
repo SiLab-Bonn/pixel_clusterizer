@@ -1,3 +1,2 @@
-future  # Python 2/3 compatibility
-numpy  # fast c array data structures 
-numba>=0.24.0  # JIT for numpy
+numpy
+numba>=0.24.0
