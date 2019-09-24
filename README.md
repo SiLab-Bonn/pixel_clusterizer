@@ -72,3 +72,7 @@ cluster_hits, clusters = cr.cluster_hits(hits)  # Cluster hits
 
 ```
 Also please have a look at the ```examples``` folder!
+
+## Support
+
+Please use GitHub's [issue tracker](https://github.com/SiLab-Bonn/pixel_clusterizer/issues) for bug reports/feature requests/questions.
