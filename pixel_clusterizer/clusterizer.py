@@ -119,7 +119,7 @@ class HitClusterizer(object):
     def _init_arrays(self, size=0):
         if self.initialized:
             self._cluster_hits = np.zeros(shape=(size, ), dtype=np.dtype(self._cluster_hits_descr))
-            self._clusters = np.zeros(shape=(size, ), dtype=np.dtype(self._cluster_descr))
+            self._clusters = np.zeros(shape=(size, ), dtype=np.dtype(self._clusters_descr))
             self._assigned_hit_array = np.zeros(shape=(size, ), dtype=np.bool)
             self._cluster_hit_indices = np.full(shape=(size, ), fill_value=-1, dtype=np_int_type_chooser(size))
 
@@ -228,13 +228,26 @@ class HitClusterizer(object):
             cluster_dtype = np.dtype([])
         else:
             cluster_dtype = np.dtype(cluster_dtype)
-        cluster_descr = cluster_dtype.descr
+        clusters_descr = cluster_dtype.descr
 
         for dtype_name, dtype in self._default_clusters_descr:
             if self._cluster_fields_mapping[dtype_name] not in cluster_dtype.fields:
-                cluster_descr.append((dtype_name, dtype))
+                clusters_descr.append((dtype_name, dtype))
 
-        self._cluster_descr = cluster_descr
+        self._clusters_descr = clusters_descr
+        self._init_arrays(size=0)
+
+    def add_hit_field(self, description):
+        ''' Adds a field or a list of fields to the cluster result array. Has to be defined as a numpy dtype entry, e.g.: ('parameter', '<i4') '''
+        if isinstance(description, list):
+            for item in description:
+                if len(item) != 2:
+                    raise TypeError("Parameter description must be a list of 2-tuples of a string and a dtype.")
+                self._cluster_hits_descr.append(item)
+        else:
+            if len(description) != 2:
+                raise TypeError("Parameter description must be a 2-tuple of a string and a dtype.")
+            self._cluster_hits_descr.append(description)
         self._init_arrays(size=0)
 
     def add_cluster_field(self, description):
@@ -242,12 +255,12 @@ class HitClusterizer(object):
         if isinstance(description, list):
             for item in description:
                 if len(item) != 2:
-                    raise TypeError("Description needs to be a list of 2-tuples of a string and a dtype.")
-                self._cluster_descr.append(item)
+                    raise TypeError("Parameter description must be a list of 2-tuples of a string and a dtype.")
+                self._clusters_descr.append(item)
         else:
             if len(description) != 2:
-                raise TypeError("Description needs to be a 2-tuple of a string and a dtype.")
-            self._cluster_descr.append(description)
+                raise TypeError("Parameter description must be a 2-tuple of a string and a dtype.")
+            self._clusters_descr.append(description)
         self._init_arrays(size=0)
 
     def set_end_of_cluster_function(self, function):

@@ -6,7 +6,7 @@ import os
 
 import numpy as np
 
-from pixel_clusterizer.clusterizer import HitClusterizer, default_hits_dtype, default_clusters_dtype, default_clusters_descr, default_cluster_hits_dtype
+from pixel_clusterizer.clusterizer import HitClusterizer, default_hits_descr, default_hits_dtype, default_clusters_dtype, default_clusters_descr, default_cluster_hits_descr, default_cluster_hits_dtype
 
 
 def create_hits(n_hits, max_column, max_row, max_frame, max_charge, hit_dtype=default_hits_dtype, hit_fields=None):
@@ -468,6 +468,48 @@ class TestClusterizer(unittest.TestCase):
 
         # Test results
         self.assertTrue(array_size_before < array_size_after)
+        self.assertTrue(np.array_equal(clusters, expected_clusters))
+        self.assertTrue(np.array_equal(cluster_hits, expected_cluster_hits))
+
+    def test_adding_hit_field(self):
+        clusterizer = HitClusterizer(pure_python=self.pure_python, min_hit_charge=0, max_hit_charge=13, charge_correction=1, charge_weighted_clustering=True, column_cluster_distance=2, row_cluster_distance=2, frame_cluster_distance=4, ignore_same_hits=True)
+        with self.assertRaises(TypeError):
+            clusterizer.add_hit_field(description=['extra_field', 'f4'])  # also test list of 2 items
+        clusterizer.add_hit_field(description=[('extra_field', 'f4')])  # also test list of 2-tuples
+        modified_hits_descr = default_hits_descr[:]
+        modified_hits_descr.append(('extra_field', 'f4'))
+        hits = create_hits(n_hits=10, max_column=100, max_row=100, max_frame=1, max_charge=2, hit_dtype=np.dtype(modified_hits_descr))
+        hits['extra_field'][1:] = range(hits.shape[0] - 1)
+        cluster_hits, clusters = clusterizer.cluster_hits(hits)
+
+        # Define expected cluster output with extra field
+        expected_clusters = np.zeros(shape=(4, ), dtype=default_clusters_dtype)
+        expected_clusters['event_number'] = [0, 1, 2, 3]
+        expected_clusters['n_hits'] = [3, 3, 3, 1]
+        expected_clusters['charge'] = [1, 2, 1, 1]
+        expected_clusters['seed_column'] = [2, 4, 8, 10]
+        expected_clusters['seed_row'] = [3, 7, 15, 19]
+        expected_clusters['mean_column'] = [2.0, 5.0, 8.0, 10.0]
+        expected_clusters['mean_row'] = [3.0, 9.0, 15.0, 19.0]
+
+        # Define expected hit clustered output
+        modified_cluster_hits_descr = default_cluster_hits_descr[:]
+        modified_cluster_hits_descr.append(('extra_field', 'f4'))
+        expected_cluster_hits = np.zeros(shape=(10, ), dtype=np.dtype(modified_cluster_hits_descr))
+        expected_cluster_hits['event_number'] = hits['event_number']
+        expected_cluster_hits['frame'] = hits['frame']
+        expected_cluster_hits['column'] = hits['column']
+        expected_cluster_hits['row'] = hits['row']
+        expected_cluster_hits['charge'] = hits['charge']
+        expected_cluster_hits['is_seed'] = [0, 1, 0, 1, 0, 0, 0, 1, 0, 1]
+        expected_cluster_hits['cluster_size'] = [3, 3, 3, 3, 3, 3, 3, 3, 3, 1]
+        expected_cluster_hits['n_cluster'] = 1
+        expected_cluster_hits['extra_field'] = [0.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
+
+        # Test results
+        print("\n")
+        print(clusters)
+        print(expected_clusters)
         self.assertTrue(np.array_equal(clusters, expected_clusters))
         self.assertTrue(np.array_equal(cluster_hits, expected_cluster_hits))
 
