@@ -361,6 +361,14 @@ class HitClusterizer(object):
             if cluster_hits_field_name in self._cluster_hits.dtype.fields:
                 self._cluster_hits[cluster_hits_field_name][:n_hits] = hits[field_name]
 
+        # Check if event number is increasing. Otherwise give a warning message.
+        if self._last_event_number is not None and hits.shape[0] != 0 and self._cluster_hits["event_number"][0] <= self._last_event_number:
+            logging.warning('The event number does not increase with successive chunks.')
+        if hits.shape[0] > 1 and not np.all((self._cluster_hits["event_number"][1:n_hits] - self._cluster_hits["event_number"][:n_hits - 1]) >= 0):
+            raise RuntimeError('Some values in column "%s" decrease.' % (self._hit_fields_mapping["event_number"],))
+        if self._cluster_hits.shape[0] != 0:
+            self._last_event_number = self._cluster_hits[-1]["event_number"]
+
         noisy_pixels_array = np.array([]) if noisy_pixels is None else np.array(noisy_pixels)
         if noisy_pixels_array.shape[0] != 0:
             noisy_pixels_max_range = np.array([max(0, np.max(noisy_pixels_array[:, 0])), max(0, np.max(noisy_pixels_array[:, 1]))])
@@ -385,12 +393,6 @@ class HitClusterizer(object):
 #         noisy_pixels[:] = [(item[0], item[1]) for item in noisy_pixels_array]
 #         disabled_pixels = np.recarray(disabled_pixels_array.shape[0], dtype=mask_dtype)
 #         disabled_pixels[:] = [(item[0], item[1]) for item in disabled_pixels_array]
-
-        # Check if event number is increasing. Otherwise give a warning message.
-        if self._last_event_number is not None and self._cluster_hits.shape[0] != 0 and self._cluster_hits[0]["event_number"] == self._last_event_number:
-            logging.warning('Event number not increasing.')
-        if self._cluster_hits.shape[0] != 0:
-            self._last_event_number = self._cluster_hits[-1]["event_number"]
 
         n_clusters = self.cluster_functions._cluster_hits(  # Set n_clusters to new size
             hits=self._cluster_hits[:n_hits],
@@ -474,4 +476,4 @@ class HitClusterizer(object):
                 raise TypeError('The dtype for hit data field "%s" does not match. Got/expected: %s/%s.' % (key, hits.dtype[key], self._cluster_hits.dtype[mapped_key]))
         additional_hit_fields = set(hits.dtype.names) - set([key for key, val in self._cluster_hits_descr])
         if additional_hit_fields:
-            logging.warning('Found additional hit fields: %s' % ", ".join(additional_hit_fields))
+            logging.warning('Found additional column: %s' % ", ".join(additional_hit_fields))

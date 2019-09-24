@@ -63,6 +63,12 @@ class TestClusterizer(unittest.TestCase):
             'frame': 'frame'}
         clusterizer = HitClusterizer(hit_fields=hit_mapping, hit_dtype=hit_dtype_new, pure_python=self.pure_python)
         _, _ = clusterizer.cluster_hits(np.array([], dtype=hit_dtype_new))
+        # TEST 4 Set custom and correct hit mapping, decrease event_number
+        hits = np.ones(shape=(2, ), dtype=hit_dtype_new)
+        hits[0]['column'], hits[0]['row'], hits[0]['charge'], hits[0]['not_defined'] = 17, 36, 30, 19
+        hits[1]['column'], hits[1]['row'], hits[1]['charge'], hits[1]['not_defined'] = 18, 36, 6, 18
+        with self.assertRaises(RuntimeError):
+            _, _ = clusterizer.cluster_hits(hits)
 
     def test_cluster_algorithm(self):  # Basic functionality checks
         # Initialize Clusterizer with default arguments
