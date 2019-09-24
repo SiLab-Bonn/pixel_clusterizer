@@ -4,14 +4,14 @@ from operator import itemgetter
 
 import numpy as np
 
-default_hit_descr = [
+default_hits_descr = [
     ('event_number', '<i8'),
     ('frame', '<u2'),
     ('column', '<u2'),
     ('row', '<u2'),
     ('charge', '<f4')]
 
-default_hit_dtype = np.dtype(default_hit_descr)
+default_hits_dtype = np.dtype(default_hits_descr)
 
 default_cluster_hits_descr = [
     ('event_number', '<i8'),
