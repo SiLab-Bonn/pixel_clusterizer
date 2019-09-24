@@ -68,7 +68,7 @@ hits = np.ones(shape=(3, ), dtype=clusterizer.default_hit_data_type)  # Create s
 
 cr = clusterizer.HitClusterizer()  # Initialize clusterizer
 
-hits_clustered, cluster = cr.cluster_hits(hits)  # Cluster hits
+cluster_hits, clusters = cr.cluster_hits(hits)  # Cluster hits
 
 ```
 Also please have a look at the ```examples``` folder!
