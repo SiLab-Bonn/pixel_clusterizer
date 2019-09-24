@@ -11,7 +11,7 @@ The hits must be provided in a numpy recarray. The array must contain the follow
 - ```row```
 - ```charge```
 
-If the column names are different, a mapping of the names to the default names can be provided. The data type of each column can vary and is not fixed. The ```column```/```row``` values can be either indices (integer) or positions (float). ```Charge``` can be either integer or float.
+If the column names are different, a mapping of the names to the default names can be provided. The data type of each column can vary and is not fixed. The ```column```/```row``` values can be either indices (integer, default) or positions (float). ```Charge``` can be either integer or float (default).
 
 After clustering, two new arrays are returned:
 1. The cluster hits array is the hits array extended by the following columns:
@@ -64,7 +64,7 @@ import numpy as np
 
 from pixel_clusterizer import clusterizer
 
-hits = np.ones(shape=(3, ), dtype=clusterizer.default_hit_data_type)  # Create some data with std. hit data type
+hits = np.ones(shape=(3, ), dtype=clusterizer.default_hit_dtype)  # Create some data with std. hit data type
 
 cr = clusterizer.HitClusterizer()  # Initialize clusterizer
 
