@@ -6,14 +6,10 @@ import os
 
 import numpy as np
 
-from pixel_clusterizer.clusterizer import HitClusterizer
+from pixel_clusterizer.clusterizer import HitClusterizer, default_hit_data_type
 
 
-def create_hits(n_hits, max_column, max_row, max_frame, max_charge, hit_dtype=np.dtype([('event_number', '<i8'),
-                                                                                        ('frame', '<u1'),
-                                                                                        ('column', '<u2'),
-                                                                                        ('row', '<u2'),
-                                                                                        ('charge', '<u2')]), hit_fields=None):
+def create_hits(n_hits, max_column, max_row, max_frame, max_charge, hit_dtype=default_hit_data_type, hit_fields=None):
     hits = np.zeros(shape=(n_hits, ), dtype=hit_dtype)
     if not hit_fields:
         for i in range(n_hits):

@@ -4,11 +4,12 @@ import os
 import numpy as np
 
 
-hit_data_type = np.dtype([('event_number', '<i8'),
-                          ('frame', '<u1'),
-                          ('column', '<u2'),
-                          ('row', '<u2'),
-                          ('charge', '<u2')])
+default_hit_data_type = np.dtype([
+    ('event_number', '<i8'),
+    ('frame', '<u1'),
+    ('column', '<u2'),
+    ('row', '<u2'),
+    ('charge', '<u2')])
 
 
 def np_uint_type_chooser(number):

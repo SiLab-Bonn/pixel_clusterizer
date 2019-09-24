@@ -64,7 +64,7 @@ import numpy as np
 
 from pixel_clusterizer import clusterizer
 
-hits = np.ones(shape=(3, ), dtype=clusterizer.hit_data_type)  # Create some data with std. hit data type
+hits = np.ones(shape=(3, ), dtype=clusterizer.default_hit_data_type)  # Create some data with std. hit data type
 
 cr = clusterizer.HitClusterizer()  # Initialize clusterizer
 
