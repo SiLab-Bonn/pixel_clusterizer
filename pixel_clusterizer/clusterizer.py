@@ -471,6 +471,8 @@ class HitClusterizer(object):
                 continue
             if key not in hits.dtype.names:
                 raise TypeError('Required hit field "%s" not found.' % key)
+            if not self.pure_python and hits.dtype[key] == np.float16:
+                raise TypeError('The dtype float16 for hit data filed "%s" is not supported.' % (key,))
             if self._cluster_hits.dtype[mapped_key] != hits.dtype[key] and not np.can_cast(hits.dtype[key], self._cluster_hits.dtype[mapped_key]):
                 raise TypeError('The dtype for hit data field "%s" does not match. Got/expected: %s/%s.' % (key, hits.dtype[key], self._cluster_hits.dtype[mapped_key]))
         additional_hit_fields = set(hits.dtype.names) - set([key for key, val in self._cluster_hits_descr])
