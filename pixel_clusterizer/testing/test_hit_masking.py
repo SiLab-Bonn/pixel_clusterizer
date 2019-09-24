@@ -31,11 +31,7 @@ class TestClusterizer(unittest.TestCase):
 
     def test_disabled_pixels(self):
         # Create some fake data
-        hits = np.ones(shape=(7, ), dtype=np.dtype([('event_number', '<i8'),
-                                                    ('frame', '<u1'),
-                                                    ('column', '<u2'),
-                                                    ('row', '<u2'),
-                                                    ('charge', '<u2')]))
+        hits = np.ones(shape=(7, ), dtype=default_hit_data_type)
         hits[0]['column'], hits[0]['row'], hits[0]['charge'], hits[0]['event_number'], hits[0]['frame'] = 1, 2, 4, 0, 0
         hits[1]['column'], hits[1]['row'], hits[1]['charge'], hits[1]['event_number'], hits[1]['frame'] = 2, 2, 4, 0, 0
         hits[2]['column'], hits[2]['row'], hits[2]['charge'], hits[2]['event_number'], hits[2]['frame'] = 2, 2, 5, 1, 10
@@ -93,11 +89,7 @@ class TestClusterizer(unittest.TestCase):
 
     def test_noisy_pixels(self):
         # Create some fake data
-        hits = np.ones(shape=(9, ), dtype=np.dtype([('event_number', '<i8'),
-                                                    ('frame', '<u1'),
-                                                    ('column', '<u2'),
-                                                    ('row', '<u2'),
-                                                    ('charge', '<u2')]))
+        hits = np.ones(shape=(9, ), dtype=default_hit_data_type)
         hits[0]['column'], hits[0]['row'], hits[0]['charge'], hits[0]['event_number'], hits[0]['frame'] = 1, 2, 8, 0, 0
         hits[1]['column'], hits[1]['row'], hits[1]['charge'], hits[1]['event_number'], hits[1]['frame'] = 2, 2, 4, 0, 0
         hits[2]['column'], hits[2]['row'], hits[2]['charge'], hits[2]['event_number'], hits[2]['frame'] = 2, 2, 5, 1, 10
@@ -157,11 +149,7 @@ class TestClusterizer(unittest.TestCase):
 
     def test_noisy_and_disabled_pixels(self):
         # Create single hit data
-        hits = np.zeros(shape=(1, ), dtype=np.dtype([('event_number', '<i8'),
-                                                     ('frame', '<u1'),
-                                                     ('column', '<u2'),
-                                                     ('row', '<u2'),
-                                                     ('charge', '<u2')]))
+        hits = np.zeros(shape=(1, ), dtype=default_hit_data_type)
         hits[0]['column'], hits[0]['row'] = 1, 1
 
         # Case 1: Test single noisy pixel
@@ -209,11 +197,7 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Create double hit data
-        hits = np.zeros(shape=(2, ), dtype=np.dtype([('event_number', '<i8'),
-                                                     ('frame', '<u1'),
-                                                     ('column', '<u2'),
-                                                     ('row', '<u2'),
-                                                     ('charge', '<u2')]))
+        hits = np.zeros(shape=(2, ), dtype=default_hit_data_type)
         hits[0]['column'], hits[0]['row'] = 1, 1
         hits[1]['column'], hits[1]['row'] = 1, 2
 
@@ -306,11 +290,7 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Create triple hit data
-        hits = np.zeros(shape=(3, ), dtype=np.dtype([('event_number', '<i8'),
-                                                     ('frame', '<u1'),
-                                                     ('column', '<u2'),
-                                                     ('row', '<u2'),
-                                                     ('charge', '<u2')]))
+        hits = np.zeros(shape=(3, ), dtype=default_hit_data_type)
         hits[0]['column'], hits[0]['row'] = 1, 1
         hits[1]['column'], hits[1]['row'] = 1, 2
         hits[2]['column'], hits[2]['row'] = 1, 3
@@ -360,11 +340,7 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Create quadruple hit data
-        hits = np.zeros(shape=(4, ), dtype=np.dtype([('event_number', '<i8'),
-                                                     ('frame', '<u1'),
-                                                     ('column', '<u2'),
-                                                     ('row', '<u2'),
-                                                     ('charge', '<u2')]))
+        hits = np.zeros(shape=(4, ), dtype=default_hit_data_type)
         hits[0]['column'], hits[0]['row'] = 1, 1
         hits[1]['column'], hits[1]['row'] = 1, 2
         hits[2]['column'], hits[2]['row'] = 1, 3
@@ -459,11 +435,7 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Create quintuple hit data
-        hits = np.zeros(shape=(5, ), dtype=np.dtype([('event_number', '<i8'),
-                                                     ('frame', '<u1'),
-                                                     ('column', '<u2'),
-                                                     ('row', '<u2'),
-                                                     ('charge', '<u2')]))
+        hits = np.zeros(shape=(5, ), dtype=default_hit_data_type)
         hits[0]['column'], hits[0]['row'] = 1, 1
         hits[1]['column'], hits[1]['row'] = 1, 2
         hits[2]['column'], hits[2]['row'] = 1, 3
@@ -647,11 +619,7 @@ class TestClusterizer(unittest.TestCase):
         self.assertTrue(np.array_equal(cluster_hits, expected_hit_result))
 
         # Create sextuple hit data
-        hits = np.zeros(shape=(6, ), dtype=np.dtype([('event_number', '<i8'),
-                                                     ('frame', '<u1'),
-                                                     ('column', '<u2'),
-                                                     ('row', '<u2'),
-                                                     ('charge', '<u2')]))
+        hits = np.zeros(shape=(6, ), dtype=default_hit_data_type)
         hits[0]['column'], hits[0]['row'] = 1, 1
         hits[1]['column'], hits[1]['row'] = 1, 2
         hits[2]['column'], hits[2]['row'] = 1, 3
