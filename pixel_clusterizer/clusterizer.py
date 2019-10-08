@@ -58,6 +58,12 @@ class HitClusterizer(object):
     ''' Clusterizer class providing an interface for the jitted functions and stores settings.'''
 
     def __init__(self, hit_fields=None, hit_dtype=None, cluster_fields=None, cluster_dtype=None, pure_python=False, min_hit_charge=None, max_hit_charge=None, charge_correction=None, charge_weighted_clustering=False, column_cluster_distance=1, row_cluster_distance=1, frame_cluster_distance=0, ignore_same_hits=True):
+        '''
+        Parameters
+        ----------
+        pure_python : bool
+            If True, disable JIT compiler. The (n)jit decorator act as if it performs no operation.
+        '''
         # Activate pure python mode by setting the environment variable NUMBA_DISABLE_JIT
         self.pure_python = pure_python
         if self.pure_python:
