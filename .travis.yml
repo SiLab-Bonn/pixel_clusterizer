@@ -20,7 +20,8 @@ install:
   - export PATH="$HOME/miniconda/bin:$PATH"
   - conda update --yes conda
   - conda info -a
-  - conda install --yes numpy numba nose
+  - conda create --yes -n test-environment python="$TRAVIS_PYTHON_VERSION" numpy numba nose
+  - source activate test-environment
   - pip install coverage coveralls
   - pip install -e .
   - conda list
