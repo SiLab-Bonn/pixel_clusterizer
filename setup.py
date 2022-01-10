@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages  # This setup relies on setuptools since distutils is insufficient and badly hacked code
 
-version = '3.1.6.dev0'
-author = 'David-Leon Pohl, Jens Janssen'
-author_email = 'pohl@physik.uni-bonn.de, janssen@physik.uni-bonn.de'
+version = '3.1.7'
+author = 'Yannick Dieter, David-Leon Pohl, Jens Janssen'
+author_email = 'dieter@physik.uni-bonn.de, pohl@physik.uni-bonn.de, janssen@physik.uni-bonn.de'
 
 # requirements for core functionality from requirements.txt
 with open('requirements.txt') as f:
