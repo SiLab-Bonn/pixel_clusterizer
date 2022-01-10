@@ -126,7 +126,7 @@ class HitClusterizer(object):
         if self.initialized:
             self._cluster_hits = np.zeros(shape=(size, ), dtype=np.dtype(self._cluster_hits_descr))
             self._clusters = np.zeros(shape=(size, ), dtype=np.dtype(self._clusters_descr))
-            self._assigned_hit_array = np.zeros(shape=(size, ), dtype=np.bool)
+            self._assigned_hit_array = np.zeros(shape=(size, ), dtype=bool)
             self._cluster_hit_indices = np.full(shape=(size, ), fill_value=-1, dtype=np_int_type_chooser(size))
 
     def reset(self):  # Resets the overwritten function hooks, otherwise they are stored as a module global and not reset on clusterizer initialization
@@ -391,18 +391,18 @@ class HitClusterizer(object):
         noisy_pixels_array = np.array([]) if noisy_pixels is None else np.array(noisy_pixels)
         if noisy_pixels_array.shape[0] != 0:
             noisy_pixels_max_range = np.array([max(0, np.max(noisy_pixels_array[:, 0])), max(0, np.max(noisy_pixels_array[:, 1]))])
-            noisy_pixels = np.zeros(noisy_pixels_max_range + 1, dtype=np.bool)
+            noisy_pixels = np.zeros(noisy_pixels_max_range + 1, dtype=bool)
             noisy_pixels[noisy_pixels_array[:, 0], noisy_pixels_array[:, 1]] = 1
         else:
-            noisy_pixels = np.zeros((0, 0), dtype=np.bool)
+            noisy_pixels = np.zeros((0, 0), dtype=bool)
 
         disabled_pixels_array = np.array([]) if disabled_pixels is None else np.array(disabled_pixels)
         if disabled_pixels_array.shape[0] != 0:
             disabled_pixels_max_range = np.array([np.max(disabled_pixels_array[:, 0]), np.max(disabled_pixels_array[:, 1])])
-            disabled_pixels = np.zeros(disabled_pixels_max_range + 1, dtype=np.bool)
+            disabled_pixels = np.zeros(disabled_pixels_max_range + 1, dtype=bool)
             disabled_pixels[disabled_pixels_array[:, 0], disabled_pixels_array[:, 1]] = 1
         else:
-            disabled_pixels = np.zeros((0, 0), dtype=np.bool)
+            disabled_pixels = np.zeros((0, 0), dtype=bool)
 
 #         col_dtype = self._cluster_hits.dtype.fields["column"][0]
 #         row_dtype = self._cluster_hits.dtype.fields["row"][0]
