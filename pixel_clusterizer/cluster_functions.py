@@ -3,13 +3,13 @@ import numpy as np
 from numba import njit
 
 
-@njit()
+@njit(cache=True)
 def _new_event(event_number_1, event_number_2):
     'Detect a new event by checking if the event number of the actual hit is the actual event number'
     return event_number_1 != event_number_2
 
 
-@njit()
+@njit(cache=True)
 def _pixel_masked(hit, array):
     ''' Checks whether a hit (column/row) is masked or not. Array is 2D array with boolean elements corresponding to pixles indicating whether a pixel is disabled or not.
     '''
@@ -19,7 +19,7 @@ def _pixel_masked(hit, array):
         return False
 
 
-# @njit()
+# @njit(cache=True)
 # def _pixel_masked(hit, array):
 #     ''' Checks whether a hit (column/row) is masked or not. Array is an iterable of column/row tuples of disabled pixels.
 #     '''
@@ -29,7 +29,7 @@ def _pixel_masked(hit, array):
 #     return False
 
 
-@njit()
+@njit(cache=True)
 def _finish_cluster(hits, clusters, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, charge_weighted_clustering, noisy_pixels, disabled_pixels):
     ''' Set hit and cluster information of the cluster (e.g. number of hits in the cluster (cluster_size), total cluster charge (charge), ...).
     '''
@@ -83,7 +83,7 @@ def _finish_cluster(hits, clusters, cluster_size, cluster_hit_indices, cluster_i
         seed_hit_index=seed_hit_index)
 
 
-@njit()
+@njit(cache=True)
 def _finish_event(hits, clusters, start_event_hit_index, stop_event_hit_index, start_event_cluster_index, stop_event_cluster_index):
     ''' Set hit and cluster information of the event (e.g. number of cluster in the event (n_cluster), ...).
     '''
@@ -103,7 +103,7 @@ def _finish_event(hits, clusters, start_event_hit_index, stop_event_hit_index, s
         stop_event_cluster_index=stop_event_cluster_index)
 
 
-@njit()
+@njit(cache=True)
 def _hit_ok(hit, min_hit_charge, max_hit_charge):
     ''' Check if given hit is withing the limits.
     '''
@@ -118,7 +118,7 @@ def _hit_ok(hit, min_hit_charge, max_hit_charge):
     return True
 
 
-@njit()
+@njit(cache=True)
 def _set_hit_invalid(hit, cluster_id=-1):
     ''' Set values for invalid hit.
     '''
@@ -127,7 +127,7 @@ def _set_hit_invalid(hit, cluster_id=-1):
     hit['cluster_size'] = 0
 
 
-@njit()
+@njit(cache=True)
 def _set_1d_array(array, value, size=-1):
     ''' Set array elemets to value for given number of elements (if size is negative number set all elements to value).
     '''
@@ -139,7 +139,7 @@ def _set_1d_array(array, value, size=-1):
             array[i] = value
 
 
-@njit()
+@njit(cache=True)
 def _is_in_max_difference(value_1, value_2, max_difference):
     ''' Helper function to determine the difference of two values that can be np.uints. Works in python and numba mode.
     Circumvents numba bug #1653
@@ -149,21 +149,21 @@ def _is_in_max_difference(value_1, value_2, max_difference):
     return (np.nextafter(value_1, value_2) - np.nextafter(value_2, value_1)) <= max_difference
 
 
-# @njit()
+# @njit(cache=True)
 # def _end_of_cluster_function(hits, clusters, cluster_size, cluster_hit_indices, cluster_index, cluster_id, charge_correction, noisy_pixels, disabled_pixels, seed_hit_index):
 #     ''' Empty function that can be overwritten with a new function that is called at the end of each cluster
 #     '''
 #     pass
 #
 #
-# @njit()
+# @njit(cache=True)
 # def _end_of_event_function(hits, clusters, start_event_hit_index, stop_event_hit_index, start_event_cluster_index, stop_event_cluster_index):
 #     ''' Empty function that can be overwritten with a new function that is called at the end of event
 #     '''
 #     pass
 
 
-@njit()
+@njit(cache=True)
 def _cluster_hits(hits, clusters, assigned_hit_array, cluster_hit_indices, min_hit_charge, max_hit_charge, charge_correction, charge_weighted_clustering, column_cluster_distance, row_cluster_distance, frame_cluster_distance, ignore_same_hits, noisy_pixels, disabled_pixels):
     ''' Main precompiled function that loopes over the hits and clusters them
     '''
