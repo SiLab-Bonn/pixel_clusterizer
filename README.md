@@ -1,4 +1,5 @@
 # Pixel Clusterizer [![Build Status](https://travis-ci.org/SiLab-Bonn/pixel_clusterizer.svg?branch=master)](https://travis-ci.org/SiLab-Bonn/pixel_clusterizer) [![Build status](https://ci.appveyor.com/api/projects/status/c8jqu9ow696opevf?svg=true)](https://ci.appveyor.com/project/laborleben/pixel-clusterizer) [![Coverage Status](https://coveralls.io/repos/github/SiLab-Bonn/pixel_clusterizer/badge.svg?branch=master)](https://coveralls.io/github/SiLab-Bonn/pixel_clusterizer?branch=master)
+[![tests](https://github.com/SiLab-Bonn/pixel_clusterizer/actions/workflows/tests.yml/badge.svg)](https://github.com/SiLab-Bonn/pixel_clusterizer/actions/workflows/tests.yml)
 
 ## Intended Use
 
