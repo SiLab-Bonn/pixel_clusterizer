@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pixel_clusterizer"
+version = "3.1.7"
+license = { "text" = "The MIT License (MIT)" }
+description = "A fast, generic, and easy to use clusterizer to cluster hits of a pixel matrix in Python."
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Yannick Dieter", email="dieter@physik.uni-bonn.de"},
+    {name = "David-Leon Pohl", email="pohl@physik.uni-bonn.de"},
+    {name = "Jens Janssen", email="janssen@physik.uni-bonn.de"}
+]
+dependencies = [
+    "numpy",
+    "numba>=0.24.0",
+]
+keywords=["cluster", "clusterizer", "pixel"]
+
+[project.urls]
+"Repository" = "https://github.com/SiLab-Bonn/pixel_clusterizer"
