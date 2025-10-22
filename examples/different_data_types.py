@@ -15,7 +15,7 @@ def pprint_array(array):  # Just to print the arrays in a nice way
     for row in array:
         print('')
         for i, column in enumerate(row):
-            sys.stdout.write(' ' * (offsets[i] / 2))
+            sys.stdout.write(' ' * (offsets[i] // 2))
             sys.stdout.write(str(column))
             sys.stdout.write('\t')
     print('')
