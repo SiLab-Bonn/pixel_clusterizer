@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pixel_clusterizer"
-version = "3.1.7"
+version = "3.2.0"
 license = "MIT"
 description = "A fast, generic, and easy to use clusterizer to cluster hits of a pixel matrix in Python."
 readme = {file = "README.md", content-type = "text/markdown"}
