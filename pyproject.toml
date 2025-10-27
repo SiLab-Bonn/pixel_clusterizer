@@ -8,7 +8,7 @@ version = "3.1.7"
 license = "MIT"
 description = "A fast, generic, and easy to use clusterizer to cluster hits of a pixel matrix in Python."
 readme = {file = "README.md", content-type = "text/markdown"}
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.14"
 authors = [
     {name = "Yannick Dieter", email="dieter@physik.uni-bonn.de"},
     {name = "David-Leon Pohl", email="pohl@physik.uni-bonn.de"},
